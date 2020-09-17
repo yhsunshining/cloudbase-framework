@@ -1,4 +1,4 @@
-import execa from "execa";
+import { spawnPromise } from "../utils/spawn";
 
 export function install(
   packageInfo: Record<string, string>,
@@ -10,8 +10,10 @@ export function install(
 
   const npmOptions = ["--prefer-offline", "--no-audit", "--progress=false"];
 
-  return execa("npm", [...args, ...packageList, ...npmOptions], {
+  // 支持node8
+  return spawnPromise("npm", [...args, ...packageList, ...npmOptions], {
     cwd: options?.cwd || process.cwd(),
+    stdio: undefined,
   });
 }
 

@@ -65,10 +65,10 @@ export interface ICloudFunction {
    */
   envVariables?: Record<string, string | number | boolean>;
   /**
-   * 运行时环境配置，可选值： `Nodejs8.9, Nodejs10.15 Php7, Java8`
+   * 运行时环境配置，可选值： `Nodejs8.9, Nodejs10.15 Php7, Java8, Go1`
    * @default Nodejs10.15
    */
-  runtime?: "Nodejs10.15" | "Nodejs8.9" | "Php7" | "Java8";
+  runtime?: "Nodejs10.15" | "Nodejs8.9" | "Php7" | "Java8" | "Go1";
   /**
    * VPC
    */
@@ -82,6 +82,11 @@ export interface ICloudFunction {
    * 函数产物路径，相对于函数根目录 functionRootPath，例如 Go 语言可指定二进制文件路径，Java 可以指定 jar 包文件地址
    */
   functionDistPath?: string;
+
+  /**
+   * 忽略的文件
+   */
+  ignore?: string[];
 }
 
 export interface IFunctionVPC {
@@ -197,7 +202,10 @@ class FunctionPlugin extends Plugin {
       return {
         name: func.name,
         localPath: localFunctionPath,
-        zipfileName: zipName,
+        zipFileName: zipName,
+        ignore: func.installDependency
+          ? ["node_modules/**/*", "node_modules", ...(func.ignore || [])]
+          : [...(func.ignore || [])],
       };
     });
 
@@ -307,7 +315,9 @@ class FunctionPlugin extends Plugin {
           FunctionName: functionConfig.name,
           MemorySize: functionConfig.memory || 128,
           Timeout: functionConfig.timeout || 5,
-          Environment: functionConfig.envVariables,
+          Environment: {
+            Variables: functionConfig.envVariables,
+          },
           VpcConfig: functionConfig.vpc,
           HttpPath: this.resolvedInputs.servicePaths[functionConfig.name],
           InstallDependency:
@@ -357,7 +367,8 @@ function resolveInputs(inputs: any, defaultInputs: any) {
 interface FunctionBuilderBuildOptions {
   name: string;
   localPath: string;
-  zipfileName: string;
+  zipFileName: string;
+  ignore: string[];
 }
 
 interface FunctionBuilderOptions {
@@ -376,9 +387,9 @@ export class FunctionBuilder extends Builder {
   }
 
   async build(options: FunctionBuilderBuildOptions[]) {
-    return {
-      functions: options.map((option) => {
-        const localZipPath = path.join(this.distDir, option.zipfileName);
+    const functions = await Promise.all(
+      options.map(async (option) => {
+        const localZipPath = path.join(this.distDir, option.zipFileName);
 
         if (!fs.existsSync(this.distDir)) {
           mkdirSync(this.distDir);
@@ -393,18 +404,24 @@ export class FunctionBuilder extends Builder {
         const fileStats = fs.statSync(option.localPath);
 
         if (fileStats.isFile()) {
-          this.zipFile(option.localPath, localZipPath);
+          this.logger.debug("option.localPath", option.localPath, localZipPath);
+          await this.zipFile(option.localPath, localZipPath);
         } else if (fileStats.isDirectory()) {
-          this.zipDir(option.localPath, localZipPath);
+          this.logger.debug("option.localPath", option.localPath, localZipPath);
+          await this.zipDir(option.localPath, localZipPath, option.ignore);
         }
 
         return {
           name: option.name,
           options: {},
           source: localZipPath,
-          entry: option.zipfileName,
+          entry: option.zipFileName,
         };
-      }),
+      })
+    );
+
+    return {
+      functions,
     };
   }
 
@@ -415,7 +432,9 @@ export class FunctionBuilder extends Builder {
       var archive = archiver("zip", {
         zlib: { level: 9 }, // Sets the compression level.
       });
-      output.on("close", resolve);
+      output.on("close", () => {
+        resolve();
+      });
       archive.on("error", reject);
       archive.file(src, {
         name: path.basename(src),
@@ -425,16 +444,26 @@ export class FunctionBuilder extends Builder {
     });
   }
 
-  async zipDir(src: string, dest: string) {
+  async zipDir(src: string, dest: string, ignore?: string[]) {
     return new Promise((resolve, reject) => {
       // create a file to stream archive data to.
       var output = fs.createWriteStream(dest);
       var archive = archiver("zip", {
         zlib: { level: 9 }, // Sets the compression level.
       });
-      output.on("close", resolve);
+      output.on("close", () => {
+        resolve();
+      });
       archive.on("error", reject);
-      archive.directory(src, false);
+      archive.glob(
+        "**/*",
+        {
+          cwd: src,
+          ignore: ignore || [],
+          dot: true,
+        },
+        {}
+      );
       archive.pipe(output);
       archive.finalize();
     });

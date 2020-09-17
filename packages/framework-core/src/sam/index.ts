@@ -62,6 +62,11 @@ export class SamManager {
     const template = this.readSam();
     let extensionId: string;
 
+    // 没有资源需要部署的情况不走 SAM安装
+    if (!Object.keys(template.Resources).length) {
+      return this.clear();
+    }
+    
     try {
       try {
         logger.debug("sam:install", template);
@@ -178,7 +183,7 @@ export class SamManager {
       filesData.map(async (fileData: any, index: number) => {
         await this.uploadFileViaUrlAndKey({
           url: fileData.UploadUrl,
-          customKey: filesData.CustomKey,
+          customKey: fileData.CustomKey,
           file: files[index].filePath,
           maxSize: fileData.MaxSize,
         });
@@ -216,6 +221,12 @@ export class SamManager {
     } else if (size === 0) {
       throw new Error(`${file} 文件大小为 0，请检查`);
     }
+
+    headers["Content-Type"] = "application/zip";
+
+    logger.debug("uploadFileViaUrlAndKey: headers", headers);
+
+    logger.debug("uploadFileViaUrlAndKey: file", file, "size", size);
 
     await fetchStream(
       url,
