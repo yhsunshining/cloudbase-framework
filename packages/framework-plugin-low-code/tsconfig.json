@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "lib",
+    "allowJs": false,
+    "noImplicitAny": false,
+    "newLine": "lf",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "jsx": "react",
+    "removeComments": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["./node_modules", "./src/weapps-sdk/*"]
+}
