@@ -22,15 +22,17 @@ async function spawnPromise(command, options) {
     );
 
     let stdout = '';
-    cm.stdout
-      && cm.stdout.on('data', (data) => {
+    if (cm.stdout) {
+      cm.stdout.on('data', (data) => {
         stdout += data;
       });
+    }
     let stderr = '';
-    cm.stderr
-      && cm.stdout.on('data', (data) => {
+    if (cm.stderr) {
+      cm.stdout.on('data', (data) => {
         stderr += data;
       });
+    }
 
     cm.on('error', reject);
     cm.on('close', code => (code === 0 ? resolve(stdout) : reject(stderr)));
