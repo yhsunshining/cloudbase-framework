@@ -1,55 +1,74 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs, { PathLike } from "fs-extra";
+import fs, { PathLike } from 'fs-extra'
 import path from 'path'
-import { Plugin, PluginServiceApi } from "@cloudbase/framework-core";
+import { Plugin, PluginServiceApi } from '@cloudbase/framework-core'
 import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp'
-import { plugin as FunctionPlugin, IFrameworkPluginFunctionInputs } from '@cloudbase/framework-plugin-function'
+import {
+  plugin as FunctionPlugin,
+  IFrameworkPluginFunctionInputs,
+} from '@cloudbase/framework-plugin-function'
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website'
-import { plugin as DatabasePlugin, IFrameworkPluginDatabaseInputs } from "@cloudbase/framework-plugin-database"
-import { plugin as AuthPlugin } from "@cloudbase/framework-plugin-auth"
+import {
+  plugin as DatabasePlugin,
+  IFrameworkPluginDatabaseInputs,
+} from '@cloudbase/framework-plugin-database'
+import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth'
+import { deserializePlatformApp } from '@cloudbase/cals'
 
-import { getValidNodeModulesPath, getIPAdress } from './utils'
+import { getValidNodeModulesPath } from './utils'
 import { default as weAppsBuild, buildAsWebByBuildType } from './builder/core'
-import { BuildType, WebpackModeType, GenerateMpType } from './builder/types/common'
-import { IMaterialItem, deserialize, IWeAppData, IPlugin } from './weapps-core'
+import {
+  BuildType,
+  WebpackModeType,
+  GenerateMpType,
+} from './builder/types/common'
+import { IMaterialItem, IPlugin } from './weapps-core'
 import { copySubpackageToApp, handleMpPlugins } from './generate'
-import symlinkDir from 'symlink-dir'
 import {
   postProcessCloudFunction,
   postprocessProjectConfig,
   processCloudFunctionInputs,
-  processDatabaseInputs
-} from "./utils/postProcess";
+  processDatabaseInputs,
+} from './utils/postProcess'
 import { merge } from 'lodash'
 import archiver from 'archiver'
 import COS from 'cos-nodejs-sdk-v5'
 import QRCode from 'qrcode'
-import url from "url";
+import url from 'url'
 /**
  * 导出接口用于生成 JSON Schema 来进行智能提示
  */
 export enum DEPLOY_MODE {
   PREVIEW = 'preview',
-  UPLOAD = 'upload'
+  UPLOAD = 'upload',
 }
 
 enum RUNTIME {
   CI = 'CI',
-  NONE = ''
+  NONE = '',
+  CLI = 'CLI',
 }
 
 export enum HISTORY_TYPE {
   BROWSER = 'BROWSER',
-  HASH = 'HASH'
+  HASH = 'HASH',
 }
 
-export const DIST_PATH = "./dist"
-const DEBUG_PATH = "./debug"
+export const DIST_PATH = './dist'
+const DEBUG_PATH = './debug'
 const QRCODE_PATH = './qrcode.jpg'
 const DEFAULT_CLOUDFUNCTION_ROOT_NAME = 'cloudfunctions'
-const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(DEFAULT_CLOUDFUNCTION_ROOT_NAME, '/')
+const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(
+  DEFAULT_CLOUDFUNCTION_ROOT_NAME,
+  '/'
+)
 const LOG_FILE = 'build.log'
+const PROJECT_SETTING = {
+  es6: true,
+  enhance: true,
+  minified: true,
+  uglifyFileName: false,
+  codeProtect: false,
+}
 
 const enum TIME_LABEL {
   LOW_CODE = 'low code lifetime',
@@ -58,10 +77,11 @@ const enum TIME_LABEL {
   WEB_BUILD = 'build web plugin',
   FUNCTION_BUILD = 'build function plugin',
   COMPILE = 'compile',
-  DEPLOY = 'DEPLOY'
+  DEPLOY = 'DEPLOY',
 }
 
 const DEFAULT_INPUTS = {
+  _inputFile: 'input.json',
   debug: false,
   runtime: process.env.CLOUDBASE_CIID ? RUNTIME.CI : RUNTIME.NONE,
   appId: 'test',
@@ -74,14 +94,22 @@ const DEFAULT_INPUTS = {
   operationService: {},
   publicPath: './',
   extraData: { isComposite: false, compProps: {} },
-  mpAppId: "",
-  mpDeployPrivateKey: process.env.mpDeployPrivateKey || "",
+  mpAppId: '',
+  mpDeployPrivateKey: process.env.mpDeployPrivateKey || '',
   deployOptions: {
     mode: process.env.deployMode || DEPLOY_MODE.PREVIEW,
-  }
+  },
+  calsVersion: 'latest',
 }
 
 export interface IFrameworkPluginLowCodeInputs {
+  /**
+   * json文件指定输入参数
+   * 相对于项目根目录相对路径
+   * @default "input.json"
+   */
+  _inputFile?: string
+
   debug?: boolean
   /**
    * 运行环境
@@ -92,7 +120,7 @@ export interface IFrameworkPluginLowCodeInputs {
   /**
    * 低码应用 appId
    */
-  appId: string,
+  appId: string
   /**
    * 低码应用描述
    */
@@ -104,17 +132,17 @@ export interface IFrameworkPluginLowCodeInputs {
   /**
    * 低码组件依赖
    */
-  dependencies?: IMaterialItem[],
+  dependencies?: IMaterialItem[]
   /**
    * 构建类型
    * @default ["mp"]
    */
-  buildTypeList?: BuildType[],
+  buildTypeList?: BuildType[]
   /**
    * 生成应用类型
    * @default app
    */
-  generateMpType?: GenerateMpType,
+  generateMpType?: GenerateMpType
   /**
    * 小程序 appId
    */
@@ -122,19 +150,19 @@ export interface IFrameworkPluginLowCodeInputs {
   /**
    * 小程序生成路径
    */
-  generateMpPath?: string,
+  generateMpPath?: string
   /**
    * 小程序生成插件
    */
-  plugins?: IPlugin[],
+  plugins?: IPlugin[]
   /**
-   * 小程序部署密钥
+   * 小程序部署密钥（需要经过base64编码）
    */
   mpDeployPrivateKey?: string
   /**
    * 静态资源路径
    */
-  publicPath?: string,
+  publicPath?: string
 
   /**
    * 构建属性
@@ -143,16 +171,16 @@ export interface IFrameworkPluginLowCodeInputs {
     /**
      * 构建类型
      */
-    mode: DEPLOY_MODE,
+    mode: DEPLOY_MODE
     /**
      * 小程序发布版本
      */
-    version?: string,
+    version?: string
     /**
      * 小程序发布说明
      */
     description?: string
-  },
+  }
 
   /**
    * 构建产物上传密钥
@@ -177,10 +205,14 @@ export interface IFrameworkPluginLowCodeInputs {
    *
    */
   extraData?: {
-    operationService?: Object,
+    operationService?: Object
     isComposite: boolean
     compProps: any
-  },
+  }
+  /**
+   * 低码应用描述的协议版本号
+   */
+  calsVersion?: string
 }
 
 type ResolvedInputs = IFrameworkPluginLowCodeInputs & typeof DEFAULT_INPUTS
@@ -204,16 +236,33 @@ class LowCodePlugin extends Plugin {
     public api: PluginServiceApi,
     public inputs: IFrameworkPluginLowCodeInputs
   ) {
-    super(name, api, inputs);
-    let inputJSONPath = path.resolve(this.api.projectPath, 'input.json')
-    let params = fs.existsSync(inputJSONPath) ? fs.readJsonSync(inputJSONPath) : {}
-    this._resolvedInputs = resolveInputs(inputs, resolveInputs(params, DEFAULT_INPUTS))
-    this._appPath = ""
-    this._productBasePath = `lca/${this._resolvedInputs.appId}/${process.env.CLOUDBASE_CIID ? `/${process.env.CLOUDBASE_CIID}` : ''}`
+    super(name, api, inputs)
+    let inputJSONPath = path.resolve(
+      this.api.projectPath,
+      inputs._inputFile || DEFAULT_INPUTS._inputFile
+    )
+    let params = fs.existsSync(inputJSONPath)
+      ? fs.readJsonSync(inputJSONPath)
+      : {}
+    this._resolvedInputs = resolveInputs(
+      inputs,
+      resolveInputs(params, DEFAULT_INPUTS)
+    )
+    this._appPath = ''
+    this._productBasePath = `lca/${this._resolvedInputs.appId}/${
+      process.env.CLOUDBASE_CIID ? `/${process.env.CLOUDBASE_CIID}` : ''
+    }`
 
     let envId = this.api.envId
     if (!this._resolvedInputs.mainAppSerializeData) {
       throw new Error('缺少必须参数: mainAppSerializeData')
+    }
+
+    if (this._checkIsVersion(this._resolvedInputs.calsVersion)) {
+      this._resolvedInputs.mainAppSerializeData = deserializePlatformApp(
+        this._resolvedInputs.mainAppSerializeData,
+        { dependencies: this._resolvedInputs.dependencies }
+      )
     }
 
     if (!this._resolvedInputs.mainAppSerializeData?.envId) {
@@ -225,15 +274,28 @@ class LowCodePlugin extends Plugin {
     //   this._resolvedInputs.mainAppSerializeData.historyType = HISTORY_TYPE.HASH
     // }
 
+    if (buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
+      let { appConfig = {} } = this._resolvedInputs.mainAppSerializeData
+      let { window = {} } = appConfig
+      let path = this._getWebRootPath(this._resolvedInputs)
+      window.publicPath = path
+      window.basename = path
+      appConfig.window = window
+      this._resolvedInputs.mainAppSerializeData.appConfig = appConfig
+    }
+
     this._initDir()
 
-    if (this._resolvedInputs.runtime === RUNTIME.CI && this._resolvedInputs.debug) {
+    if (
+      this._resolvedInputs.runtime === RUNTIME.CI &&
+      this._resolvedInputs.debug
+    ) {
       this._logFilePath = path.resolve(this.api.projectPath, LOG_FILE)
       fs.removeSync(this._logFilePath)
       fs.ensureFileSync(this._logFilePath)
-      let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' });
-      process.stdout.write = logStream.write.bind(logStream) as any;
-      process.stderr.write = logStream.write.bind(logStream) as any;
+      let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' })
+      process.stdout.write = logStream.write.bind(logStream) as any
+      process.stderr.write = logStream.write.bind(logStream) as any
     }
 
     this.api.logger.debug(`low-code plugin construct at ${Date.now()}`)
@@ -247,21 +309,33 @@ class LowCodePlugin extends Plugin {
   }
 
   _subPluginConstructor(resolveInputs: ResolvedInputs) {
-    let { appId, mpAppId, buildTypeList, mpDeployPrivateKey, deployOptions } = resolveInputs
+    if (resolveInputs.runtime === RUNTIME.CLI) {
+      return
+    }
+
+    let {
+      appId,
+      mpAppId,
+      buildTypeList,
+      mpDeployPrivateKey,
+      deployOptions,
+    } = resolveInputs
 
     this._authPlugin = new AuthPlugin('auth', this.api, {
-      configs: [{
-        platform: "NONLOGIN",
-        status: "ENABLE",
-        platformId: '',
-        platformSecret: ''
-      },
-      {
-        platform: "ANONYMOUS",
-        status: "ENABLE",
-        platformId: '',
-        platformSecret: ''
-      }]
+      configs: [
+        {
+          platform: 'NONLOGIN',
+          status: 'ENABLE',
+          platformId: '',
+          platformSecret: '',
+        },
+        {
+          platform: 'ANONYMOUS',
+          status: 'ENABLE',
+          platformId: '',
+          platformSecret: '',
+        },
+      ],
     })
 
     /**
@@ -269,41 +343,62 @@ class LowCodePlugin extends Plugin {
      **/
     if (buildTypeList.includes(BuildType.MP)) {
       if (mpDeployPrivateKey) {
-        fs.writeFileSync(path.join(this.api.projectPath, `./private.${mpAppId}.key`), mpDeployPrivateKey)
+        fs.writeFileSync(
+          path.join(this.api.projectPath, `./private.${mpAppId}.key`),
+          mpDeployPrivateKey,
+          'base64'
+        )
       }
 
-      let projectJson = fs.readJsonSync(path.resolve(this.api.projectPath, DIST_PATH, 'project.config.json'))
+      let projectJson = fs.readJsonSync(
+        path.resolve(this.api.projectPath, DIST_PATH, 'project.config.json')
+      )
       let { cloudfunctionRoot } = projectJson
-      this._miniprogramePlugin = new MiniProgramsPlugin('miniprograme', this.api, {
-        appid: mpAppId,
-        privateKeyPath: `./private.${mpAppId}.key`,
-        localPath: DIST_PATH,
-        ignores: ["node_modules/**/*", LOG_FILE].concat(cloudfunctionRoot ? [path.join(cloudfunctionRoot, "**/*")] : []),
-        deployMode: deployOptions.mode,
-        uploadOptions: {
-          version: '1.0.0'
-        },
-        previewOptions: {
-          qrcodeOutputPath: path.resolve(this.api.projectPath, QRCODE_PATH),
-          pagePath: fs.readJsonSync(path.resolve(this.api.projectPath, DIST_PATH, 'app.json'))?.pages?.[0],
-          // setting: {
-          //   codeProtect: false,
-          //   // es6: true
-          // }
-        }
-      })
 
+      let setting = {
+        es6: true,
+        es7: true,
+        minify: true,
+        codeProtect: false,
+      }
+
+      this._miniprogramePlugin = new MiniProgramsPlugin(
+        'miniprograme',
+        this.api,
+        {
+          appid: mpAppId,
+          privateKeyPath: `./private.${mpAppId}.key`,
+          localPath: DIST_PATH,
+          ignores: ['node_modules/**/*', LOG_FILE].concat(
+            cloudfunctionRoot ? [path.join(cloudfunctionRoot, '**/*')] : []
+          ),
+          deployMode: deployOptions.mode,
+          uploadOptions: {
+            version: deployOptions?.version || '1.0.0',
+            desc: deployOptions?.description || '',
+            setting,
+          },
+          previewOptions: {
+            qrcodeOutputPath: path.resolve(this.api.projectPath, QRCODE_PATH),
+            pagePath: fs.readJsonSync(
+              path.resolve(this.api.projectPath, DIST_PATH, 'app.json')
+            )?.pages?.[0],
+            setting,
+          },
+        }
+      )
     } else if (buildAsWebByBuildType(buildTypeList)) {
       this._webPlugin = new WebsitePlugin('web', this.api, {
         outputPath: DIST_PATH,
-        // cloudPath: this._resolvedInputs.deployOptions.mode === DEPLOY_MODE.PREVIEW ? `/${appId}` : '/',
+        cloudPath: this._getWebRootPath(resolveInputs),
         ignore: [
-          ".git",
-          ".github",
-          "node_modules",
-          "cloudbaserc.js",
+          '.git',
+          '.github',
+          'node_modules',
+          'cloudbaserc.js',
           LOG_FILE,
-          DEFAULT_CLOUDFUNCTION_ROOT_NAME]
+          DEFAULT_CLOUDFUNCTION_ROOT_NAME,
+        ],
       })
     }
 
@@ -311,13 +406,27 @@ class LowCodePlugin extends Plugin {
      * 资源相关
      */
     if (this._functionInputs) {
-      this._functionPlugin = new FunctionPlugin('function', this.api, this._functionInputs)
+      this._functionPlugin = new FunctionPlugin(
+        'function',
+        this.api,
+        this._functionInputs
+      )
     }
 
     if (this._databaseInputs) {
-      this._databasePlugin = new DatabasePlugin('database', this.api, this._databaseInputs)
+      this._databasePlugin = new DatabasePlugin(
+        'database',
+        this.api,
+        this._databaseInputs
+      )
     }
+  }
 
+  _getWebRootPath(resolveInputs: ResolvedInputs) {
+    let { appId, deployOptions } = resolveInputs
+    return deployOptions?.mode === DEPLOY_MODE.PREVIEW
+      ? `/${appId}/preview/`
+      : `/${appId}/production/`
   }
 
   /**
@@ -343,27 +452,22 @@ class LowCodePlugin extends Plugin {
   /**
    * 初始化
    */
-  async init() {
-
-  }
+  async init() {}
 
   /**
    * 执行本地命令
    */
-  async run() { }
+  async run() {}
 
   /**
    * 删除资源
    */
-  async remove() {
-  }
+  async remove() {}
 
   /**
    * 生成代码
    */
-  async genCode() {
-
-  }
+  async genCode() {}
 
   /**
    * 构建
@@ -383,12 +487,19 @@ class LowCodePlugin extends Plugin {
       plugins,
       publicPath,
       extraData = { isComposite: false, compProps: {} },
-      mpAppId
+      mpAppId,
+      calsVersion,
     } = this._resolvedInputs
 
     const webpackMode = WebpackModeType.PRODUCTION
 
-    const subAppSerializeDataList = subAppSerializeDataStrList.map(item => JSON.parse(item))
+    const subAppSerializeDataList = subAppSerializeDataStrList.map((item) => {
+      let obj = JSON.parse(item)
+      if (this._checkIsVersion(calsVersion)) {
+        obj = deserializePlatformApp(obj, { dependencies })
+      }
+      return obj
+    })
     const nodeModulesPath = getValidNodeModulesPath()
 
     let miniAppDir = ''
@@ -396,7 +507,7 @@ class LowCodePlugin extends Plugin {
     const h5url = `./${appId}/index.html`
 
     if (extraData.isComposite) {
-      Object.keys(extraData.compProps.events).forEach(eName => {
+      Object.keys(extraData.compProps.events).forEach((eName) => {
         extraData.compProps.events[eName] = `$$EVENT_${eName}$$`
       })
     }
@@ -420,6 +531,7 @@ class LowCodePlugin extends Plugin {
               publicPath,
               buildTypeList,
               mode: webpackMode,
+              deployMode: this._resolvedInputs.deployOptions?.mode,
               watch: false,
               generateMpType,
               generateMpPath,
@@ -427,29 +539,38 @@ class LowCodePlugin extends Plugin {
               plugins,
               extraData,
             },
-            async (err: any, stats: any, { appBuildDir, plugins = [] }: any) => {
+            async (err: any, result) => {
               if (!err) {
+                const { appConfig = {} } = mainAppSerializeData
+                const { publicPath = '' } = appConfig?.window || {}
+                const { outDir = '', timeElapsed = 0, plugins } = result || {}
 
-                this._databaseInputs = processDatabaseInputs(mainAppSerializeData)
+                this._databaseInputs = processDatabaseInputs(
+                  mainAppSerializeData,
+                  { mode: this._resolvedInputs.deployOptions?.mode }
+                )
 
                 if (buildTypeList.includes(BuildType.MP)) {
-                  miniAppDir = path.resolve(appBuildDir, 'dist/mp')
+                  miniAppDir = outDir
                 }
 
                 if (buildAsWebByBuildType(buildTypeList)) {
-                  webAppDir = path.resolve(appBuildDir, 'preview')
+                  webAppDir = path.resolve(outDir, 'preview')
                 }
 
+                logger.debug(
+                  `=== Compilation finished at ${outDir}, elapsed time: ${
+                    timeElapsed / 1000
+                  }s.===\n`
+                )
 
-                const outputPath = stats.compilation.outputOptions.path
-                logger.debug(`==== Compilation finished at ${outputPath}, elapsed time: ${(stats.endTime -
-                  stats.startTime) /
-                  1000}s.====\n`)
+                if (buildTypeList.includes(BuildType.MP) && miniAppDir) {
+                  let projDir = outDir
 
-                if (miniAppDir && outputPath.includes(miniAppDir)) {
-                  let openIdeDir = miniAppDir
-
-                  let projectJsonPath = path.resolve(miniAppDir, 'project.config.json')
+                  let projectJsonPath = path.resolve(
+                    miniAppDir,
+                    'project.config.json'
+                  )
                   let cloudfunctionRoot = DEFAULT_CLOUDFUNCTION_ROOT_PATH
 
                   let projectJson = fs.readJsonSync(projectJsonPath)
@@ -457,49 +578,60 @@ class LowCodePlugin extends Plugin {
                     cloudfunctionRoot = projectJson.cloudfunctionRoot
                   }
 
-                  let functionNames = await postProcessCloudFunction(path.resolve(miniAppDir, cloudfunctionRoot), mainAppSerializeData)
-                  this._functionInputs = processCloudFunctionInputs(cloudfunctionRoot, mainAppSerializeData)
+                  let functionNames = await postProcessCloudFunction(
+                    path.resolve(miniAppDir, cloudfunctionRoot),
+                    { appId, ...mainAppSerializeData },
+                    { mode: this._resolvedInputs.deployOptions?.mode }
+                  )
+                  this._functionInputs = processCloudFunctionInputs(
+                    cloudfunctionRoot,
+                    { appId, ...mainAppSerializeData },
+                    { mode: this._resolvedInputs.deployOptions?.mode }
+                  )
 
                   await postprocessProjectConfig(projectJsonPath, {
                     appid: mpAppId,
-                    cloudfunctionRoot: functionNames.length ? cloudfunctionRoot : undefined,
-                    setting: {
-                      enhance: false,
-                      uglifyFileName: false,
-                      es6: false
-                    }
+                    cloudfunctionRoot: functionNames.length
+                      ? cloudfunctionRoot
+                      : undefined,
+                    setting: PROJECT_SETTING,
                   })
 
                   if (generateMpType === GenerateMpType.APP) {
-
                     // 模板拷入的 miniprogram_npm 有问题，直接删除使用重新构建的版本
                     // 模板需要占位保证 mp 文件夹存在
                     fs.removeSync(path.resolve(miniAppDir, 'miniprogram_npm'))
                   }
 
-                  if (appBuildDir) {
+                  if (outDir) {
                     // 打开开发者工具的目录切换为主程序目录
-                    if (generateMpType === GenerateMpType.SUBPACKAGE && generateMpPath) {
-                      openIdeDir = generateMpPath
-                      await copySubpackageToApp(appBuildDir, appId, generateMpPath)
+                    if (
+                      generateMpType === GenerateMpType.SUBPACKAGE &&
+                      generateMpPath
+                    ) {
+                      projDir = generateMpPath
+                      await copySubpackageToApp(outDir, appId, generateMpPath)
                     }
 
                     // 原生小程序的插件在这里进行插入
                     if (plugins) {
-                      await handleMpPlugins(plugins, appBuildDir)
+                      await handleMpPlugins(plugins, outDir)
                     }
-
                   }
-
-                  // 小程序构建 npm ci 构建
-                  // await buildNpm(openIdeDir)
                 }
                 // 编译web
-                if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
+                else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
                   let cloudfunctionRoot = DEFAULT_CLOUDFUNCTION_ROOT_PATH
-                  let functionNames = await postProcessCloudFunction(path.resolve(webAppDir, cloudfunctionRoot), mainAppSerializeData)
-                  this._functionInputs = processCloudFunctionInputs(cloudfunctionRoot, mainAppSerializeData)
-
+                  let functionNames = await postProcessCloudFunction(
+                    path.resolve(webAppDir, cloudfunctionRoot),
+                    { appId, ...mainAppSerializeData },
+                    { mode: this._resolvedInputs.deployOptions?.mode }
+                  )
+                  this._functionInputs = processCloudFunctionInputs(
+                    cloudfunctionRoot,
+                    { appId, ...mainAppSerializeData },
+                    { mode: this._resolvedInputs.deployOptions?.mode }
+                  )
 
                   const staticAppDir = path.join(staticDir, publicPath)
                   fs.ensureDirSync(staticAppDir)
@@ -508,10 +640,10 @@ class LowCodePlugin extends Plugin {
                     //   const devConfig = devServerConf
                     //   const params = devConfig ? ['--devServerConf', devConfig] : []
                     //   const devServerPath = path.resolve(appBuildDir, './webpack/devServer.js')
-                    //   this.api.logger.info(`start node ${devServerPath} --devServerConf ${devConfig}....`)
+                    //   logger.info(`start node ${devServerPath} --devServerConf ${devConfig}....`)
                     //   const env = process.env
                     //   env.NODE_PATH = appBuildDir
-                    //   console.log('spawn env 环境：', env.NODE_PATH)
+                    //   logger.info('spawn env 环境：', env.NODE_PATH)
                     //   const ls = spawn('node', [devServerPath, ...params], {
                     //     env,
                     //   })
@@ -522,11 +654,9 @@ class LowCodePlugin extends Plugin {
                     //       startWebDevServer.set(appId, true)
                     //     }
                     //   })
-
                     //   ls.stderr.on('data', data => {
                     //     logger.error(`${data}`, 'devServer strerr:')
                     //   })
-
                     //   ls.on('close', code => {
                     //     logger.error(`子进程退出，退出码 ${code}`)
                     //   })
@@ -549,13 +679,11 @@ class LowCodePlugin extends Plugin {
                 }
 
                 resolve(distPath)
-
               } else {
                 reject(err)
               }
             }
           )
-
         } catch (e) {
           reject(e)
         }
@@ -566,7 +694,11 @@ class LowCodePlugin extends Plugin {
         resumeConsoleOutput()
       }
 
-      logger.info(`code generated successfully, cost ${this._timeEnd(TIME_LABEL.BUILD)}s: ${this._appPath}`)
+      logger.info(
+        `code generated successfully, cost ${this._timeEnd(
+          TIME_LABEL.BUILD
+        )}s: ${this._appPath}`
+      )
 
       // 子插件构建
       this._subPluginConstructor(this._resolvedInputs)
@@ -575,31 +707,43 @@ class LowCodePlugin extends Plugin {
         this._time(TIME_LABEL.MP_BUILD)
         await this._miniprogramePlugin.init()
         await this._miniprogramePlugin.build()
-        logger.debug(`miniprograme plugin build cost ${this._timeEnd(TIME_LABEL.MP_BUILD)}s`)
+        logger.debug(
+          `miniprograme plugin build cost ${this._timeEnd(
+            TIME_LABEL.MP_BUILD
+          )}s`
+        )
       } else if (this._webPlugin) {
         this._time(TIME_LABEL.WEB_BUILD)
         await this._webPlugin.init()
         await this._webPlugin.build()
-        logger.debug(`website plugin build cost ${this._timeEnd(TIME_LABEL.WEB_BUILD)}s`)
+        logger.debug(
+          `website plugin build cost ${this._timeEnd(TIME_LABEL.WEB_BUILD)}s`
+        )
       }
 
       if (this._functionPlugin) {
         this._time(TIME_LABEL.FUNCTION_BUILD)
         await this._functionPlugin.init()
         await this._functionPlugin.build()
-        logger.debug(`function plugin build cost ${this._timeEnd(TIME_LABEL.FUNCTION_BUILD)}s`)
+        logger.debug(
+          `function plugin build cost ${this._timeEnd(
+            TIME_LABEL.FUNCTION_BUILD
+          )}s`
+        )
       }
-
     } catch (e) {
       if (debug) {
         await this._debugInfo()
       }
       try {
-        let privateKeyPath = path.join(this.api.projectPath, `./private.${mpAppId}.key`)
+        let privateKeyPath = path.join(
+          this.api.projectPath,
+          `./private.${mpAppId}.key`
+        )
         if (fs.existsSync(privateKeyPath)) {
           fs.copy(privateKeyPath, path.join(this.api.projectPath, DIST_PATH))
         }
-      } catch (e) { }
+      } catch (e) {}
       if (this._resolvedInputs.runtime === RUNTIME.CI) {
         await this._handleCIProduct()
       }
@@ -608,21 +752,16 @@ class LowCodePlugin extends Plugin {
       throw e
     }
 
-
     logger.info(`low-code build end: ${this._appPath}`)
 
     return this._appPath
-
   }
 
   async compile() {
-
     try {
-
       this._time(TIME_LABEL.COMPILE)
 
       let res = await this._authPlugin.compile()
-
 
       if (this._miniprogramePlugin) {
         res = merge(res, await this._miniprogramePlugin.compile())
@@ -643,15 +782,20 @@ class LowCodePlugin extends Plugin {
         res = merge(res, {
           Resources: {
             Lowcode: {
-              Type: 'CloudBase::Lowcode'
-            }
-          }
+              Type: 'CloudBase::Lowcode',
+              Properties: {
+                Description: 'lowcode application',
+              },
+            },
+          },
         })
       }
 
-      this.api.logger.info(`compile end, cost ${this._timeEnd(TIME_LABEL.COMPILE)}s: `, res)
+      this.api.logger.info(
+        `compile end, cost ${this._timeEnd(TIME_LABEL.COMPILE)}s: `,
+        res
+      )
       return res
-
     } catch (e) {
       if (this._resolvedInputs.debug) {
         await this._debugInfo()
@@ -662,10 +806,7 @@ class LowCodePlugin extends Plugin {
       }
 
       throw e
-
     }
-
-
   }
 
   /**
@@ -673,11 +814,10 @@ class LowCodePlugin extends Plugin {
    */
   async deploy() {
     try {
-
       this._time(TIME_LABEL.DEPLOY)
       const hostingService = this.api.cloudbaseManager.hosting
-      const HostingProvider = this.api.resourceProviders?.hosting;
-      const envId = this.api.envId;
+      const HostingProvider = this.api.resourceProviders?.hosting
+      const envId = this.api.envId
 
       if (this._functionPlugin) {
         await this._functionPlugin.deploy()
@@ -685,18 +825,17 @@ class LowCodePlugin extends Plugin {
 
       if (this._miniprogramePlugin) {
         await this._miniprogramePlugin.deploy()
-      }
-      else if (this._webPlugin) {
+      } else if (this._webPlugin) {
         await this._webPlugin.deploy()
         let historyType = this._resolvedInputs.mainAppSerializeData?.historyType
         try {
-
           async function getHostingInfo(envId) {
-            let [website, hostingDatas] = await HostingProvider.getHostingInfo({ envId: envId })
-              .then(({ data: hostingDatas }) => {
-                let website = hostingDatas[0]
-                return [website, hostingDatas]
-              })
+            let [website, hostingDatas] = await HostingProvider.getHostingInfo({
+              envId: envId,
+            }).then(({ data: hostingDatas }) => {
+              let website = hostingDatas[0]
+              return [website, hostingDatas]
+            })
 
             if (!website || website?.status !== 'online') {
               await new Promise((resolve) => {
@@ -710,100 +849,147 @@ class LowCodePlugin extends Plugin {
             }
           }
 
+          let timeout: any = null
           let [website, hostingDatas] = await Promise.race([
-            new Promise(resolve => {
-              setTimeout(() => {
+            new Promise((resolve) => {
+              timeout = setTimeout(() => {
                 resolve([])
               }, 120 * 1000)
             }),
             this._webPlugin.website
               ? Promise.resolve([this._webPlugin.website])
-              : getHostingInfo(envId)
+              : getHostingInfo(envId),
           ])
+          if (timeout) {
+            clearTimeout(timeout)
+          }
 
           if (website) {
             if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-              let { WebsiteConfiguration } = await this.api.cloudbaseManager.hosting.getWebsiteConfig()
+              let {
+                WebsiteConfiguration,
+              } = await this.api.cloudbaseManager.hosting.getWebsiteConfig()
 
-              let find = false
-              let rules = (WebsiteConfiguration.RoutingRules || []).map(rule => {
-                let meta: any = {}
-                let { Condition, Redirect } = rule
-                if (Condition.HttpErrorCodeReturnedEquals) {
-                  meta.httpErrorCodeReturnedEquals = Condition.HttpErrorCodeReturnedEquals
-                }
-                if (Condition.KeyPrefixEquals) {
-                  meta.keyPrefixEquals = Condition.KeyPrefixEquals
-                }
+              let path = this._getWebRootPath(this._resolvedInputs)
 
-                if (Redirect.ReplaceKeyWith) {
-                  meta.replaceKeyWith = Redirect.ReplaceKeyWith
-                }
+              let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
+                (arr, rule) => {
+                  let meta: any = {}
+                  let { Condition, Redirect } = rule
+                  if (Condition.HttpErrorCodeReturnedEquals) {
+                    meta.httpErrorCodeReturnedEquals =
+                      Condition.HttpErrorCodeReturnedEquals
+                  }
+                  if (Condition.KeyPrefixEquals) {
+                    meta.keyPrefixEquals = Condition.KeyPrefixEquals
+                  }
 
-                if (Redirect.ReplaceKeyPrefixWith) {
-                  meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith
-                }
-                if (meta.httpErrorCodeReturnedEquals === '404') {
-                  find = true
-                  meta.replaceKeyWith = '/'
-                }
-                return meta
-              })
+                  if (Redirect.ReplaceKeyWith) {
+                    meta.replaceKeyWith = Redirect.ReplaceKeyWith
+                  }
 
-              if (!find) {
-                rules.push({
-                  httpErrorCodeReturnedEquals: '404',
-                  replaceKeyWith: '/',
-                })
-              }
+                  if (Redirect.ReplaceKeyPrefixWith) {
+                    meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith
+                  }
+
+                  if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
+                    return arr
+                  }
+
+                  if (meta.httpErrorCodeReturnedEquals !== '404') {
+                    arr.push(meta)
+                  }
+                  return arr
+                },
+                []
+              )
+
+              this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
+                (page) => {
+                  rules.push({
+                    keyPrefixEquals: `${path.slice(1)}${page.id}`,
+                    replaceKeyWith: path,
+                  })
+                }
+              )
 
               if (rules) {
                 if (HostingProvider) {
                   if (!hostingDatas) {
-                    hostingDatas = (await HostingProvider.getHostingInfo({ envId: envId })).data
+                    hostingDatas = (
+                      await HostingProvider.getHostingInfo({ envId: envId })
+                    ).data
                   }
-                  let domains = hostingDatas.map(item => item.cdnDomain)
-                  let { Domains: domainList } = await hostingService.tcbCheckResource({ domains })
-                  let modifyDomainConfigPromises = domainList.filter(item => item.DomainConfig.FollowRedirect !== 'on')
-                    .map(item => hostingService.tcbModifyAttribute({
-                      domain: item.Domain,
-                      domainId: item.DomainId,
-                      domainConfig: ({ FollowRedirect: 'on' } as any)
-                    }))
+                  let domains = hostingDatas.map((item) => item.cdnDomain)
+                  let {
+                    Domains: domainList,
+                  } = await hostingService.tcbCheckResource({ domains })
+                  let modifyDomainConfigPromises = domainList
+                    .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
+                    .map((item) =>
+                      hostingService.tcbModifyAttribute({
+                        domain: item.Domain,
+                        domainId: item.DomainId,
+                        domainConfig: { FollowRedirect: 'on' } as any,
+                      })
+                    )
                   await Promise.all(modifyDomainConfigPromises)
                 }
               }
 
               await this.api.cloudbaseManager.hosting.setWebsiteDocument({
                 indexDocument: 'index.html',
-                routingRules: rules
-              });
+                routingRules: rules,
+              })
             }
 
-            const link = `https://${website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath}`
-            const qrcodeOutputPath = path.resolve(this.api.projectPath, QRCODE_PATH)
-            await QRCode.toFile(path.resolve(this.api.projectPath, QRCODE_PATH), link, { errorCorrectionLevel: 'M', type: 'image/jpeg', scale: 12, margin: 2 })
-            this.api.logger.info(`${this.api.emoji("🚀")} 网站部署成功, 访问二维码地址：${this.api.genClickableLink(url.format({
-              protocol: 'file:',
-              host: qrcodeOutputPath
-            }))}`);
+            const link = `https://${
+              website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
+            }`
+            const qrcodeOutputPath = path.resolve(
+              this.api.projectPath,
+              QRCODE_PATH
+            )
+            await QRCode.toFile(
+              path.resolve(this.api.projectPath, QRCODE_PATH),
+              link,
+              {
+                errorCorrectionLevel: 'M',
+                type: 'image/jpeg',
+                scale: 12,
+                margin: 2,
+              }
+            )
+            this.api.logger.info(
+              `${this.api.emoji(
+                '🚀'
+              )} 网站部署成功, 访问二维码地址：${this.api.genClickableLink(
+                url.format({
+                  protocol: 'file:',
+                  host: qrcodeOutputPath,
+                })
+              )}`
+            )
           } else {
-            throw new Error("检查静态托管开通超时")
+            throw new Error('检查静态托管开通超时')
           }
-
         } catch (e) {
-          this.api.logger.error("网站部署失败: ", e)
+          this.api.logger.error('网站部署失败: ', e)
           throw e
         }
       }
 
-      this.api.logger.info(`${this.api.emoji("🚀")} low - code deploy end, cost ${this._timeEnd(TIME_LABEL.DEPLOY)}s`)
-
+      this.api.logger.info(
+        `${this.api.emoji('🚀')} low - code deploy end, cost ${this._timeEnd(
+          TIME_LABEL.DEPLOY
+        )}s`
+      )
     } catch (e) {
       throw e
     } finally {
-
-      this.api.logger.debug(`low-code plugin takes ${this._timeEnd(TIME_LABEL.LOW_CODE)}s to run.`)
+      this.api.logger.debug(
+        `low-code plugin takes ${this._timeEnd(TIME_LABEL.LOW_CODE)}s to run.`
+      )
       if (this._resolvedInputs.debug) {
         await this._debugInfo()
       }
@@ -812,157 +998,192 @@ class LowCodePlugin extends Plugin {
         await this._handleCIProduct()
       }
     }
-    return;
+    return
+  }
+
+  _checkIsVersion(version) {
+    return version === 'latest' || String(version).startsWith('2')
   }
 
   async _handleCIProduct() {
     fs.ensureDir(path.resolve(this.api.projectPath, DIST_PATH))
 
     try {
-      const zipPath = path.resolve(this.api.projectPath, `${this._resolvedInputs.appId}.zip`)
+      const zipPath = path.resolve(
+        this.api.projectPath,
+        `${this._resolvedInputs.appId}.zip`
+      )
       await this._zipDir(path.resolve(this.api.projectPath, DIST_PATH), zipPath)
       let { credential, storage } = this._resolvedInputs
-      let cos = credential?.token ? new COS({
-        getAuthorization: function (options, callback) {
-          callback({
-            TmpSecretId: credential?.secretId,
-            TmpSecretKey: credential?.secretKey,
-            XCosSecurityToken: credential?.token,
-            ExpiredTime: Math.floor(Date.now() / 1000) + 600
-          });
-        }
-      }) : new COS({
-        SecretId: credential?.secretId,
-        SecretKey: credential?.secretKey,
-      });
+      let cos = credential?.token
+        ? new COS({
+            getAuthorization: function (options, callback) {
+              callback({
+                TmpSecretId: credential?.secretId,
+                TmpSecretKey: credential?.secretKey,
+                XCosSecurityToken: credential?.token,
+                ExpiredTime: Math.floor(Date.now() / 1000) + 600,
+              })
+            },
+          })
+        : new COS({
+            SecretId: credential?.secretId,
+            SecretKey: credential?.secretKey,
+          })
 
       await new Promise((resolve, reject) => {
-        cos.putObject({
-          Bucket: storage?.bucket,
-          Region: storage?.region,
-          Key: `${this._productBasePath}/dist.zip`,
-          Body: fs.createReadStream(zipPath),
-        }, function (err, data) {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(data)
+        cos.putObject(
+          {
+            Bucket: storage?.bucket,
+            Region: storage?.region,
+            Key: `${this._productBasePath}/dist.zip`,
+            Body: fs.createReadStream(zipPath),
+          },
+          function (err, data) {
+            if (err) {
+              reject(err)
+            } else {
+              resolve(data)
+            }
           }
-        });
+        )
       })
       fs.removeSync(zipPath)
 
       if (fs.existsSync(path.resolve(this.api.projectPath, QRCODE_PATH))) {
         await new Promise((resolve, reject) => {
-          cos.putObject({
-            Bucket: storage?.bucket,
-            Region: storage?.region,
-            Key: `${this._productBasePath}/qrcode.jpg`,
-            Body: fs.createReadStream(path.resolve(this.api.projectPath, QRCODE_PATH)),
-          }, function (err, data) {
-            if (err) {
-              reject(err)
-            } else {
-              resolve(data)
+          cos.putObject(
+            {
+              Bucket: storage?.bucket,
+              Region: storage?.region,
+              Key: `${this._productBasePath}/qrcode.jpg`,
+              Body: fs.createReadStream(
+                path.resolve(this.api.projectPath, QRCODE_PATH)
+              ),
+            },
+            function (err, data) {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(data)
+              }
             }
-          });
+          )
         })
       }
 
       if (this._logFilePath) {
         await new Promise((resolve, reject) => {
-          cos.putObject({
-            Bucket: storage?.bucket,
-            Region: storage?.region,
-            Key: `${this._productBasePath}/${LOG_FILE}`,
-            Body: fs.createReadStream(this._logFilePath as PathLike),
-          }, function (err, data) {
-            if (err) {
-              reject(err)
-            } else {
-              resolve(data)
+          cos.putObject(
+            {
+              Bucket: storage?.bucket,
+              Region: storage?.region,
+              Key: `${this._productBasePath}/${LOG_FILE}`,
+              Body: fs.createReadStream(this._logFilePath as PathLike),
+            },
+            function (err, data) {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(data)
+              }
             }
-          });
+          )
         })
       }
 
-      if (fs.existsSync(path.resolve(this.api.projectPath, DEBUG_PATH)) && this._resolvedInputs.debug) {
+      if (
+        fs.existsSync(path.resolve(this.api.projectPath, DEBUG_PATH)) &&
+        this._resolvedInputs.debug
+      ) {
         const zipPath = path.resolve(this.api.projectPath, `debug.zip`)
-        await this._zipDir(path.resolve(this.api.projectPath, DEBUG_PATH), zipPath)
+        await this._zipDir(
+          path.resolve(this.api.projectPath, DEBUG_PATH),
+          zipPath
+        )
         await new Promise((resolve, reject) => {
-          cos.putObject({
-            Bucket: storage?.bucket,
-            Region: storage?.region,
-            Key: `${this._productBasePath}/debug.zip`,
-            Body: fs.createReadStream(zipPath),
-          }, function (err, data) {
-            if (err) {
-              reject(err)
-            } else {
-              resolve(data)
+          cos.putObject(
+            {
+              Bucket: storage?.bucket,
+              Region: storage?.region,
+              Key: `${this._productBasePath}/debug.zip`,
+              Body: fs.createReadStream(zipPath),
+            },
+            function (err, data) {
+              if (err) {
+                reject(err)
+              } else {
+                resolve(data)
+              }
             }
-          });
+          )
         })
       }
 
-      this.api.logger.info(`${this.api.emoji("🚀")} 上传制品成功。`)
-
+      this.api.logger.info(`${this.api.emoji('🚀')} 上传制品成功。`)
     } catch (e) {
-      this.api.logger.error(`${this.api.emoji("🚀")} 上传制品失败：`, e)
+      this.api.logger.error(`${this.api.emoji('🚀')} 上传制品失败：`, e)
     }
   }
 
   async _debugInfo() {
     fs.ensureDirSync(path.resolve(this.api.projectPath, DEBUG_PATH))
-    fs.writeJSONSync(path.resolve(this.api.projectPath, DEBUG_PATH, 'input.json'), this._resolvedInputs, { spaces: 2 })
-    fs.writeJSONSync(path.resolve(this.api.projectPath, DEBUG_PATH, 'env.json'), process.env, { spaces: 2 })
+    fs.writeJSONSync(
+      path.resolve(this.api.projectPath, DEBUG_PATH, 'input.json'),
+      this._resolvedInputs,
+      { spaces: 2 }
+    )
+    fs.writeJSONSync(
+      path.resolve(this.api.projectPath, DEBUG_PATH, 'env.json'),
+      process.env,
+      { spaces: 2 }
+    )
   }
 
   async _zipDir(src, dist) {
     return new Promise((resolve, reject) => {
       // create a file to stream archive data to.
-      var output = fs.createWriteStream(dist);
-      var archive = archiver("zip", {
+      var output = fs.createWriteStream(dist)
+      var archive = archiver('zip', {
         zlib: { level: 9 }, // Sets the compression level.
-      });
-      output.on("close", resolve);
-      archive.on("error", reject);
-      archive.directory(src, false);
-      archive.pipe(output);
-      archive.finalize();
-    });
+      })
+      output.on('close', resolve)
+      archive.on('error', reject)
+      archive.directory(src, false)
+      archive.pipe(output)
+      archive.finalize()
+    })
   }
 }
 
-
 function resolveInputs(inputs: any, defaultInputs: any) {
-  return Object.assign({}, defaultInputs, inputs);
+  return Object.assign({}, defaultInputs, inputs)
 }
 
-const originalStdoutWrite = process.stdout.write.bind(process.stdout);
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
-let previousStdoutWrite = process.stdout.write.bind(process.stdout);
-let previousStderrWrite = process.stderr.write.bind(process.stderr);
+const originalStdoutWrite = process.stdout.write.bind(process.stdout)
+const originalStderrWrite = process.stderr.write.bind(process.stderr)
+let previousStdoutWrite = process.stdout.write.bind(process.stdout)
+let previousStderrWrite = process.stderr.write.bind(process.stderr)
 // 暂停控制台输出
 function pauseConsoleOutput() {
   previousStdoutWrite = process.stdout.write
   process.stdout.write = () => {
-    return true;
+    return true
   }
-  previousStderrWrite = process.stderr.write.bind(process.stderr);
+  previousStderrWrite = process.stderr.write.bind(process.stderr)
   process.stderr.write = () => {
-    return true;
+    return true
   }
 }
 // 恢复控制台输出
 function resumeConsoleOutput(original = false) {
   if (original) {
-    process.stdout.write = originalStdoutWrite;
-    process.stderr.write = originalStderrWrite;
+    process.stdout.write = originalStdoutWrite
+    process.stderr.write = originalStderrWrite
   } else {
-    process.stdout.write = previousStdoutWrite;
-    process.stderr.write = previousStderrWrite;
+    process.stdout.write = previousStdoutWrite
+    process.stderr.write = previousStderrWrite
   }
 }
 
-export const plugin = LowCodePlugin;
+export const plugin = LowCodePlugin

@@ -14,3 +14,4 @@ export { getPageOptions, getLaunchOptions }
 export { urlJoinParams }
 
 export { default as AppApis } from './app-h5-sdk'
+export { styleToCss } from './common/style'

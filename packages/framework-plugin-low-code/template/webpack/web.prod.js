@@ -1,12 +1,12 @@
-const path = require('path')
-const webpack = require('webpack')
-const TerserPlugin = require('terser-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const HardSourceWebpackPlugin = require('hard-source-webpack-plugin')
-const themeVars = require('./themeVars')
+const path = require('path');
+const webpack = require('webpack');
+const TerserPlugin = require('terser-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+const themeVars = require('./themeVars');
 
-module.exports = function(options) {
+module.exports = function (options) {
   const {
     context,
     entry,
@@ -20,7 +20,7 @@ module.exports = function(options) {
       meta: {},
     },
     definePlugin = {},
-  } = options
+  } = options;
   const isDevelopment = mode !== 'production';
   let plugins = [
     new HtmlWebpackPlugin({
@@ -43,12 +43,10 @@ module.exports = function(options) {
         definePlugin
       )
     ),
-    new webpack.optimize.ModuleConcatenationPlugin()
-  ]
+    new webpack.optimize.ModuleConcatenationPlugin(),
+  ];
   if (isDevelopment) {
-    plugins.concat([
-      new HardSourceWebpackPlugin()
-    ])
+    plugins.concat([new HardSourceWebpackPlugin()]);
   } else {
     plugins = plugins.concat([
       new webpack.HashedModuleIdsPlugin({
@@ -60,7 +58,7 @@ module.exports = function(options) {
         SSR: false,
         WEBPACK_ENV: 'production',
       }),
-    ])
+    ]);
   }
   return {
     context,
@@ -70,7 +68,7 @@ module.exports = function(options) {
     output,
     externals,
     cache: {
-      type: 'memory'
+      type: 'memory',
     },
     devtool: isDevelopment ? 'eval-source-map' : false,
     resolve: {
@@ -80,9 +78,9 @@ module.exports = function(options) {
       cacheWithContext: false,
       alias: {
         '@': path.resolve(__dirname, '../src'),
-        react: 'preact/compat',
-        'react-dom/test-utils': 'preact/test-utils',
-        'react-dom': 'preact/compat',
+        // react: 'preact/compat',
+        // 'react-dom/test-utils': 'preact/test-utils',
+        // 'react-dom': 'preact/compat',
       },
     },
     module: {
@@ -100,10 +98,8 @@ module.exports = function(options) {
                 '@babel/preset-env',
                 {
                   targets: {
-                    ios: '10',
-                    android: '4',
+                    esmodules: true,
                   },
-                  modules: 'commonjs',
                 },
               ],
               '@babel/preset-react',
@@ -124,15 +120,11 @@ module.exports = function(options) {
               '@babel/plugin-proposal-export-namespace-from',
               '@babel/plugin-proposal-optional-chaining',
               '@babel/plugin-proposal-partial-application',
-              ['@babel/plugin-proposal-pipeline-operator', { proposal: 'minimal' }],
               [
-                '@babel/plugin-transform-react-jsx',
-                {
-                  // "pragma": "h",
-                  pragmaFrag: 'Fragment',
-                },
+                '@babel/plugin-proposal-pipeline-operator',
+                { proposal: 'minimal' },
               ],
-            ].filter(Boolean)
+            ].filter(Boolean),
           },
         },
         {
@@ -150,14 +142,16 @@ module.exports = function(options) {
               loader: 'postcss-loader',
               options: {
                 ident: 'postcss',
-                plugins: loader => [
-                  require('postcss-pxtorem')({
-                    rootValue: 14,
-                    propList: ['*'],
-                    // todo
-                    selectorBlackList: ['.weui-picker__indicator'],
-                  }),
-                ],
+                plugins: (loader) => {
+                  return [
+                    require('postcss-pxtorem')({
+                      rootValue: 14,
+                      propList: ['*'],
+                      // todo
+                      selectorBlackList: ['.weui-picker__indicator'],
+                    }),
+                  ];
+                },
               },
             },
             {
@@ -183,7 +177,7 @@ module.exports = function(options) {
               loader: 'postcss-loader',
               options: {
                 ident: 'postcss',
-                plugins: loader => [
+                plugins: (loader) => [
                   require('postcss-pxtorem')({
                     rootValue: 14,
                     propList: ['*'],
@@ -210,43 +204,47 @@ module.exports = function(options) {
       ],
     },
     plugins,
-    optimization:
-      isDevelopment
-        ? {
-            minimize: false,
-            removeAvailableModules: false,
-            removeEmptyChunks: false,
-            splitChunks: false,
-          }
-        : {
-            minimizer: [
-              new TerserPlugin({
-                test: /\.js(\?.*)?$/i,
-                cache: true,
-                parallel: true,
-                sourceMap: true,
-                terserOptions: {
-                  compress: {
-                    // eslint-disable-next-line @typescript-eslint/camelcase
-                    drop_console: true,
-                  },
+    optimization: true
+      ? {
+          minimize: false,
+          removeAvailableModules: false,
+          removeEmptyChunks: false,
+          splitChunks: false,
+        }
+      : {
+          minimizer: [
+            new TerserPlugin({
+              test: /\.js(\?.*)?$/i,
+              cache: true,
+              parallel: true,
+              sourceMap: true,
+              terserOptions: {
+                compress: {
+                  // eslint-disable-next-line @typescript-eslint/camelcase
+                  drop_console: false,
                 },
-              }),
-            ],
-            splitChunks: {
-              cacheGroups: {
-                commons: {
-                  test: /[\\/]node_modules[\\/]/,
-                  // cacheGroupKey here is `commons` as the key of the cacheGroup
-                  name(module, chunks, cacheGroupKey) {
-                    const moduleFileName = module.identifier().split('/').reduceRight(item => item);
-                    const allChunksNames = chunks.map((item) => item.name).join('~');
-                    return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
-                  },
-                  chunks: 'all'
-                }
+              },
+            }),
+          ],
+          splitChunks: {
+            cacheGroups: {
+              commons: {
+                test: /[\\/]node_modules[\\/]/,
+                // cacheGroupKey here is `commons` as the key of the cacheGroup
+                name(module, chunks, cacheGroupKey) {
+                  const moduleFileName = module
+                    .identifier()
+                    .split('/')
+                    .reduceRight((item) => item);
+                  const allChunksNames = chunks
+                    .map((item) => item.name)
+                    .join('~');
+                  return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
+                },
+                chunks: 'all',
               },
             },
           },
-  }
-}
+        },
+  };
+};

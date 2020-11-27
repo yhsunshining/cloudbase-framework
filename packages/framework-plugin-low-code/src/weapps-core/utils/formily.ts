@@ -1,5 +1,5 @@
 // @ts-nocheck
-import _get from 'lodash.get'
+import _get from 'lodash/get'
 import {
   IWeAppPage,
   IWeAppComponentInstance,
@@ -14,7 +14,11 @@ import {
 import { IWebRuntimeAppData } from '../types'
 import { ISchema } from '@formily/react-schema-renderer/lib/types'
 import { IDataBind, IDataType } from '../types/web'
-import { isValidClassNameListBind, isValidStyleBind, setValidValue } from './common'
+import {
+  isValidClassNameListBind,
+  isValidStyleBind,
+  setValidValue,
+} from './common'
 import { removeInvalidStyleFormValue } from './style'
 import { HISTORY_TYPE } from '../../index'
 
@@ -30,22 +34,35 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     npmDependencies: webRuntimeAppData.npmDependencies,
     plugins: webRuntimeAppData.plugins,
     rootPath: webRuntimeAppData.rootPath,
+    datasources: webRuntimeAppData.datasources || [],
+    vars: webRuntimeAppData.vars || { data: [] },
+    dataset: webRuntimeAppData.dataset,
   }
 
   setValidValue(weAppData, 'appConfig', webRuntimeAppData.appConfig)
   setValidValue(weAppData, 'themeVars', webRuntimeAppData.themeVars)
   setValidValue(weAppData, 'presetColors', webRuntimeAppData.presetColors)
 
-  handlePageInstanceList(webRuntimeAppData.pageInstanceList, weAppData.pageInstanceList)
+  handlePageInstanceList(
+    webRuntimeAppData.pageInstanceList,
+    weAppData.pageInstanceList
+  )
 
-  function handlePageInstanceList(pageInstanceList: IPageInstance[], collection: IWeAppPage[]) {
-    pageInstanceList.map(pageData => {
+  function handlePageInstanceList(
+    pageInstanceList: IPageInstance[],
+    collection: IWeAppPage[]
+  ) {
+    pageInstanceList.map((pageData) => {
       const newPage = {
         id: pageData.id,
       } as IWeAppPage
       setValidValue(newPage, 'isHome', pageData.isHome)
       setValidValue(newPage, 'data', readDynamicData(pageData))
-      setValidValue(newPage, 'commonStyle', removeInvalidStyleFormValue(pageData.style))
+      setValidValue(
+        newPage,
+        'commonStyle',
+        removeInvalidStyleFormValue(pageData.style)
+      )
       setValidValue(newPage, 'styleBindPath', pageData.styleBindPath)
       if (isValidStyleBind(pageData.styleBind)) {
         setValidValue(newPage, 'styleBind', pageData.styleBind)
@@ -58,7 +75,11 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
         'componentInstances',
         readComponents(pageData.componentSchemaJson.properties)
       )
-      setValidValue(newPage, 'listeners', readListeners(pageData.listenerInstances))
+      setValidValue(
+        newPage,
+        'listeners',
+        readListeners(pageData.listenerInstances)
+      )
       setValidValue(newPage, 'pluginInstances', pageData.pluginInstances)
       setValidValue(newPage, 'lowCodes', pageData.codeModules)
 
@@ -70,7 +91,10 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     })
   }
 
-  function readComponents(properties: { [key: string]: ISchema } = {}, excludeKeys: string[] = []) {
+  function readComponents(
+    properties: { [key: string]: ISchema } = {},
+    excludeKeys: string[] = []
+  ) {
     const cmps: IWeAppPage['componentInstances'] = {}
     for (const key in properties) {
       if (excludeKeys.indexOf(key) > -1) {
@@ -87,7 +111,11 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
         })
         const componentXProps = {} as IWeAppComponentInstance['xProps']
         setValidValue(componentXProps, 'data', readDynamicData(srcProps))
-        setValidValue(componentXProps, 'listeners', readListeners(srcProps.listenerInstances))
+        setValidValue(
+          componentXProps,
+          'listeners',
+          readListeners(srcProps.listenerInstances)
+        )
         setValidValue(componentXProps, 'directives', readDirectives(srcProps))
         setValidValue(componentXProps, 'style', srcProps.style)
         setValidValue(
@@ -96,21 +124,34 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
           removeInvalidStyleFormValue(srcProps.commonStyle)
         )
         setValidValue(componentXProps, 'styleBindPath', srcProps.styleBindPath)
-        if (isValidStyleBind(srcProps.styleBind)) {
-          setValidValue(componentXProps, 'styleBind', srcProps.styleBind)
+        if (srcProps.styleBind && srcProps.styleBind.bindDataPath) {
+          componentXProps.styleBind = {
+            type: srcProps.styleBind.type,
+            value: srcProps.styleBind.bindDataPath,
+          }
         }
+
         if (isValidClassNameListBind(srcProps.classNameListBind)) {
-          setValidValue(componentXProps, 'classNameListBind', srcProps.classNameListBind)
+          const classList = srcProps.classNameListBind
+          setValidValue(componentXProps, 'classListBind', {
+            type: classList.type,
+            value: classList.bindDataPath,
+          })
         }
-        setValidValue(componentXProps, 'classNameList', srcProps.classNameList)
-        // 默认有 xProps 防止对比的时候有差异
-        cmps[key].xProps = componentXProps
+        if (srcProps.classNameList) {
+          setValidValue(componentXProps, 'classList', srcProps.classNameList)
+        }
+        setValidValue(cmps[key], 'xProps', componentXProps)
         setValidValue(cmps[key], 'xIndex', srcCmp['x-index'])
 
         const excludeKeys = (srcProps.dataTypes || [])
-          .filter(dataType => dataType.type !== 'slot')
-          .map(dataType => dataType.propertyPath)
-        setValidValue(cmps[key], 'properties', readComponents(srcCmp.properties, excludeKeys))
+          .filter((dataType) => dataType.type !== 'slot')
+          .map((dataType) => dataType.propertyPath)
+        setValidValue(
+          cmps[key],
+          'properties',
+          readComponents(srcCmp.properties, excludeKeys)
+        )
       } else {
         cmps[key] = { properties: readComponents(srcCmp.properties) }
       }
@@ -129,10 +170,12 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     }
 
     if (cmp.dataBinds && cmp.dataBinds.length) {
-      const bind = cmp.dataBinds.find(bind => bind.propertyPath === '_visible')
+      const bind = cmp.dataBinds.find(
+        (bind) => bind.propertyPath === '_visible'
+      )
       if (bind) {
         const foundDataType = (cmp.dataTypes || []).find(
-          dataType => dataType.propertyPath === bind.propertyPath
+          (dataType) => dataType.propertyPath === bind.propertyPath
         )
         if (foundDataType && foundDataType.type === 'bind') {
           directives.waIf = {
@@ -142,7 +185,9 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
         }
       }
 
-      const forBind = cmp.dataBinds.find(bind => bind.propertyPath === '_waFor')
+      const forBind = cmp.dataBinds.find(
+        (bind) => bind.propertyPath === '_waFor'
+      )
       if (forBind) {
         directives.waFor = {
           type: forBind.type || PropBindType.state,
@@ -162,23 +207,18 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
       if (ignoredProps.indexOf(prop) > -1) {
         continue
       }
-      if (prop === '_waFor' && cmp.data._waFor && cmp.data._waFor.length === 0) {
-        continue
-      }
-      const value = cmp.data[prop]
-      if (value !== null && value !== undefined && value !== '') {
-        data[prop] = { value: cmp.data[prop] }
-      }
+      // Keep null values to generate all wxml attributes
+      data[prop] = { value: cmp.data[prop] }
     }
     // Read data binds
     cmp.dataBinds &&
-      cmp.dataBinds.forEach(bind => {
+      cmp.dataBinds.forEach((bind) => {
         if (ignoredProps.indexOf(bind.propertyPath) > -1) {
           return
         }
 
         const foundDataType = (cmp.dataTypes || []).find(
-          dataType => dataType.propertyPath === bind.propertyPath
+          (dataType) => dataType.propertyPath === bind.propertyPath
         )
         if (foundDataType && foundDataType.type === 'bind') {
           data[bind.propertyPath] = {
@@ -188,31 +228,11 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
         }
       })
 
-    // 修正slot类型
-    cmp.dataTypes &&
-      cmp.dataTypes
-        .filter(dataType => dataType.type === 'slot')
-        .forEach(dataType => {
-          const realPath = dataType.propertyPath.replace(/(.*?)\./, '$1.value.')
-          const foundOne = _get(data, realPath)
-          if (foundOne) {
-            if (realPath.indexOf('.') >= 0) {
-              data[dataType.propertyPath] = {
-                // 嵌套结构打平
-                type: PropBindType.slot,
-                value: '',
-              }
-            } else {
-              foundOne.type = 'slot'
-            }
-          }
-        })
-
     return data
   }
 
   function readListeners(listenerInstances: IListenerInstance[] = []) {
-    const listeners: IWeAppPage['listeners'] = listenerInstances.map(act => {
+    const listeners: IWeAppPage['listeners'] = listenerInstances.map((act) => {
       const fromParts = act.sourceKey.split(':')
       return {
         trigger: act.trigger,
@@ -222,6 +242,8 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
           name: fromParts[1],
         },
         data: readDynamicData(act),
+        isCapturePhase: act.isCapturePhase,
+        noPropagation: act.noPropagation,
       }
     })
     return listeners
@@ -248,17 +270,25 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
     appConfig: weAppData.appConfig || {},
     datasources: weAppData.datasources || [],
     vars: weAppData.vars || { data: [] },
-    envId: weAppData.envId || ''
+    dataset: weAppData.dataset,
+    envId: weAppData.envId || '',
   }
-  handlePageInstanceList(weAppData.pageInstanceList, webRuntimeAppData.pageInstanceList)
+  handlePageInstanceList(
+    weAppData.pageInstanceList,
+    webRuntimeAppData.pageInstanceList
+  )
 
-  function handlePageInstanceList(pageInstanceList: IWeAppPage[], collection: IPageInstance[]) {
-    pageInstanceList.map(srcPage => {
+  function handlePageInstanceList(
+    pageInstanceList: IWeAppPage[],
+    collection: IPageInstance[]
+  ) {
+    pageInstanceList.map((srcPage) => {
       const page = {
         id: srcPage.id,
         data: {},
         dataBinds: [],
-        vars: { data: [] }
+        vars: { data: [] },
+        dataset: srcPage.dataset,
       } as IPageInstance
       page.vars = srcPage.vars ? srcPage.vars : page.vars
       page.isHome = srcPage.isHome || false
@@ -269,6 +299,7 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
       page.componentSchemaJson = {
         type: 'object',
         properties: readCmpInstances(srcPage.componentInstances),
+        'x-index': 0,
       }
       page.listenerInstances = readListeners(srcPage.listeners) || []
 
@@ -293,7 +324,6 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
 
   return webRuntimeAppData
 }
-
 /* tslint:disable */
 export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
   const properties = {}
@@ -316,9 +346,36 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
       xProps.style = cmp.xProps.style || {}
       xProps.commonStyle = cmp.xProps.commonStyle || {}
       setValidValue(xProps, 'styleBindPath', cmp.xProps.styleBindPath)
-      setValidValue(xProps, 'styleBind', cmp.xProps.styleBind)
-      setValidValue(xProps, 'classNameListBind', cmp.xProps.classNameListBind)
-      setValidValue(xProps, 'classNameList', cmp.xProps.classNameList)
+
+      let { classList, classListBind } = cmp.xProps
+      const { styleBind } = cmp.xProps
+
+      // for compatibility with error data
+      const legacyClassList = classList as any
+      if (legacyClassList && legacyClassList.value) {
+        if (!legacyClassList.type || legacyClassList.type === 'static') {
+          classList = legacyClassList.value
+        } else {
+          classList = []
+          classListBind = classListBind
+        }
+      }
+
+      classList && setValidValue(xProps, 'classNameList', classList)
+      classListBind &&
+        setValidValue(xProps, 'classNameListBind', {
+          type: classListBind.type,
+          propertyPath: 'classNameList',
+          bindDataPath: classListBind.value,
+        })
+      if (styleBind && styleBind.type !== 'static') {
+        xProps.styleBind = {
+          type: styleBind.type,
+          propertyPath: 'style',
+          bindDataPath: styleBind.value,
+        }
+      }
+
       xProps.listenerInstances = readListeners(cmp.xProps.listeners) || []
       readDynamicData(cmp.xProps.data, xProps, cmp.properties)
 
@@ -370,10 +427,8 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
   return properties
 }
 /* tslint:enable */
-
-
 function readListeners(listeners: IWeAppPage['listeners'] = []) {
-  return listeners.map(l => {
+  return listeners.map((l) => {
     const act: IListenerInstance = {
       key: '',
       sourceKey: l.handler.moduleName + ':' + l.handler.name,
@@ -382,6 +437,8 @@ function readListeners(listeners: IWeAppPage['listeners'] = []) {
       data: {},
       dataBinds: [],
       handler: l.handler,
+      isCapturePhase: l.isCapturePhase,
+      noPropagation: l.noPropagation,
     }
     readDynamicData(l.data, act)
     return act
@@ -440,15 +497,18 @@ function readDynamicData(
 
   // 兼容之前的应用，slot类型的字段从 properties 中取
   if (properties) {
-    Object.keys(properties).forEach(key => {
-      const foundOne = (to.dataTypes as IDataType[]).find(dataType => dataType.propertyPath === key)
+    Object.keys(properties).forEach((key) => {
+      const foundOne = (to.dataTypes as IDataType[]).find(
+        (dataType) => dataType.propertyPath === key
+      )
       if (foundOne) {
         foundOne.type = 'slot'
       } else {
-        (to.dataTypes as IDataType[]).push({
-          propertyPath: key,
-          type: 'slot',
-        })
+        if (!properties[key].xComponent)
+          to.dataTypes.push({
+            propertyPath: key,
+            type: 'slot',
+          })
       }
     })
   }

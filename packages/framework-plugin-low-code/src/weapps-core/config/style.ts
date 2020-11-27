@@ -68,7 +68,16 @@ export const WRAPPER_REMOVE_STYLE_KEY_LIST = [
   'columnWidth',
 ]
 
-export const PERCENTAGE_KEY_LIST = ['opacity', 'zIndex', 'fontWeight']
+export const PERCENTAGE_KEY_LIST = [
+  'opacity',
+  'order',
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'zIndex',
+  'fontWeight',
+  'borderImage',
+]
 
 export const DISTANCE_KEY_LIST = ['top', 'right', 'bottom', 'left']
 

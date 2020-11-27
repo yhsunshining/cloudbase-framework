@@ -16,10 +16,15 @@ const kboneApisIncluded = [
   /**
    * 数据存储
    */
+  'setStorageSync',
   'setStorage',
+  'removeStorageSync',
   'removeStorage',
+  'getStorageSync',
   'getStorage',
+  'getStorageInfoSync',
   'getStorageInfo',
+  'clearStorageSync',
   'clearStorage',
   /**
    * 媒体
@@ -59,7 +64,6 @@ const kboneApisIncluded = [
   'showModal', // 对话框
   'showToast',
   'hideToast',
-  'showModal',
   'showLoading',
   'hideLoading',
   'showActionSheet',
@@ -91,7 +95,6 @@ const kboneApisIncluded = [
   /**
    * 网络
    */
-  'request',
   'uploadFile',
   'downloadFile',
   /**

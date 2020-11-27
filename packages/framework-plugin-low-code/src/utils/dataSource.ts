@@ -2,6 +2,9 @@
 //  处理依赖合并问题
 import mergePackageJson from 'merge-package-json'
 import { IWebRuntimeAppData, IPageInstance } from 'src/weapps-core'
+import { DEPLOY_MODE } from '../index'
+import { PropBindType } from '@cloudbase/cals/lib/parser/expression'
+import { generateDataBind } from '../builder/mp/util'
 
 export const CLOUD_FUNCTION_TYPE = 'cloud-function'
 export const DATABASE_TYPE = 'database'
@@ -10,16 +13,24 @@ export const DATABASE_TYPE = 'database'
  * 获取数据源云函数文件名称及数据源本地云函数文件名称
  * @param dsConfig 数据源配置
  */
-export function getDatasourceResourceName(dsConfig) {
-  return `lcap-${dsConfig.id}-${dsConfig.name}`
+export function getDatasourceResourceName(datasrouce, mode) {
+  let suffix = mode === DEPLOY_MODE.PREVIEW ? `-preview` : ''
+  return `lcap-${datasrouce.id}-${datasrouce.name}${suffix}`
+}
+
+export function getAppDatasourceResourceName(appId, datasrouce, mode) {
+  let suffix = mode === DEPLOY_MODE.PREVIEW ? `-preview` : ''
+  return `lcap-${datasrouce.id}-${datasrouce.name}-${appId}${suffix}`
 }
 
 /**
  * 获取数据库 集合名称
  * @param dsConfig 数据源配置
  */
-export function getDatasourceDatabaseName(dsConfig) {
-  return dsConfig.type === DATABASE_TYPE ? getDatasourceResourceName(dsConfig) : null
+export function getDatasourceDatabaseName(dsConfig, mode) {
+  return dsConfig.type === DATABASE_TYPE
+    ? getDatasourceResourceName(dsConfig, mode)
+    : null
 }
 
 /**
@@ -40,11 +51,11 @@ export function mergeDependencies(...pkgs) {
 function getDependencies(pkg) {
   if (pkg.dependencies && typeof pkg.dependencies === 'object') {
     return {
-      dependencies: pkg.dependencies
+      dependencies: pkg.dependencies,
     }
   }
   return {
-    dependencies: pkg
+    dependencies: pkg,
   }
 }
 
@@ -54,37 +65,39 @@ function getDependencies(pkg) {
  * @param datasources 完整的数据源描述信息数组
  */
 export function getDatasourceProfiles(datasources) {
-  return datasources.map(ds => {
-    const formated: {
-      id: string
-      name: string
-      type: string
-      config?: any
-      methods?: any
-    } = {
-      id: ds.id,
-      name: ds.name,
-      type: ds.type
-    }
-
-    if (ds.config) {
-      formated.config = {
-        kind: ds.config.kind,
-        methods: ds.config.methods
+  return (
+    datasources?.map((ds) => {
+      const formated: {
+        id: string
+        name: string
+        type: string
+        config?: any
+        methods?: any
+      } = {
+        id: ds.id,
+        name: ds.name,
+        type: ds.type,
       }
-    }
 
-    if (ds.methods) {
-      formated.methods = ds.methods.map(method => {
-        return {
-          name: method.name,
-          type: method.type
+      if (ds.config) {
+        formated.config = {
+          kind: ds.config.kind,
+          methods: ds.config.methods || ds.config.defaultMethods,
         }
-      })
-    }
+      }
 
-    return formated
-  })
+      if (ds.methods) {
+        formated.methods = ds.methods.map((method) => {
+          return {
+            name: method.name,
+            type: method.type,
+          }
+        })
+      }
+
+      return formated
+    }) || []
+  )
 }
 
 /**
@@ -95,11 +108,54 @@ export function getDatasourceProfiles(datasources) {
 export function getDataVarProfiles(appData: IWebRuntimeAppData) {
   const result = {
     // 应用数据源变量
-    $global: appData.vars && appData.vars.data || []
+    $global: (appData.vars && appData.vars.data) || [],
   }
   appData.pageInstanceList.forEach((pageInstance) => {
     let p = pageInstance as IPageInstance
-    result[p.id] = p.vars && p.vars.data || []
+    result[p.id] = (p.vars && p.vars.data) || []
+  })
+  return result
+}
+
+function _generateDynamicDataset(dataset) {
+  let { state } = dataset
+  if (state) {
+    for (let key in state) {
+      let config = state[key]
+      if (config.varType === 'datasource' && config.initMethod?.params) {
+        let params = config.initMethod.params
+        if (params) {
+          let processed = {}
+          for (let paramKey in params) {
+            let bind = params[paramKey]
+            if (!bind.type || bind.type === PropBindType.state) {
+              let value = bind.value
+              processed[paramKey] = `%%%(app, $page) => (${
+                typeof value === 'string' ? `'${value}'` : value
+              })%%%`
+            } else {
+              let jsExp = generateDataBind(bind)
+              processed[paramKey] = `%%%(app, $page) =>  (${jsExp})%%%`
+            }
+          }
+          config.initMethod.params = processed
+        }
+      }
+    }
+  }
+  return dataset
+}
+
+export function getDatasetProfiles(appData: IWebRuntimeAppData) {
+  const result = {}
+  if (appData.dataset) {
+    result['$global'] = _generateDynamicDataset(appData.dataset)
+  }
+  appData.pageInstanceList.forEach((pageInstance) => {
+    let p = pageInstance as IPageInstance
+    if (p.dataset) {
+      result[p.id] = _generateDynamicDataset(p.dataset)
+    }
   })
   return result
 }

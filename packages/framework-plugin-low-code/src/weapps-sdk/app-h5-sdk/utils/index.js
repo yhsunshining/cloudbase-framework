@@ -284,6 +284,13 @@ const interactiveHelper = () => {
   }
 }
 
+function calPxToREM(px) {
+  if (+px === 0) {
+    return '0'
+  }
+  return (px / 14).toFixed(4) + 'rem'
+}
+
 export {
   shouleBeObject,
   getParameterError,
@@ -302,5 +309,6 @@ export {
   findRef,
   easeInOut,
   getTimingFunc,
-  interactiveHelper
+  interactiveHelper,
+  calPxToREM
 }

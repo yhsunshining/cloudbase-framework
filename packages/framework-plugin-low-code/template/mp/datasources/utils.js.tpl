@@ -15,7 +15,8 @@ export function prefixIdentifier(name) {
 } // 为表名增加前缀, 保证唯一
 
 export function getTableName(ds) {
-  return prefixIdentifier(`${ds.id}-${ds.name}`);
+  let preview = <%= isPreview %>;
+  return `lcap-${ds.id}-${ds.name}${preview?'-preview':''}`;
 }
 /**
  * 获取数据源云函数名称
@@ -23,7 +24,8 @@ export function getTableName(ds) {
  */
 
 export function getCloudFnName(ds) {
-  return prefixIdentifier(`${ds.id}-${ds.name}`);
+  let preview = <%= isPreview %>;
+  return prefixIdentifier(`${ds.id}-${ds.name}-<%= appId %>${preview?'-preview':''}`);
 }
 /** 预置的错误对象, 可用该对象抛出自定义错误代码及错误信息 */
 

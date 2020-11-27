@@ -46,7 +46,7 @@ cloudbase framework:deploy
   "framework": {
     "plugins": {
       "client": {
-        "use": "@cloudbase/framework-plugin-mp",
+        "use": "@cloudbase/framework-plugin-low-code",
         "inputs": {
           "appId": "appid for low-code app",
           "mainAppSerializeData": {},
@@ -84,7 +84,7 @@ cloudbase framework:deploy
 
 当 buildTypeList 为["mp"] 时必填，字符串，小程序构建私钥，可在微信小程序后台下载，获取内容
 
-### `deployOptions
+### `deployOptions`
 
 当 buildTypeList 为["mp"] 时必填，对象格式
 | 属性名称 | 类型 | 是否必填 | 描述 |

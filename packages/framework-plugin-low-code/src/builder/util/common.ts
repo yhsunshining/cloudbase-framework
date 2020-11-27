@@ -4,6 +4,12 @@ import path from 'path'
 import fs from 'fs-extra'
 import { ISchema, Schema } from '@formily/react-schema-renderer'
 import { IPackageJson } from '../types/common'
+import { IWeAppComponentInstance, toCssStyle } from '../../weapps-core'
+import { ICompositedComponent, IMaterialItem } from '../../weapps-core/types/material'
+import { pullComponentToListByInstance } from '../service/builder/generate'
+import os from 'os'
+const homeDir = os.homedir()
+const commandConfigPath = path.join(homeDir, '.warc')
 
 export type PromiseResult<T> = Promise<[null, T] | [Error, null]>
 export function promiseWrapper<T>(p: Promise<T>): PromiseResult<T> {
@@ -17,6 +23,9 @@ export function promiseWrapper<T>(p: Promise<T>): PromiseResult<T> {
 }
 
 export function getMetaInfoBySourceKey(sourceKey: string) {
+  if (!sourceKey) {
+    return {}
+  }
   const [materialName, name] = sourceKey.split(':')
   return {
     materialName,
@@ -80,7 +89,7 @@ export function getSelfPackageJson(): IPackageJson | undefined {
 }
 
 export function JsonToStringWithVariableName(copyJson: any): string {
-  return JSON.stringify(copyJson, null, 2).replace(/("%%%|%%%")/g, '')
+  return JSON.stringify(copyJson, null, 2).replace(/("%%%|%%%"|\\n)/g, '')
 }
 
 export function deepDealSchema(
@@ -89,7 +98,9 @@ export function deepDealSchema(
 ): ISchema {
   const fieldSchema = new Schema(sourceSchema)
   if (fieldSchema && fieldSchema.isObject()) {
-    fieldSchema.mapProperties((schema, key) => {
+    let properties = fieldSchema.properties || {}
+    for (let key in properties) {
+      const schema = properties[key]
       const { 'x-props': xProps } = schema
       if (xProps && xProps['data'] && xProps['data']._visible === false) {
         // 暂时不知道 fieldSchema.properties.key 如何删除，暂时使用空Schema替换
@@ -98,7 +109,7 @@ export function deepDealSchema(
         deepDealSchema(schema, deal)
         deal && deal(schema, key)
       }
-    })
+    }
   }
   return fieldSchema.toJSON()
 }
@@ -111,5 +122,75 @@ export function requireUncached(module) {
 export function removeRequireUncached(path = '') {
   if (fs.existsSync(path)) {
     delete require.cache[require.resolve(path)]
+  }
+}
+
+
+export async function getInputProps(appBuildDir: string, dependencies: IMaterialItem[]) {
+  const inputProps = {}
+  await Promise.all(
+    dependencies.map(async ({ name: materialName, version, components, isComposite }) => {
+      if (isComposite) {
+        components.forEach((component) => {
+          let compItem = component as ICompositedComponent
+          const sourceKey = `${materialName}:${compItem.name}`
+          Object.keys(compItem.dataForm || {}).forEach(key => {
+            const inputProp = compItem.dataForm[key]?.inputProp
+            if (inputProp) {
+              inputProps[sourceKey] = {
+                [key]: inputProp,
+                ...(inputProps[sourceKey] || {}),
+              }
+            }
+          })
+        })
+      } else {
+        const materialComponentsPath = path
+          .resolve(appBuildDir, `libraries/${materialName}@${version}/components`)
+          .replace(/packages\/\w+\//, '') // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
+        const components = await fs.readdir(materialComponentsPath)
+
+        await Promise.all(
+          components.map(async name => {
+            const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
+            const sourceKey = `${materialName}:${name}`
+            inputProps[sourceKey] = (await fs.readJson(componentMetaPath)).inputProps
+          })
+        )
+      }
+    })
+  )
+  return inputProps
+}
+
+export async function getYyptConfigInfo(extraData: any) {
+  let configJson
+  try {
+    configJson = await fs.readJSON(commandConfigPath)
+  } catch (e) { }
+  configJson = configJson || {
+    yyptAppKey: '',
+    reportUrl: '',
+    stopReport: false,
+  }
+  if (!extraData || !extraData.operationService) {
+    extraData = extraData || {}
+    extraData.operationService = extraData.operationService || {}
+  }
+
+  const yyptAppKey = extraData.operationService.extAppId || configJson.yyptAppKey || ''
+  const reportUrl = extraData.operationService.reportUrl || configJson.reportUrl || ''
+  const yyptEnabled = extraData.operationService.yyptEnabled
+  let stopReport = false
+  if (typeof yyptEnabled === 'boolean') {
+    stopReport = !yyptEnabled
+  } else {
+    stopReport = configJson.stopReport === 'true'
+  }
+
+  return {
+    yyptAppKey,
+    reportUrl,
+    stopReport,
   }
 }

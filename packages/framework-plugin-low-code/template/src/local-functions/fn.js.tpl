@@ -1,4 +1,4 @@
-import { TCBError } from '@/datasources'
+import { TCBError } from '../datasources'
 
 /** 自定义操作函数列表 */
 export default {

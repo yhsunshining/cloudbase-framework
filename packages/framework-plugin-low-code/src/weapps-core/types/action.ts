@@ -20,4 +20,5 @@ export enum ActionType {
   LifeCycle = 'lifecycle', // 生命周期函数
   PropEvent = 'prop-event', // 属性事件。用于复合组件
   HandlerFn = 'handler-fn', // 低代码 handler 事件
+  Inline = 'inline', // The handler name is js code
 }

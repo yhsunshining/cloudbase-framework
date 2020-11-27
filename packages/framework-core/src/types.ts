@@ -75,6 +75,10 @@ export interface CloudBaseFrameworkConfig {
    * 新版本的备注信息
    */
   versionRemark?: string;
+  /**
+   * 是否强制使用应用名
+   */
+  forece?: boolean
 }
 
 export interface ICloudBaseConfig {

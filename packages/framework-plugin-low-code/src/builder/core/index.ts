@@ -4,8 +4,18 @@ import {
   IInstallOpts,
 } from '../service/builder/webpack'
 import { getCompileDirs } from '../service/builder'
-import { IMaterialItem, deserialize, IWeAppData, IPlugin } from '../../weapps-core'
-import { BuildType, GenerateMpType, WebpackBuildCallBack, WebpackModeType } from '../types/common'
+import {
+  IMaterialItem,
+  deserialize,
+  IWeAppData,
+  IPlugin,
+} from '../../weapps-core'
+import {
+  BuildType,
+  GenerateMpType,
+  WebpackBuildCallBack,
+  WebpackModeType,
+} from '../types/common'
 export { buildAsWebByBuildType } from '../types/common'
 import { getPluginType } from '../service/builder/plugin'
 import { runGenerateCore } from './generate'
@@ -14,6 +24,9 @@ import { runCopy } from './copy'
 import { createDoneCallBack, runPrepare } from './prepare'
 import { runHandleKbonePlugin, runHandleMpPlugin } from './plugin'
 import { runWebpackCore } from './webpack'
+import { generateWxMp } from '../mp'
+import path from 'path'
+import { DEPLOY_MODE } from '../../index'
 
 export type BuildAppProps = {
   dependencies: IMaterialItem[]
@@ -42,9 +55,9 @@ export async function buildWebApp(
     dependencies,
     appKey = 'test',
     nodeModulesPath,
-    publicPath = '/',
     buildTypeList = [BuildType.WEB],
     mode = WebpackModeType.PRODUCTION,
+    deployMode = DEPLOY_MODE.PREVIEW,
     watch = false,
     generateMpType = GenerateMpType.APP,
     generateMpPath = '',
@@ -54,7 +67,7 @@ export async function buildWebApp(
       isComposite: false,
       compProps: {},
     },
-  }: BuildAppProps,
+  }: BuildAppProps & { deployMode: DEPLOY_MODE },
   cb?: WebpackBuildCallBack
 ) {
   if (!mainAppSerializeData) {
@@ -67,81 +80,95 @@ export async function buildWebApp(
     console.log('主包项目路径', generateMpPath)
   }
 
-  // 处理应用数据
-  const mainAppData = deserialize(mainAppSerializeData)
-  const subAppDataList = subAppSerializeDataList.map(sub => deserialize(sub))
+  let { appBuildDir } = getCompileDirs(appKey)
+  const { materialsDir } = getCompileDirs(appKey)
 
-  // 初始化目录
-  const { appBuildDir, materialsDir } = getCompileDirs(appKey)
+  const startTime = Date.now()
+  if (buildTypeList.includes(BuildType.MP)) {
+    appBuildDir = path.join(appBuildDir, 'mp')
+    try {
+      const outDir = await generateWxMp(
+        [mainAppSerializeData, ...subAppSerializeDataList],
+        appBuildDir,
+        appKey,
+        dependencies,
+        plugins,
+        mode === WebpackModeType.PRODUCTION,
+        deployMode,
+        extraData
+      )
+      cb && cb(null, { outDir, timeElapsed: Date.now() - startTime })
+      return outDir
+    } catch (e) {
+      cb && cb(e)
+      return
+    }
+  } else {
+    appBuildDir = path.join(appBuildDir, 'h5')
 
-  // 前置操作
-  const projectConfig = await runPrepare(buildTypeList, appBuildDir, isCleanDistDir)
+    // 处理应用数据
+    const mainAppData = deserialize(mainAppSerializeData)
+    const subAppDataList = subAppSerializeDataList.map((sub) =>
+      deserialize(sub)
+    )
 
-  // 处理 mp_config
-  const mpConfig = await extractAndRemoveKbConfig(mainAppData, subAppDataList, appBuildDir)
-  // await Promise.all(
-  //   subAppDataList.map(async sub => await extractAndRemoveKbConfig(sub, appBuildDir))
-  // )
+    // 前置操作
+    const { publicPath, basename } = mainAppData.appConfig?.window || {}
+    const projectConfig = await runPrepare(
+      buildTypeList,
+      appBuildDir,
+      isCleanDistDir
+    )
 
-  // 复制 写入mainAppData.json
-  await runCopy(appBuildDir, mainAppData)
-  // 素材库
-  const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial'
-  console.time(runHandleMaterialTag)
-  dependencies = await runHandleMaterial(appBuildDir, dependencies, materialsDir)
-  console.timeEnd(runHandleMaterialTag)
-  const {
-    appConfig,
-  } = mainAppData
-  const { window = {} } = appConfig as any
+    // 处理 mp_config
+    const mpConfig = await extractAndRemoveKbConfig(
+      mainAppData,
+      subAppDataList,
+      appBuildDir
+    )
 
-  // 安装依赖
-  await runGenerateCore(
-    appBuildDir,
-    mainAppData,
-    subAppDataList,
-    dependencies,
-    appKey,
-    window.basename || '',
-    buildTypeList,
-    extraData
-  )
+    // 复制
+    await runCopy(appBuildDir, mainAppData)
+    // 素材库
+    const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial'
+    console.time(runHandleMaterialTag)
+    await runHandleMaterial(appBuildDir, dependencies, materialsDir)
+    console.timeEnd(runHandleMaterialTag)
+    // 安装依赖
+    await runGenerateCore(
+      appBuildDir,
+      mainAppData,
+      subAppDataList,
+      dependencies,
+      appKey,
+      basename,
+      buildTypeList,
+      deployMode,
+      extraData
+    )
 
-  // 获取插件类型
-  plugins = await getPluginType(appBuildDir, plugins)
+    const doneCallback = createDoneCallBack({ appBuildDir, projectConfig }, cb)
+    await runWebpackCore({
+      appBuildDir,
+      mainAppData,
+      subAppDataList,
+      materialsDir,
+      dependencies,
+      nodeModulesPath,
+      publicPath,
+      mode,
+      watch,
+      appKey,
+      cb: doneCallback,
+      mpConfig,
+      buildTypeList,
+      generateMpType,
+      generateMpPath,
+      plugins,
+    })
 
-  // 编译前置Kbone小程序的安装
-  const kbonePlugins = plugins.filter(item => item.type === 'kbone')
-  if (kbonePlugins && kbonePlugins.length > 0) {
-    // config 会在内部改变，非 immuable 的
-    await runHandleKbonePlugin(appBuildDir, kbonePlugins, mpConfig)
+    return appBuildDir
   }
-
-  const doneCallback = createDoneCallBack({ appBuildDir, projectConfig }, cb)
-  await runWebpackCore({
-    appBuildDir,
-    mainAppData,
-    subAppDataList,
-    materialsDir,
-    dependencies,
-    nodeModulesPath,
-    publicPath: window.publicPath || '',
-    mode,
-    watch,
-    appKey,
-    cb: doneCallback,
-    mpConfig,
-    buildTypeList,
-    generateMpType,
-    generateMpPath,
-    plugins,
-  })
-
-  // 编译后置原生小程序类的安装
-  const mpPlugins = plugins.filter(item => item.type === 'mp')
-  await runHandleMpPlugin(appBuildDir, mpPlugins, nodeModulesPath)
-
-  return appBuildDir
 }
 
 export function installDep(dir, opts: IInstallOpts = {}) {

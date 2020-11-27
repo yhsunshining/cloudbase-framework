@@ -1,76 +1,107 @@
-import React from 'react'
-import { on } from './eventListener'
-import { SchemaForm, FormEffectHooks } from '@formily/react-schema-renderer'
-import { createFormActions } from '@formily/react-schema-renderer'
-import { observer } from 'mobx-react-lite'
-import { rendererFieldMiddleware } from './FieldMiddleware/renderer'
-import { emitEvent } from './actionHandler/utils'
-import { BaseActionTrigger } from '@govcloud/weapps-core'
-import { FormActionsContext } from './controller'
-import { deepDealSchema } from './utils/common'
+import * as React from "react";
+import { useRef } from "react";
+import * as _ from "lodash";
+import { createFormActions } from "@formily/react-schema-renderer";
+import { CompRenderer } from "./FieldMiddleware/renderer";
 
-export class AppRender extends React.Component {
-  FormActions = null
+function getComponentChildren(component) {
+  const { properties } = component;
+  if (!properties) {
+    return [];
+  }
+  return Object.values(properties).sort(
+    (a, b) => (a["x-index"] || 0) - (b["x-index"] || 0)
+  );
+}
 
-  constructor(props) {
-    super(props)
-    const { virtualFields, onFormActionsInit } = props
+export function AppRender(props) {
+  const {
+    className,
+    virtualFields,
+    componentSchema,
+    renderSlot,
+    rootNode = true,
+    codeContext,
+  } = props;
 
-    this.FormActions = createFormActions()
-    this.addMiddlewareVirtualFields = Object.keys(virtualFields).reduce((result, key) => {
-      result[key] = observer(rendererFieldMiddleware(virtualFields[key]))
-      return result
-    }, {})
-    this.componentSchema = deepDealSchema(this.props.componentSchema, (schema, key) => {
-      schema.key = key
-      schema.type = 'object'
-    })
+  const { "x-props": xProps, properties = {} } = componentSchema;
 
-    onFormActionsInit && onFormActionsInit(this.FormActions)
+  // 判断是否为 slot
+  const isSlot = !xProps;
+  if (isSlot && !(renderSlot || rootNode)) {
+    return null;
   }
 
-  componentWillMount() {
-    const { pluginInstances = [] } = this.props
+  const preClassName = useRef();
 
-    pluginInstances.forEach(({ sourceKey, data, key }) => {
-      sourceKey &&
-        sourceKey({
-          data,
-          key,
-          on,
-        })
-    })
+  // wrapperClass
+  const containerEl = Object.values(properties)[0];
+  if (containerEl && containerEl["x-props"] && className) {
+    let { classNameList = [] } = containerEl["x-props"];
+
+    // 先替换掉先前计算出来的className部分
+    if (preClassName.current) {
+      if (preClassName.current !== className) {
+        classNameList = classNameList.filter(
+          (clsName) => clsName !== preClassName.current
+        );
+        preClassName.current = className;
+      }
+    } else {
+      preClassName.current = className;
+    }
+
+    containerEl["x-props"].classNameList = [className, ...classNameList];
   }
 
-  addMiddlewareVirtualFields = {}
+  if (xProps && xProps.sourceKey) {
+    const { sourceKey } = xProps;
+    const Field = virtualFields[sourceKey];
+    if (!Field) {
+      return (
+        <div style={{ color: "red" }}>
+          组件<em>{sourceKey}</em>未找到
+        </div>
+      );
+    }
+  }
 
-  render() {
-    const { componentSchema } = this
-    return (
-      <FormActionsContext.Provider value={this.FormActions}>
-        <SchemaForm
-          className={this.props.className || ''}
-          effects={() => {
-            FormEffectHooks.onFormInit$().subscribe(formState => {
-              this.emit(BaseActionTrigger.INIT, formState)
-            })
-            FormEffectHooks.onFieldValueChange$('*').subscribe(fieldState => {
-              this.emit(BaseActionTrigger.FIELD_VALUE_CHANGE, fieldState)
-            })
-          }}
-          actions={this.FormActions}
-          schema={componentSchema}
-          virtualFields={this.addMiddlewareVirtualFields}
+  const children = getComponentChildren(componentSchema);
+  const slots = {};
+  // eslint-disable-next-line guard-for-in
+  for (const key in properties) {
+    const child = properties[key];
+    if (!child["x-props"]) {
+      slots[key] = (
+        <AppRender
+          key={child.key}
+          componentSchema={child}
+          renderSlot
+          virtualFields={virtualFields}
+          codeContext={codeContext}
         />
-      </FormActionsContext.Provider>
-    )
+      );
+    }
   }
 
-  emit(trigger, customEventData) {
-    emitEvent(trigger, this.props.pageListenerInstances, {
-      customEventData, // Deprecated
-      event: customEventData,
-      FormActions: this.FormActions, // Deprecated
-    })
-  }
+  return (
+    <CompRenderer
+      id={componentSchema.key}
+      xProps={xProps}
+      virtualFields={virtualFields}
+      slots={slots}
+      codeContext={codeContext}
+    >
+      {children.map((comp) => (
+        <AppRender
+          key={comp.key}
+          componentSchema={comp}
+          rootNode={false}
+          renderSlot={false}
+          virtualFields={virtualFields}
+          codeContext={codeContext}
+        />
+      ))}
+    </CompRenderer>
+  );
 }

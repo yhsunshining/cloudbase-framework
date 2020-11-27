@@ -2,8 +2,9 @@ import path from 'path'
 import fs from 'fs-extra'
 import _ from 'lodash'
 import tpl from 'lodash.template'
-import { Schema } from '@formily/react-schema-renderer'
+import { Schema, ISchema } from '@formily/react-schema-renderer'
 import chalk from 'chalk'
+import os from 'os'
 import {
   IMaterialItem,
   IPageInstance,
@@ -22,43 +23,43 @@ import {
   isEmptyObj,
   IDataBind,
   PropBindType,
+  IComponentMeta,
+  getCompositedComponentClass,
+  ICompositedComponent,
+  IWeAppData,
 } from '../../../weapps-core'
-import postcss from 'postcss'
-import less from 'less'
-import pxToRem from 'postcss-pxtorem'
 import {
   deepDealSchema,
+  getInputProps,
   getMetaInfoBySourceKey,
   JsonToStringWithVariableName,
   simpleDeepClone,
 } from '../../util'
-import { REPLACE_SIGN } from '../../config'
-import { appTemplateDir } from '../../config'
-import { buildAsWebByBuildType } from '../../types/common'
-import os from 'os'
+import { REPLACE_SIGN, appTemplateDir } from '../../config'
+import {
+  processLess,
+  generateDefaultTheme,
+  generateDefaultStyle,
+  defaultThemeCode,
+} from '../../util/style'
+import { buildAsWebByBuildType, IComponentInputProps } from '../../types/common'
+import { getYyptConfigInfo } from '../../util'
 
-import { getDatasourceProfiles, getDataVarProfiles } from '../../../utils/dataSource'
-
-const homeDir = os.homedir()
-const commandConfigPath = path.join(homeDir, '.warc')
+import {
+  getDatasourceProfiles,
+  getDataVarProfiles,
+  getDatasetProfiles,
+} from '../../../utils/dataSource'
+import { DEPLOY_MODE } from '../../../index'
 
 export interface IOriginKeyInfo {
+  sourceKey: string
   name: string
   materialName: string
   materialVersion: string
   key: string
   variableName: string
   type?: ActionType
-}
-
-const remConfig = {
-  rootValue: 28,
-  propList: ['*'],
-  unitPrecision: 5,
-  selectorBlackList: [],
-  replace: true,
-  mediaQuery: false,
-  minPixelValue: 0,
 }
 
 export async function generateAppStyleLessFile(
@@ -70,34 +71,41 @@ export async function generateAppStyleLessFile(
   for (const appData of allAppDataList) {
     if (appData.codeModules) {
       // 兼容 'app-style'
-      const styleCodeModule = appData.codeModules.find(
-        item => item.type === 'app-style' || item.type === 'style'
-      )
-      if (styleCodeModule && styleCodeModule.code) {
-        const content = await fs.readFile(appLessPath, {
-          encoding: 'utf8',
-        })
-        await fs.writeFile(appLessPath, `${content}\n${styleCodeModule.code}`, {
-          encoding: 'utf8',
-        })
-      }
+      const content = `@import "./lowcode/style.less";`
+      await fs.writeFile(appLessPath, `${content}${os.EOL}`, {
+        encoding: 'utf8',
+      })
     }
   }
-  const appLessContent = await fs.readFile(appLessPath, {
-    encoding: 'utf8',
-  })
-  const { css: lessCss } = await less.render(appLessContent)
-  const { css: remCss } = await postcss([pxToRem(remConfig)]).process(lessCss)
-  await fs.writeFile(appLessPath, remCss, {
-    encoding: 'utf8',
-  })
+  // const appLessContent = await fs.readFile(appLessPath, {
+  //   encoding: 'utf8',
+  // })
+  // console.log(appLessPath, '<<<<<<<<<<<< generateAppStyleLessFile')
+  // const remCss = await processLess(appLessContent)
+  // await fs.writeFile(appLessPath, remCss, {
+  //   encoding: 'utf8',
+  // })
 }
 
-export async function generateThemeVarsFile(themeVars: object = {}, appBuildDir: string) {
+export async function generateThemeVarsFile(
+  themeVars: object = {},
+  appBuildDir: string
+) {
   const themeVarsPath = path.resolve(appBuildDir, './webpack/themeVars.js')
-  await fs.writeFile(themeVarsPath, `module.exports = ${JSON.stringify(themeVars, null, 2)}`, {
-    encoding: 'utf8',
-  })
+
+  // 清除没有的变量
+  for (const key in themeVars) {
+    if (!themeVars[key]) {
+      delete themeVars[key]
+    }
+  }
+  await fs.writeFile(
+    themeVarsPath,
+    `module.exports = ${JSON.stringify(themeVars, null, 2)}`,
+    {
+      encoding: 'utf8',
+    }
+  )
 }
 
 export async function generateAllPageJsxFile(
@@ -108,14 +116,20 @@ export async function generateAllPageJsxFile(
     isComposite: boolean
     compProps: any
   } = {
-      isComposite: false,
-      compProps: {},
-    },
+    isComposite: false,
+    compProps: {},
+  },
   buildTypeList: any[]
 ) {
   await Promise.all(
-    loopDealWithFn(pageInstanceList, pageInstance =>
-      generateSinglePageJsxFile(pageInstance, appBuildDir, dependencies, extraData, buildTypeList)
+    loopDealWithFn(pageInstanceList, (pageInstance) =>
+      generateSinglePageJsxFile(
+        pageInstance,
+        appBuildDir,
+        dependencies,
+        extraData,
+        buildTypeList
+      )
     )
   )
 }
@@ -128,9 +142,9 @@ export async function generateSinglePageJsxFile(
     isComposite: boolean
     compProps: any
   } = {
-      isComposite: false,
-      compProps: {},
-    },
+    isComposite: false,
+    compProps: {},
+  },
   buildTypeList: any[]
 ) {
   const fixedDependencies = dependencies // getFixedDependencies(dependencies)
@@ -139,18 +153,34 @@ export async function generateSinglePageJsxFile(
     pluginInstances,
     listenerInstances: pageListenerInstances,
     style: PageStyle,
+    data,
   } = pageInstance
-
-  const { originComponentList, originActionList } = getOriginComponentAndActionList(
+  const {
+    originComponentList,
+    originActionList,
+  } = getOriginComponentAndActionList(
     componentSchemaJson as IComponentSchemaJson,
     fixedDependencies
   )
-  const originPluginList = getOriginPluginList(pluginInstances, dependencies)
-  pullActionToListByInstances(pageListenerInstances, originActionList, fixedDependencies)
+  const componentInputProps = await getInputProps(appBuildDir, dependencies)
 
-  const componentImportStringArr = getComponentImportStringArr(originComponentList)
+  const originPluginList = getOriginPluginList(pluginInstances, dependencies)
+  pullActionToListByInstances(
+    pageListenerInstances,
+    originActionList,
+    fixedDependencies
+  )
+  const componentImportStringArr = getComponentImportStringArr(
+    originComponentList
+  )
   const actionImportStringArr = getActionImportStringArr(originActionList)
   const pluginImportStringArr = getPluginImportStringArr(originPluginList)
+
+  const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
+    componentSchemaJson as IComponentSchemaJson,
+    false,
+    componentInputProps
+  )
 
   const templateData = {
     pageName: pageInstance.id,
@@ -158,42 +188,43 @@ export async function generateSinglePageJsxFile(
     pluginImports: pluginImportStringArr.join(';\n'),
     actionImports: actionImportStringArr.join(';\n'),
     pageListenerInstances: getListenersString(pageListenerInstances),
-    componentSchema: getComponentSchemaString(componentSchemaJson as IComponentSchemaJson),
     virtualFields: getVirtualFieldsString(originComponentList),
     pluginInstances: getPluginInstancesString(pluginInstances),
+    componentSchema,
+    widgets,
+    dataBinds,
     // 复合组件预览需要
     isComposite: extraData.isComposite,
     compProps: extraData.compProps,
+    title: data.navigationBarTitleText || data.title || '',
   }
 
   const dest = path.resolve(appBuildDir, `./pages/${pageInstance.id}/index.jsx`)
-  const template = await fs.readFile(path.resolve(appTemplateDir, './src/pages/app.tpl'), {
-    encoding: 'utf8',
-  })
+  const template = await fs.readFile(
+    path.resolve(appTemplateDir, './src/pages/app.tpl'),
+    {
+      encoding: 'utf8',
+    }
+  )
   const jsx = tpl(template)(templateData)
   await fs.ensureFile(dest)
   await fs.writeFile(dest, jsx)
 
-  // 生成小程序页面入口
-  await fs.copy(
-    path.resolve(appTemplateDir, './miniprogram/main.mp.jsx'),
-    path.resolve(appBuildDir, `./pages/${pageInstance.id}/main.mp.jsx`)
-  )
-
   // 生成页面样式
-  const pageStyleDest = path.resolve(appBuildDir, `./pages/${pageInstance.id}/index.less`)
+  const pageStyleDest = path.resolve(
+    appBuildDir,
+    `./pages/${pageInstance.id}/index.less`
+  )
   const pageStyleString = toCssText(
     toCssStyle(PageStyle),
     buildAsWebByBuildType(buildTypeList) ? 'body' : 'page'
   )
+  const prefixStyleImport = `@import "../../lowcode/${pageInstance.id}/style.less";`
   await fs.ensureFile(pageStyleDest)
-  await fs.writeFile(pageStyleDest, pageStyleString)
-  // if (buildTypeList.includes('mp')) {
-  //   const pageStyleDest = path.resolve(appBuildDir, `./pages/${pageInstance.id}/index.less`)
-  //   const pageStyleString = toCssText(toCssStyle(PageStyle), 'page')
-  //   await fs.ensureFile(pageStyleDest)
-  //   await fs.writeFile(pageStyleDest, pageStyleString)
-  // }
+  await fs.writeFile(
+    pageStyleDest,
+    prefixStyleImport + os.EOL + pageStyleString
+  )
 }
 
 export function getOriginComponentAndActionList(
@@ -207,19 +238,30 @@ export function getOriginComponentAndActionList(
     const { 'x-props': xProps } = fieldSchema
     if (xProps) {
       const { listenerInstances, sourceKey } = xProps as IComponentInstanceProps
-      pullComponentToListByInstance(sourceKey, originComponentList, fixedDependencies)
-      pullActionToListByInstances(listenerInstances, originActionList, fixedDependencies)
+      pullComponentToListByInstance(
+        sourceKey,
+        originComponentList,
+        fixedDependencies
+      )
+      pullActionToListByInstances(
+        listenerInstances,
+        originActionList,
+        fixedDependencies
+      )
     }
 
-    fieldSchema.mapProperties(schema => {
-      const schemaJson = (schema as unknown) as IComponentSchemaJson
-      getOriginComponentAndActionList(
-        schemaJson,
-        fixedDependencies,
-        originComponentList,
-        originActionList
-      )
-    })
+    if (fieldSchema.properties) {
+      for (let key in fieldSchema.properties) {
+        const schema = fieldSchema.properties[key]
+        const schemaJson = (schema as unknown) as IComponentSchemaJson
+        getOriginComponentAndActionList(
+          schemaJson,
+          fixedDependencies,
+          originComponentList,
+          originActionList
+        )
+      }
+    }
   }
 
   return {
@@ -235,7 +277,9 @@ export function getOriginPluginList(
 ) {
   pluginInstances.map((instance: IPluginInstance) => {
     const { sourceKey } = instance
-    const { materialName, name, variableName } = getMetaInfoBySourceKey(sourceKey)
+    const { materialName, name, variableName } = getMetaInfoBySourceKey(
+      sourceKey
+    )
     const pluginKey = `${materialName}_${name}`
     const isExist = originPluginList.find((item: any) => item.key === pluginKey)
     if (isExist) {
@@ -243,11 +287,13 @@ export function getOriginPluginList(
     }
 
     originPluginList.push({
-      name,
-      materialName,
-      materialVersion: dependencies.find(m => m.name === materialName)?.version as string,
+      sourceKey,
+      name: name || '',
+      materialName: materialName || '',
+      materialVersion: dependencies.find((m) => m.name === materialName)
+        ?.version as string,
       key: pluginKey,
-      variableName,
+      variableName: variableName || '',
     })
   })
   return originPluginList
@@ -263,10 +309,14 @@ export function pullActionToListByInstances(
   }
   listenerInstances.map((pageListenerInstance: IListenerInstance) => {
     const { sourceKey, type } = pageListenerInstance
-    const { materialName, name, variableName } = getMetaInfoBySourceKey(sourceKey)
-    const material = fixedDependencies.find(m => m.name === materialName)
+    const { materialName, name, variableName } = getMetaInfoBySourceKey(
+      sourceKey
+    )
+    const material = fixedDependencies.find((m) => m.name === materialName)
     const actionKey = `${materialName}_${name}`
-    const isExistAction = originActionList.find((item: IOriginKeyInfo) => item.key === actionKey)
+    const isExistAction = originActionList.find(
+      (item: IOriginKeyInfo) => item.key === actionKey
+    )
     if (!isExistAction) {
       originActionList.push({
         name,
@@ -282,7 +332,7 @@ export function pullActionToListByInstances(
 
 export function pullComponentToListByInstance(
   sourceKey: string,
-  originComponentList,
+  originComponentList: IOriginKeyInfo[],
   fixedDependencies: IMaterialItem[]
 ) {
   const { materialName, name, variableName } = getMetaInfoBySourceKey(sourceKey)
@@ -291,14 +341,15 @@ export function pullComponentToListByInstance(
     (item: IOriginKeyInfo) => item.key === componentKey
   )
   if (!isExistComponent) {
-    const foundOne = fixedDependencies.find(m => m.name === materialName)
+    const foundOne = fixedDependencies.find((m) => m.name === materialName)
     if (!foundOne) return
     originComponentList.push({
-      name,
-      materialName,
+      sourceKey,
+      name: name || '',
+      materialName: materialName || '',
       materialVersion: foundOne.version,
       key: componentKey,
-      variableName,
+      variableName: variableName || '',
     })
   }
 }
@@ -314,22 +365,95 @@ export function getVirtualFieldsString(components: IOriginKeyInfo[]) {
   return JSON.stringify(fields, null, 2).replace(/("%%%|%%%")/g, '')
 }
 
+export function isSlot(comp: Schema) {
+  return comp.path && !comp['x-props']
+}
+
+function getChildrenId(properties = {}) {
+  let childrenId: string[] = []
+
+  for (const key in properties) {
+    const comp = properties[key]
+    if (isSlot(comp)) {
+      childrenId = childrenId.concat(getChildrenId(comp.properties))
+    } else {
+      childrenId = childrenId.concat(key)
+    }
+  }
+
+  return childrenId
+}
+
 export function getComponentSchemaString(
   componentSchema: IComponentSchemaJson,
-  isComposite = false
+  isComposite = false,
+  componentInputProps: IComponentInputProps = {},
+  wrapperClass?: string
 ) {
   const copyJson = simpleDeepClone<IComponentSchemaJson>(componentSchema)
-  const componentSchemaJson = deepDealSchema(copyJson, schema => {
-    const { 'x-props': xProps, properties } = schema
+  const compWidgets = {}
+  const compDataBinds = {}
+  const componentSchemaJson = deepDealSchema(copyJson, (schema) => {
+    const { 'x-props': xProps = {}, properties } = schema
+    const {
+      dataBinds = [],
+      commonStyle = {},
+      data = {},
+      classNameList = [],
+      sourceKey,
+      styleBind,
+      classNameListBind,
+    } = xProps
+
+    // 生成 widgets/dataBinds
+    if (!isSlot(schema) && schema.key) {
+      compWidgets[schema.key] = {
+        ...data,
+        style: toCssStyle(commonStyle),
+        classList: classNameList,
+        widgetType: sourceKey,
+        _parentId: isSlot(schema.parent as Schema)
+          ? schema?.parent?.parent?.key
+          : schema?.parent?.key,
+      }
+      if (dataBinds.length > 0) {
+        compDataBinds[schema.key] = generateDataBinds(dataBinds, isComposite)
+      }
+      if (styleBind) {
+        if (!styleBind.bindDataPath) {
+          console.warn('无 bindDataPath', xProps)
+        } else {
+          styleBind.propertyPath = 'style'
+          compDataBinds[schema.key] = {
+            ...(compDataBinds[schema.key] || {}),
+            ...generateDataBinds([styleBind], isComposite),
+          }
+        }
+      }
+      if (classNameListBind) {
+        classNameListBind.propertyPath = 'classList'
+        compDataBinds[schema.key] = {
+          ...(compDataBinds[schema.key] || {}),
+          ...generateDataBinds([classNameListBind], isComposite),
+        }
+      }
+    }
 
     // 针对 JSON 体积做优化
     if (properties && isEmptyObj(properties)) {
       delete schema.properties
     }
-    delete schema.key
     delete schema.type
 
     if (xProps) {
+      // 如果是复合组件的根节点，则补充 wrapperClass
+      if (isComposite) {
+        if (!schema?.parent?.parent) {
+          if (!xProps['classNameList']) xProps['classNameList'] = []
+          xProps['classNameList'].push(wrapperClass)
+        }
+      }
+
       xProps['commonStyle'] = toCssStyle(xProps['commonStyle'])
 
       if (isEmptyObj(xProps['commonStyle'])) {
@@ -341,14 +465,14 @@ export function getComponentSchemaString(
       if (xProps['dataBinds'] && xProps['dataBinds'].length === 0) {
         delete xProps['dataBinds']
       }
-      if (xProps['listenerInstances'] && xProps['listenerInstances'].length === 0) {
+      if (
+        xProps['listenerInstances'] &&
+        xProps['listenerInstances'].length === 0
+      ) {
         delete xProps['listenerInstances']
       }
       if (xProps['data']) {
         const xPropsData = xProps['data']
-        if (xPropsData._visible === true) {
-          delete xPropsData._visible
-        }
         if (xPropsData._waFor && xPropsData._waFor.length === 0) {
           delete xPropsData._waFor
         }
@@ -359,10 +483,32 @@ export function getComponentSchemaString(
           delete xProps['data']
         }
       }
-      delete xProps.sourceKey
 
       if (xProps.listenerInstances) {
-        xProps.listenerInstances = generateListnerInstances(xProps.listenerInstances, isComposite)
+        xProps.listenerInstances = generateListnerInstances(
+          xProps.listenerInstances,
+          isComposite
+        )
+      }
+
+      // 组件双向绑定
+      const inputProps = componentInputProps[xProps.sourceKey]
+      if (inputProps) {
+        if (!xProps.listenerInstances) xProps.listenerInstances = []
+        Object.keys(inputProps).forEach((key) => {
+          const { changeEvent, valueFromEvent } = inputProps[key]
+          // 双向绑定需要优先第一个执行
+          xProps.listenerInstances.unshift({
+            trigger: changeEvent,
+            instanceFunction: `${REPLACE_SIGN}function({ event, forItems }) {
+              const wid = ${isComposite ? 'this.widgets' : '$page.widgets'}.${
+              schema.key
+            };
+              const widgetData = (forItems.forIndexes && forItems.forIndexes.length > 0) ? get(wid, forItems.forIndexes) : wid;
+              widgetData.${key} = ${valueFromEvent};
+            }.bind(this)${REPLACE_SIGN}`,
+          })
+        })
       }
 
       if (xProps.dataBinds) {
@@ -374,48 +520,42 @@ export function getComponentSchemaString(
       }
 
       if (xProps.classNameListBind) {
-        xProps.classNameListBind = generateDataBinds([xProps.classNameListBind], isComposite)
+        xProps.classNameListBind = generateDataBinds(
+          [xProps.classNameListBind],
+          isComposite
+        )
       }
     }
   })
-  return JsonToStringWithVariableName(componentSchemaJson)
+
+  return {
+    widgets: JsonToStringWithVariableName(compWidgets),
+    dataBinds: JsonToStringWithVariableName(compDataBinds)
+      .replace(/\\r/g, '\n')
+      .replace(/\\"/g, '"'),
+    componentSchema: JsonToStringWithVariableName(componentSchemaJson)
+      .replace(/\\r/g, '\n')
+      .replace(/\\"/g, '"'),
+  }
 }
 
 // convert data binds to functions for performance & simplicity
-function generateDataBinds(dataBinds, isComposite = false) {
+function generateDataBinds(dataBinds, isComposite: boolean) {
   const dataBindFuncs = {}
   dataBinds.forEach((bind: IDataBind) => {
+    if (!bind.bindDataPath) {
+      return console.warn('无 bindDataPath', bind.propertyPath)
+    }
     // 默认空函数, 避免出错
-    let funcCode = '() => ()'
-    if (bind.type === PropBindType.state) {
-      if (bind.bindDataPath.startsWith('global.')) {
-        funcCode = bind.bindDataPath.replace(/^global./, 'app.state.')
-      } else {
-        if (isComposite) {
-          funcCode = bind.bindDataPath.replace(/^\$\w+_\d+./, 'this.state.')
-        } else {
-          funcCode = bind.bindDataPath.replace(/^\w+./, '$page.state.')
-        }
-      }
-      funcCode = `() => ${funcCode}`
-    } else if (bind.type === PropBindType.computed) {
-      if (bind.bindDataPath.startsWith('global.')) {
-        funcCode = bind.bindDataPath.replace(/^global./, 'app.computed.')
-      } else {
-        if (isComposite) {
-          funcCode = bind.bindDataPath.replace(/^\$\w+_\d+./, 'this.computed.')
-        } else {
-          funcCode = bind.bindDataPath.replace(/^\w+./, '$page.computed.')
-        }
-      }
-      funcCode = `() => ${funcCode}`
-    } else if (bind.type === PropBindType.forItem) {
+    let funcCode = '() => {}'
+    funcCode = `() => ${funcCode}`
+    if (bind.type === PropBindType.forItem) {
       funcCode = `(forItems) => forItems.${bind.bindDataPath}`
     } else if (bind.type === PropBindType.expression) {
       if (isComposite) {
         funcCode = `(forItems) => (${bind.bindDataPath
           .replace(/\n/g, ' ')
-          .replace(/\$comp/g, 'this')})`
+          .replace(/\$comp/g, 'this.$WEAPPS_COMP')})`
       } else {
         funcCode = `(forItems) => (${bind.bindDataPath.replace(/\n/g, ' ')})`
       }
@@ -425,34 +565,83 @@ function generateDataBinds(dataBinds, isComposite = false) {
       if (isNegated) bindDataPath = bindDataPath.replace(/^!/, '')
       if (isComposite) {
         // 复合组件在预览时其实就是page，所以沿用page的变量即可
-        funcCode = `() => ${isNegated ? '!' : ''}this.props.data.${bindDataPath}`
+        funcCode = `() => ${
+          isNegated ? '!' : ''
+        }this.$WEAPPS_COMP.props.data.${bindDataPath}`
       } else {
         // 复合组件在预览时其实就是page，所以沿用page的变量即可
-        funcCode = `() => ${isNegated ? '!' : ''}$page.props.data.${bindDataPath}`
+        funcCode = `() => ${
+          isNegated ? '!' : ''
+        }$page.props.data.${bindDataPath}`
       }
-    } else if (bind.type === 'dataVar') {
-      if (bind.bindDataPath.startsWith('global.')) {
-        funcCode = bind.bindDataPath.replace(/^global./, 'app.dataVar.')
-      } else {
-        funcCode = bind.bindDataPath.replace(/^\w+./, '$page.dataVar.')
+    } else {
+      const PREFIX_MAP = {
+        [PropBindType.state]: 'state',
+        [PropBindType.computed]: 'computed',
+        [PropBindType.dataVar]: 'dataVar',
+        [PropBindType.stateData]: 'dataset.state',
+        [PropBindType.paramData]: 'dataset.params',
       }
-      funcCode = `() => ${funcCode}`
+
+      switch (bind.type) {
+        case PropBindType.state:
+        case PropBindType.computed:
+        case PropBindType.dataVar:
+        case PropBindType.stateData:
+        case PropBindType.paramData: {
+          if (bind.bindDataPath.startsWith('global.')) {
+            funcCode = bind.bindDataPath.replace(
+              /^global./,
+              `app.${PREFIX_MAP[bind.type]}.`
+            )
+          } else {
+            if (isComposite) {
+              funcCode = bind.bindDataPath
+                .replace(
+                  /^comp-\w+./,
+                  `this.$WEAPPS_COMP.${PREFIX_MAP[bind.type]}.`
+                )
+                .replace(
+                  /^\$comp_\w+./,
+                  `this.$WEAPPS_COMP.${PREFIX_MAP[bind.type]}.`
+                )
+            } else {
+              funcCode = bind.bindDataPath.replace(
+                /^\w+./,
+                `$page.${PREFIX_MAP[bind.type]}.`
+              )
+            }
+          }
+          funcCode = `() => ${funcCode}`
+
+          break
+        }
+      }
     }
-    dataBindFuncs[bind.propertyPath] = `${REPLACE_SIGN}${funcCode}${REPLACE_SIGN}`
+    dataBindFuncs[
+      bind.propertyPath
+    ] = `${REPLACE_SIGN}${funcCode}${REPLACE_SIGN}`
   })
   return dataBindFuncs
 }
 
-function generateListnerInstances(listenerInstances: IListenerInstance[], isComposite = false) {
+function generateListnerInstances(
+  listenerInstances: IListenerInstance[],
+  isComposite = false
+) {
   return listenerInstances.map((listener: IListenerInstance) => {
-    const generatedListener: any = { trigger: listener.trigger }
+    const generatedListener: any = {
+      trigger: listener.trigger,
+      isCapturePhase: listener.isCapturePhase,
+      noPropagation: listener.noPropagation,
+    }
     if (listener.type === ActionType.Material) {
       const { sourceKey } = listener
       const { variableName } = getMetaInfoBySourceKey(sourceKey)
       generatedListener.instanceFunction = `${REPLACE_SIGN}${variableName}${REPLACE_SIGN}`
     } else if (listener.type === ActionType.PropEvent) {
       if (isComposite) {
-        generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${listener.handler.name}', {detail: data.target, name: '${listener.handler.name}'}) }.bind(this)${REPLACE_SIGN}`
+        generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${listener.handler.name}', data.target) }.bind(this)${REPLACE_SIGN}`
       } else {
         generatedListener.instanceFunction = `${REPLACE_SIGN}function(...args) { $page.props.events.${listener.handler.name}.apply(null, args) }${REPLACE_SIGN}`
       }
@@ -468,14 +657,23 @@ function generateListnerInstances(listenerInstances: IListenerInstance[], isComp
       generatedListener.data = listener.data
     }
     if (listener.dataBinds && listener.dataBinds.length > 0) {
-      generatedListener.dataBinds = generateDataBinds(listener.dataBinds)
+      generatedListener.dataBinds = generateDataBinds(
+        listener.dataBinds,
+        isComposite
+      )
     }
+
     return generatedListener
   })
 }
 
-export function getListenersString(listeners: IListenerInstance[] = [], isComposite = false) {
-  return JsonToStringWithVariableName(generateListnerInstances(listeners, isComposite))
+export function getListenersString(
+  listeners: IListenerInstance[] = [],
+  isComposite = false
+) {
+  return JsonToStringWithVariableName(
+    generateListnerInstances(listeners, isComposite)
+  )
 }
 
 export function getPluginInstancesString(instances: IItemInstance[]) {
@@ -483,7 +681,7 @@ export function getPluginInstancesString(instances: IItemInstance[]) {
     return '[]'
   }
   const copyInstances = simpleDeepClone<IItemInstance[]>(instances)
-  copyInstances.map(itemInstance => {
+  copyInstances.map((itemInstance) => {
     const { sourceKey } = itemInstance
     const { variableName } = getMetaInfoBySourceKey(sourceKey)
     itemInstance.instanceFunction = `${REPLACE_SIGN}${variableName}${REPLACE_SIGN}`
@@ -491,7 +689,10 @@ export function getPluginInstancesString(instances: IItemInstance[]) {
   return JsonToStringWithVariableName(copyInstances)
 }
 
-export function getPluginImportStringArr(plugins: any, pluginImportStringArr: string[] = []) {
+export function getPluginImportStringArr(
+  plugins: any,
+  pluginImportStringArr: string[] = []
+) {
   plugins.map(async (plugin: any) => {
     const { name, materialName, materialVersion, variableName } = plugin
 
@@ -560,26 +761,31 @@ export async function generateRouterFile(
   const routerRenders: string[] = []
   const mountApis: string[] = []
   await Promise.all(
-    allAppDataList.map(async data => {
+    allAppDataList.map(async (data) => {
       const { pageInstanceList, rootPath = '' } = data
       const pageFilePath = rootPath ? `packages/${rootPath}/` : ''
       // 判断app环境才进行加载引入
       mountApis.push(`import '${pageFilePath}app/mountAppApis';`)
       loopDealWithFn(pageInstanceList, (pageInstance: any) => {
-        const pageId = [rootPath, pageInstance.id].filter(i => i).join('_')
+        const pageId = [rootPath, pageInstance.id].filter((i) => i).join('_')
         if (pageInstance.isHome && !rootPath) {
           routerRenders.push(`<Redirect from="/" exact to="/${pageId}"/>`)
         }
         routerImports.push(
           `import Page${pageId} from '${pageFilePath}pages/${pageInstance.id}/index';`
         )
-        routerRenders.push(`<Route path="/${pageId}" component={Page${pageId}}/>`)
+        routerRenders.push(
+          `<Route path="/${pageId}" component={Page${pageId}}/>`
+        )
       })
     })
   )
-  const routerTemplate = await fs.readFile(path.resolve(appTemplateDir, './src/router/index.tpl'), {
-    encoding: 'utf8',
-  })
+  const routerTemplate = await fs.readFile(
+    path.resolve(appTemplateDir, './src/router/index.tpl'),
+    {
+      encoding: 'utf8',
+    }
+  )
   const routerIndexStr = tpl(routerTemplate)({
     routerImports: routerImports.join('\n'),
     routerRenders: routerRenders.join('\n'),
@@ -589,75 +795,100 @@ export async function generateRouterFile(
   const dest = path.resolve(appBuildDir, `src/router/index.jsx`)
   await fs.ensureFile(dest)
   await fs.writeFile(dest, routerIndexStr)
-  // browser history 不使用 history文件， 内部使用 useHistory hook
-  // const historyTemplate = await fs.readFile(
-  //   path.resolve(appTemplateDir, './src/utils/history.js'),
-  //   {
-  //     encoding: 'utf8',
-  //   }
-  // )
-  // const routerHistoryStr = tpl(historyTemplate)({
-  //   publicPath,
-  // })
-  // await fs.writeFile(path.resolve(appBuildDir, `src/utils/history.js`), routerHistoryStr)
 }
 
-export async function writeLowCodeFiles(appData: IWebRuntimeAppData, appBuildDir: string) {
+export async function writeLowCodeFiles(
+  appData: IWebRuntimeAppData,
+  appBuildDir: string
+) {
   const lowcodeRootDir = path.join(appBuildDir, 'lowcode')
   console.log(chalk.blue.bold('Writing lowcode files:'))
-  await Promise.all(appData.codeModules.map(m => writeCode2file(m, 'global')))
+  generateDefaultTheme(appData)
+  const themeCode = appData.codeModules.find((mod) => mod.type === 'theme')
+  await Promise.all(appData.codeModules.map((m) => writeCode2file(m, 'global')))
   await Promise.all(
-    loopDealWithFn(appData.pageInstanceList, async page => {
-      await page.codeModules.forEach(m => writeCode2file(m, page.id))
+    loopDealWithFn(appData.pageInstanceList, async (page) => {
+      generateDefaultStyle(page)
+      await page.codeModules
+        .filter((m) => m.name !== '____index____')
+        .forEach((m) => writeCode2file(m, page.id))
     })
   )
 
   async function writeCode2file(mod: IWeAppCode, pageId: string) {
     const file = path.join(lowcodeRootDir, getCodeModuleFilePath(pageId, mod))
-    const weappsApiPrefix = `import { app, $page } from '${path
-      .relative(path.dirname(file), appBuildDir + '/app/global-api')
-      .replace(/\\/g, '/')}'` // windows compatibility
-    console.log(file)
+    let weappsApiPrefix = ''
+    if (mod.type !== 'theme') {
+      weappsApiPrefix =
+        mod.type !== 'style'
+          ? `import { app, $page } from '${path
+              .relative(path.dirname(file), appBuildDir + '/app/global-api')
+              .replace(/\\/g, '/')}';`
+          : `` // windows compatibility
+    }
+    console.log(chalk.green(file))
+    let code = mod.code
+    if (mod.type === 'style') {
+      code = await processLess((themeCode?.code || defaultThemeCode) + code)
+    }
+
     await fs.ensureFile(file)
-    await fs.writeFile(file, weappsApiPrefix + '\n' + mod.code)
+    await fs.writeFile(file, weappsApiPrefix + os.EOL + code)
   }
 }
 
 export async function writeLowCodeFilesForCompositeComp(
-  compositeGroups: any[],
+  compositeGroups: IMaterialItem[],
   appBuildDir: string
 ) {
   const lowcodeRootDir = path.join(appBuildDir, 'src', 'lowcode', 'composite')
   console.log(chalk.blue.bold('Writing composite component lowcode files:'))
   await Promise.all(
-    compositeGroups.map(async gItem => {
+    compositeGroups.map(async (gItem) => {
       return await Promise.all(
-        gItem.components.map(async cItem => {
-          return await cItem.lowCodes.forEach(m => writeCode2file(m, cItem.name + '_' + cItem.id))
+        gItem.components.map(async (component) => {
+          let cItem = component as ICompositedComponent
+          return await cItem.lowCodes.forEach((m) =>
+            writeCode2file(
+              m,
+              path.join(
+                appBuildDir,
+                'src',
+                'libraries',
+                `${gItem.name}@${gItem.version}`,
+                'components',
+                cItem.name,
+                'lowcode'
+              ),
+              cItem
+            )
+          )
         })
       )
     })
   )
 
-  async function writeCode2file(mod: IWeAppCode, pageId: string) {
-    const file = path.join(lowcodeRootDir, getCodeModuleFilePath(pageId, mod))
-    console.log(file)
+  async function writeCode2file(
+    mod: IWeAppCode,
+    lowcodeDir: string,
+    comp: ICompositedComponent
+  ) {
+    const pageId = comp.name + '_' + comp.id
+    const file = path.join(lowcodeDir, getCodeModuleFilePath(pageId, mod))
     await fs.ensureFile(file)
 
     let codeContent = ''
 
     if (mod.type === 'style') {
-      codeContent = `.${pageId} { ${mod.code} }` // pageId 作为组件样式的 scope
+      codeContent = `.${getCompositedComponentClass(comp)} { ${mod.code} }` // pageId 作为组件样式的 scope
       try {
-        const { css: lessCss } = await less.render(codeContent)
-        const { css: remCss } = await postcss([pxToRem(remConfig)]).process(lessCss)
-        codeContent = remCss
+        codeContent = await processLess(codeContent)
       } catch (e) {
         console.error(`样式转换失败 [${pageId}] :`, e, codeContent)
       }
     } else {
       codeContent = `import { app } from 'app/global-api'
-      ${mod.code.replace(/\$comp/g, 'this')}`
+      ${mod.code.replace(/\$comp/g, 'this.$WEAPPS_COMP')};`
     }
 
     await fs.writeFile(file, codeContent)
@@ -670,44 +901,17 @@ export async function generateCodeFromTpl(
   dependencies: IMaterialItem[],
   appKey: string,
   rootPath,
+  deployMode: DEPLOY_MODE,
   extraData
 ) {
-  let configJson
   const pageIds: string[] = []
   const pageModules = {}
-  try {
-    configJson = await fs.readJSON(commandConfigPath)
-  } catch (e) { }
-  configJson = configJson || {
-    yyptAppKey: '',
-    reportUrl: '',
-    stopReport: false,
-  }
-  loopDealWithFn(appData.pageInstanceList, p => {
+  loopDealWithFn(appData.pageInstanceList, (p) => {
     pageIds.push(p.id)
     pageModules[p.id] = p.codeModules
   })
 
-  if (!extraData || !extraData.operationService) {
-    extraData = extraData || {}
-    extraData.operationService = extraData.operationService || {}
-  }
-
-  const yyptAppKey = extraData.operationService.extAppId || configJson.yyptAppKey || ''
-  const reportUrl = extraData.operationService.reportUrl || configJson.reportUrl || ''
-  const yyptEnabled = extraData.operationService.yyptEnabled
-  let stopReport = false
-  if (typeof yyptEnabled === 'boolean') {
-    stopReport = !yyptEnabled
-  } else {
-    stopReport = configJson.stopReport === 'true'
-  }
-
-  const yyptConfig = {
-    yyptAppKey,
-    reportUrl,
-    stopReport,
-  }
+  const yyptConfig = await getYyptConfigInfo(extraData)
 
   // # all templates to be generated
   const templatesData = {
@@ -725,28 +929,39 @@ export async function generateCodeFromTpl(
     },
     'app/common.js': {
       mods: appData.codeModules
-        .filter(m => m.type === 'normal-module' && m.name !== '____index____')
-        .map(m => m.name),
+        .filter((m) => m.type === 'normal-module' && m.name !== '____index____')
+        .map((m) => m.name),
     },
     'store/computed.js': {
       pageIds,
     },
-    'miniprogram-app.js': {
-      ...yyptConfig,
-      ...appData,
+    'datasources/index.js.tpl': {
+      envId: appData.envId,
     },
-    'index.jsx': yyptConfig,
-    "datasources/index.js.tpl": {
-      envId: appData.envId
+    'datasources/utils.js.tpl': {
+      appId: appKey,
+      isPreview: deployMode === DEPLOY_MODE.PREVIEW,
     },
-    "datasources/datasources-profiles.js.tpl": {
-      datasourceProfiles: getDatasourceProfiles((appData as any).datasources || [])
+    'datasources/datasources-profiles.js.tpl': {
+      datasourceProfiles: JsonToStringWithVariableName(
+        getDatasourceProfiles((appData as any).datasources || [])
+      ),
     },
-    "datasources/datavar-profiles.js.tpl": {
-      datavarProfiles: getDataVarProfiles(appData)
-    }
+    'datasources/datavar-profiles.js.tpl': {
+      datavarProfiles: JsonToStringWithVariableName(
+        getDataVarProfiles(appData)
+      ),
+    },
+    'datasources/dataset-profiles.js.tpl': {
+      datasetProfiles: JsonToStringWithVariableName(
+        getDatasetProfiles(appData)
+      ),
+    },
   }
 
+  if (!rootPath) {
+    templatesData['index.jsx'] = yyptConfig
+  }
 
   console.log(chalk.blue.bold('Generating code by templates:'))
   // Generating file by template and data
@@ -754,9 +969,13 @@ export async function generateCodeFromTpl(
     const tplStr = await fs.readFile(path.join(appTemplateDir, 'src', file), {
       encoding: 'utf8',
     })
-    const generatedCode = tpl(tplStr)(templatesData[file])
-    const outFile = path.resolve(appBuildDir, file.replace(/.tpl$/, ""))
-    const outTplPath = /.tpl$/.test(file) ? path.resolve(appBuildDir, file) : null
+    const generatedCode = tpl(tplStr, {
+      interpolate: /<%=([\s\S]+?)%>/g,
+    })(templatesData[file])
+    const outFile = path.resolve(appBuildDir, file.replace(/.tpl$/, ''))
+    const outTplPath = /.tpl$/.test(file)
+      ? path.resolve(appBuildDir, file)
+      : null
     await fs.ensureFile(outFile)
     console.log(outFile)
     await fs.writeFile(outFile, generatedCode)
@@ -767,10 +986,10 @@ export async function generateCodeFromTpl(
 }
 
 export async function generateLocalFcuntions(
-  appData: IWebRuntimeAppData,
+  appData: IWeAppData,
+  templateDir: string,
   appBuildDir: string
 ) {
-
   const FUNCTION_PATH = 'local-functions'
 
   let functionNames: string[] = []
@@ -778,36 +997,52 @@ export async function generateLocalFcuntions(
 
   fs.ensureDirSync(path.join(appBuildDir, FUNCTION_PATH))
 
-  let promises = appData.datasources.reduce((arr, datasource) => {
-    let { appId, name } = datasource
-    // let localFunctionName = getDatasourceResourceName(appId, name)
-    let localFunctionName = name
-    functionNames.push(localFunctionName)
-    arr.push(fs.writeFile(
-      path.join(appBuildDir, FUNCTION_PATH, `${localFunctionName}.js`),
+  let promises =
+    appData.datasources?.reduce((arr, datasource) => {
+      let { appId, name } = datasource
+      // let localFunctionName = getDatasourceResourceName(appId, name)
+      let localFunctionName = name
+      functionNames.push(localFunctionName)
+      arr.push(
+        fs.writeFile(
+          path.join(appBuildDir, FUNCTION_PATH, `${localFunctionName}.js`),
+          tpl(
+            fs
+              .readFileSync(
+                path.resolve(templateDir, FUNCTION_PATH, 'fn.js.tpl')
+              )
+              .toString()
+          )({
+            datasource,
+          }),
+          { flag: 'w' }
+        )
+      )
+
+      // dependencies = dependencies.concat(datasource.methods.map(method => method.calleeBody?.config?.deps || {}))
+
+      return arr
+    }, []) || []
+
+  promises.push(
+    fs.writeFile(
+      path.join(appBuildDir, FUNCTION_PATH, `index.js`),
       tpl(
-        fs.readFileSync(path.resolve(appTemplateDir, 'src', FUNCTION_PATH, 'fn.js.tpl')).toString()
-      )({
-        datasource
-      }),
+        fs
+          .readFileSync(
+            path.resolve(templateDir, FUNCTION_PATH, 'index.js.tpl')
+          )
+          .toString()
+      )(appData),
       { flag: 'w' }
-    ))
+    )
+  )
 
-    // dependencies = dependencies.concat(datasource.methods.map(method => method.calleeBody?.config?.deps || {}))
-
-    return arr
-
-  }, [])
-
-  promises.push(fs.writeFile(
-    path.join(appBuildDir, FUNCTION_PATH, `index.js`),
-    tpl(
-      fs.readFileSync(path.resolve(appTemplateDir, 'src', FUNCTION_PATH, 'index.js.tpl')).toString()
-    )(appData),
-    { flag: 'w' }
-  ))
-
-  await Promise.all(promises)
+  try {
+    await Promise.all(promises)
+  } catch (e) {
+    console.error(e)
+  }
 
   console.log(path.join(appBuildDir, `index.js`))
 

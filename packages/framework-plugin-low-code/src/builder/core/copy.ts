@@ -13,7 +13,6 @@ export async function runCopy(appBuildDir: string, webRuntimeAppData: IWebRuntim
     'src/index.less',
     'src/handlers',
     'src/utils',
-    'dist/mp',
     'html',
     'webpack',
     'src/libraries',

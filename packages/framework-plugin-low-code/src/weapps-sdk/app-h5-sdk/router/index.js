@@ -1,13 +1,19 @@
-import { urlJoinParams } from '@govcloud/weapps-sdk'
+import { urlJoinParams } from '../../'
 import { getConfig, preHashPath } from '../setConfig'
-import { useHistory } from "react-router-dom";
 function routerGo(path, action = 'push') {
    if (process.env.isApp) {
     location.hash = path
    } else {
-    const history = useHistory();
-    history[action](path);
+    window._WEAPPS_HISTORY[action](path);
    }
+}
+
+export function redirectTo({ pageId, packageName, params }) {
+  let url = packageName ? `${packageName}_${pageId}` : `${pageId}`
+  if (!process.env.isApp) {
+    let path = urlJoinParams(url, params)
+    routerGo(path, 'replace')
+  }
 }
 
 export function navigateTo({ pageId, packageName, params, events, success, fail, complete }) {
@@ -33,7 +39,7 @@ export function navigateTo({ pageId, packageName, params, events, success, fail,
     let path = urlJoinParams(url, params)
     routerGo(path)
   }
- 
+
 }
 
 export function reLaunch({ pageId, packageName, params, events, success, fail, complete }) {
@@ -66,5 +72,5 @@ export function switchTab({ url }) {
       routerGo(`${hash}${paths[1] ? `?${paths[1]}` : ''}`)
     }
   }
-  
+
 }

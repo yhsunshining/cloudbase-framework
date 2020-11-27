@@ -1,17 +1,20 @@
 // Import Libs and Handlers
-import React, { useEffect } from 'react'
+import * as React from 'react'
 import { observable } from 'mobx'
 import { AppRender } from 'handlers/render'
 import { initLifeCycle, pageLifeCycleMount } from 'handlers/lifecycle'
 import { createComputed } from 'utils'
 import AppLifeCycle from 'lowcode/lifecycle'
-import { createDataVar, buildDataVarFetchFn } from '@/datasources'
+import { createDataVar, buildDataVarFetchFn, createDataset, updateDatasetParams, createStateDatasrouceVar } from '@/datasources'
 import PageLifeCycle from '../../lowcode/<%= pageName %>/lifecycle'
 import initPageState from '../../lowcode/<%= pageName %>/state'
 import computed from '../../lowcode/<%= pageName %>/computed'
-import { <%= pageName %> as handler } from '../../app/handlers'
+import { $$_<%= pageName %> as handler } from '../../app/handlers'
 import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
+import { createWidgets, retryDataBinds } from 'handlers/utils'
+import { useScrollTop } from 'handlers/hooks'
+import { get } from 'lodash'
 import './index.less'
 
 let ReactDOMServer;
@@ -33,60 +36,61 @@ if(process.env.SSR) {
 
 // Plugin
 const pluginInstances = <%= pluginInstances %>;
-
 const virtualFields = <%= virtualFields %>;
-
 const componentSchema = <%= componentSchema %>;
-
 const pageListenerInstances = <%= pageListenerInstances %>;
+const widgetsContext = <%= widgets %>;
+const dataBinds = <%= dataBinds %>;
 
-AppLifeCycle.fetchAppDataVar = buildDataVarFetchFn('$global');
-PageLifeCycle.fetchPageDataVar = buildDataVarFetchFn('<%= pageName %>');
-
-
+AppLifeCycle.beforeCustomLaunch = ({query})=>{
+  updateDatasetParams('$global', query || {})
+  buildDataVarFetchFn('$global')
+  createStateDatasrouceVar('$global',{app})
+};
+PageLifeCycle.beforePageCustomLaunch = ({query}) => {
+  updateDatasetParams('<%= pageName %>', query || {})
+  createStateDatasrouceVar('<%= pageName %>',{app, $page})
+  buildDataVarFetchFn('<%= pageName %>');
+};
 // lifecycle
 initLifeCycle({
   ...AppLifeCycle,
   ...PageLifeCycle
 }, app, mainApp)
 
+
 // Init
 export default function App() {
+  useScrollTop()
+
   Object.assign($page, {
     id:'<%= pageName %>',
-    state: <% if (isComposite) { %>initPageState<% } else { %>observable(initPageState)<% } %>,
+    state: observable(initPageState),
     computed: createComputed(computed),<% if (!isComposite) { %>
     dataVar: createDataVar('<%= pageName %>'),<% } %>
-    handler,
-    <% if (isComposite) { %>props: <%= JSON.stringify(compProps).replace(/"\$\$EVENT_(.*?)\$\$"/g, 'function(...args){ console.log(">>> call: $1"); console.log(">>> args:", args) }') %><% } %>
+    handler
   })
-  <% if (isComposite) { %>
-  // state 会引用 props 的值
-  $page.state = observable($page.state.call())
-  Object.defineProperty($page, 'actions', {
-    get() {
-      return app.formActions
-    }
-  })
-  <% } %>
+  let dataset = createDataset('<%= pageName %>', {app, $page})
+  $page.dataset = dataset
+  $page.state.dataset = dataset
 
+  $page.widgets = createWidgets(widgetsContext, dataBinds)
+  // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
+  retryDataBinds()
   // Web 环境页面级别生命周期
   if (!process.env.isMiniprogram) {
-    pageLifeCycleMount(useEffect, PageLifeCycle, app)
+    React.useEffect(() => {
+      document.title = "<%= title %>"
+    }, [])
+    pageLifeCycleMount(React.useEffect, PageLifeCycle, app)
   }
 
   return (
     <div className="weapps-page">
       <AppRender
-        ref={ref => {
-          if (ref) {
-            app.formActions = ref.FormActions
-          }
-        }}
         pageListenerInstances={pageListenerInstances}
         virtualFields={virtualFields}
         componentSchema={componentSchema}
-        pluginInstances={pluginInstances}
       />
     </div>
   );

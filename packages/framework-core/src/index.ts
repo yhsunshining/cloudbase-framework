@@ -111,6 +111,7 @@ export class CloudBaseFrameworkCore {
       resourceProviders,
       bumpVersion,
       versionRemark,
+      forece
     } = this.frameworkConfig;
 
     // 初始化 logger
@@ -231,6 +232,11 @@ export class CloudBaseFrameworkCore {
     const logger = getLogger();
     logger.debug('run', module, params);
     await this.pluginManager.run(module, params?.runCommandKey);
+  }
+
+  async build(module?: string, params?: CommandParams) {
+    await this.pluginManager.init(module);
+    await this.pluginManager.build(module);
   }
 
   /**

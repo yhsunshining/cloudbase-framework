@@ -15,7 +15,7 @@ export const setConfig = (config) => {
       })
       let tabBar = generate.tabBar || appExtraConfig.tabBar || {}
       const { list = []} = tabBar
-      tabBar.list = tlist.map(item => {
+      tabBar.list = list.map(item => {
         let pagePath = item.pagePath
         let result = /pages\/([0-9a-zA-z_]+)\/index/.exec(pagePath)
         if (result.length > 1) {

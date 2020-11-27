@@ -1,13 +1,14 @@
-import React from 'react';
+import * as React from 'react';
 import { BrowserRouter, Router, Route, Redirect, Switch, HashRouter } from 'react-router-dom';
 import { history, generateBrowserHistory } from 'utils/history';
+console.log(React)
 
 <%= mountApis %>
 <%= routerImports %>
 
 export default () => {
   // 显式声明HASH 或 app 的 路由使用 hash router，而其他web应用使用 BrowserRouter
-  if (process.env.buildType === 'app' || process.env.historyType === 'HASH') {
+  if (process.env.isApp || process.env.historyType === 'HASH') {
     return (
       <Router history={history}>
         <Switch>

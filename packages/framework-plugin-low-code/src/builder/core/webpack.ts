@@ -2,7 +2,6 @@ import { WebpackBuildCallBack, buildAsWebByBuildType, BuildType } from '../types
 import { IPlugin, IWebRuntimeAppData } from '../../weapps-core'
 import {
   generateMpJsonConfigFile,
-  generateWebpackMpBuildParamsFile,
   generateWebpackWebBuildParamsFile,
   startCompile,
   generateWebpackWebDevServerFile,
@@ -53,25 +52,6 @@ export async function runWebpackCore({
     watch,
     buildTypeList,
   })
-  const mpWebpackConfigPath = await generateWebpackMpBuildParamsFile(
-    {
-      allAppDataList,
-      appBuildDir,
-      materialsDir,
-      dependencies,
-      nodeModulesPath,
-      // @ts-ignore
-      mode,
-      // @ts-ignore
-      watch,
-      // @ts-ignore
-      plugins,
-    },
-    {
-      appKey,
-      generateMpType,
-    }
-  )
   console.timeEnd('webpackGenerate')
 
   // compile
@@ -95,24 +75,6 @@ export async function runWebpackCore({
         appKey,
       },
       cb as any
-    )
-  }
-  if (buildTypeList.includes(BuildType.MP)) {
-    taskList.push(
-      (async () => {
-        fixProcessCwd(appBuildDir)
-        startCompile(
-          {
-            appBuildDir,
-            configPath: mpWebpackConfigPath,
-            appKey,
-            generateMpType,
-            generateMpPath,
-            plugins,
-          },
-          cb as any
-        )
-      })()
     )
   }
   console.time('webpackCompile')

@@ -46,6 +46,7 @@ export async function runPrepare(
     await fs.remove(path.resolve(appBuildDir, './src'))
     await fs.remove(path.resolve(appBuildDir, './webpack'))
     await fs.remove(path.resolve(appBuildDir, './package-lock.json'))
+    await fs.remove(path.resolve(appBuildDir, './yarn.lock'))
   }
   await fs.ensureDir(appBuildDir)
   console.timeEnd('runPrepare')

@@ -22,11 +22,12 @@ import {
 import { MP_CONFIG_MODULE_NAME, KBONE_PAGE_KEYS, npmRegistry } from '../../config'
 import { getKbonePluginEntry, getPluginKboneSubpackage } from './plugin'
 import { sync as commandExistsSync } from 'command-exists'
-import { BuildType, WebpackModeType } from '../../types/common'
+import { BuildType, WebpackModeType, WebpackBuildCallBack } from '../../types/common'
 import { appTemplateDir } from '../../config'
 import { notice } from '../../util/console'
 import { HISTORY_TYPE } from '../../../index'
 const yarnExists = commandExistsSync('yarn')
+const pnpmExists = commandExistsSync('pnpm')
 
 export interface IMpConfig {
   origin: string
@@ -66,10 +67,7 @@ export interface ICompileOpts {
   generateMpPath?: string
   plugins?: IPlugin[]
 }
-export function startCompile(
-  options: ICompileOpts,
-  cb: (err: any, stats?: webpack.Stats, options?: ICompileOpts) => void
-) {
+export function startCompile(options: ICompileOpts, cb: WebpackBuildCallBack) {
   const key = options.configPath
   const runningProcess = runningCompilations[key]
   if (runningProcess) {
@@ -93,9 +91,10 @@ export function startCompile(
 
     if (stats.hasErrors()) {
       console.error('Webpack compilation errors', info.errors.join('\n'))
-      cb && cb(info.errors, stats, options)
+      cb && cb(info.errors)
     } else {
-      cb && cb(null, stats, options)
+      let { endTime = 0, startTime = 0 } = stats
+      cb && cb(null, { outDir: options.appBuildDir, timeElapsed: endTime - startTime })
     }
 
     if (stats.hasWarnings()) {
@@ -168,54 +167,6 @@ export async function generateWebpackWebBuildParamsFile({
   await fs.writeFile(webpackConfigPath, webpackConfigContent)
   return webpackConfigPath
 }
-
-export async function generateWebpackMpBuildParamsFile(
-  {
-    appBuildDir,
-    materialsDir,
-    dependencies,
-    allAppDataList,
-    nodeModulesPath,
-    mode,
-    watch,
-    plugins,
-  }: {
-    allAppDataList: IWebRuntimeAppData[]
-    appBuildDir: string
-    materialsDir: string
-    dependencies: IMaterialItem[]
-    nodeModulesPath: string
-    mode: WebpackModeType
-    watch: boolean
-    plugins: IPlugin[]
-  },
-  options: IGenerateMpJsonConfigFileOpts
-) {
-  // 配置 kbone 需要的 webpack entry
-  const params = getWebpackMpBuildParams(
-    appBuildDir,
-    materialsDir,
-    dependencies,
-    nodeModulesPath,
-    allAppDataList,
-    mode,
-    watch,
-    options
-  )
-
-  params.entry = {
-    ...params.entry,
-    // 配置 kbone 插件
-    ...(await getKbonePluginEntry(appBuildDir, plugins)),
-  }
-
-  const webpackConfigPath = path.resolve(appBuildDir, './webpack/webpack.mp.prod.js')
-  const paramsString = JSON.stringify(params, null, 2)
-  const webpackConfigContent = `const params = ${paramsString};\nmodule.exports = require('./mp.prod.js')(params);`
-  await fs.writeFile(webpackConfigPath, webpackConfigContent)
-  return webpackConfigPath
-}
-
 export interface IGenerateMpJsonConfigFileOpts {
   appKey?: string
   generateMpType: 'app' | 'subpackage'
@@ -681,6 +632,17 @@ export async function installDependencies(targetDir: string, options: IInstallOp
   console.time(operationTag)
 
   const registry = `--registry=${npmRegistry}`
+  const npmOptions = [
+    '--prefer-offline', 
+    '--no-audit', 
+    '--progress=false',
+    registry
+  ];
+  fs.writeFileSync(
+    path.join(targetDir, '.npmrc'), 
+    '@govcloud:registry=https://r.gnpm.govcloud.qq.com',
+    'utf8'
+  )
 
   let installProcess
   if (yarnExists) {
@@ -690,8 +652,15 @@ export async function installDependencies(targetDir: string, options: IInstallOp
       env: process.env,
       stdio: ['inherit', 'pipe', 'pipe'],
     })
+  } else if (pnpmExists) {
+    const addPackage = packageName ? ['add', packageName] : ['install']
+    installProcess = spawn('pnpm', [...addPackage], {
+      cwd: targetDir,
+      env: process.env,
+      stdio: ['inherit', 'pipe', 'pipe'],
+    })
   } else {
-    installProcess = spawn('npm', ['install', packageName, registry], {
+    installProcess = spawn('npm', ['install', packageName, ...npmOptions], {
       cwd: targetDir,
       env: process.env,
       stdio: ['inherit', 'pipe', 'pipe'],
@@ -710,7 +679,6 @@ export function getMaterialNodeModulesPathList(
   const localPkg = getCurrentPackageJson()
   return dependencies.map(({ name, version }) => {
     const nameVersion = `${name}@${version}`
-    console.log('get nodemodules', localPkg, name, version)
     if (localPkg && localPkg.name === name && localPkg.version === version) {
       console.log('当前本地目录是素材库的时候，直接使用当前目录的 node_modules', nameVersion)
       return path.join(process.cwd(), 'node_modules')
@@ -733,3 +701,4 @@ export async function generateWebpackWebDevServerFile({ appBuildDir, buildTypeLi
   await fs.ensureFile(dest)
   await fs.writeFile(dest, jsContent)
 }
+

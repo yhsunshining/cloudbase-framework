@@ -1,0 +1,4 @@
+{
+  "prettier.disableLanguages": [],
+  "typescript.tsdk": "packages/framework-plugin-low-code/node_modules/typescript/lib"
+}

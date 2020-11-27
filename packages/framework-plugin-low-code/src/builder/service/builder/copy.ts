@@ -2,11 +2,23 @@
 import path from 'path'
 import fs from 'fs-extra'
 import tpl from 'lodash.template'
+import jsonSchemaDefaults from 'json-schema-defaults'
 import _ from 'lodash'
 import { getCurrentPackageJson } from '../../util'
-import { IMaterialItem, IWebRuntimeAppData, readCmpInstances } from '../../../weapps-core'
+import {
+  IMaterialItem,
+  IWebRuntimeAppData,
+  readCmpInstances,
+  getCompositedComponentClass,
+  ICompositedComponent,
+} from '../../../weapps-core'
 import { appTemplateDir } from '../../config'
-import { getComponentSchemaString, getListenersString } from './generate'
+import { IComponentInputProps } from '../../types/common'
+import {
+  getComponentSchemaString,
+  getListenersString,
+  getOriginComponentAndActionList,
+} from './generate'
 
 export async function copyEntryFile(appBuildDir: string, appContent: IWebRuntimeAppData) {
   const entryFilePath = path.resolve(appTemplateDir, './src/index.jsx')
@@ -47,23 +59,37 @@ export async function copyMaterialLibraries(
 export async function genCompositeComponentLibraries(
   dependencies: IMaterialItem[] = [],
   appBuildDir: string,
-  materialGroupVersionMap: { [name: string]: string } = {}
+  materialGroupVersionMap: { [name: string]: string } = {},
+  componentsInputProps: IComponentInputProps
 ) {
   await Promise.all(
     dependencies.map(async ({ name, version, components }) => {
       const materialNameVersion = `${name}@${version}`
       const librariesDir = path.join(appBuildDir, 'src/libraries', materialNameVersion)
       await Promise.all(
-        components.map(async compItem => {
+        components.map(async (component) => {
+          let compItem = component as ICompositedComponent
+          const wrapperClass = getCompositedComponentClass(compItem as ICompositedComponent)
           const componentSchemaJson = {
             type: 'object',
             // @ts-ignore
             properties: readCmpInstances(compItem.componentInstances),
           }
+          const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
+            componentSchemaJson,
+            true,
+            componentsInputProps,
+            wrapperClass
+          )
           const templateData = {
             // @ts-ignore
             id: compItem.id,
             name: compItem.name,
+            defaultProps: jsonSchemaDefaults({
+              type: 'object',
+              properties: compItem.dataForm || {},
+            }),
+            emitEvents: JSON.stringify(compItem.emitEvents.map(evt => evt.eventName)),
             // @ts-ignore
             handlersImports: compItem.lowCodes.filter(
               codeItem => codeItem.type === 'handler-fn' && codeItem.name !== '____index____'
@@ -92,7 +118,9 @@ export async function genCompositeComponentLibraries(
               })
               return _.uniqBy(list, 'key')
             })(),
-            componentSchema: getComponentSchemaString(componentSchemaJson, true),
+            widgets,
+            dataBinds,
+            componentSchema,
             // @ts-ignore
             pageListenerInstances: getListenersString(compItem.listeners, true),
           }

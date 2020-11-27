@@ -17,7 +17,10 @@ export const enum WebpackModeType {
   NONE = '',
   PRODUCTION = 'production'
 }
-export type WebpackBuildCallBack = (err: any, stats: webpack.Stats, options?: any) => Promise<void>
+export type WebpackBuildCallBack = (
+  err: any,
+  result?: { outDir: string; timeElapsed: number; plugins?: any[] }
+) => Promise<void>
 
 export interface IPackageJson {
   name: string
@@ -41,3 +44,14 @@ export const buildAsWebByBuildType = (buildTypeList: BuildType[] = []) => {
     buildTypeList.includes(BuildType.WECHAT_H5)
   )
 }
+
+export type IComponentInputProps = Record<
+  string,
+  Record<
+    string,
+    {
+      changeEvent: string
+      valueFromEvent: string
+    }
+  >
+>

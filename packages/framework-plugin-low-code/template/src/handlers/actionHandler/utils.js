@@ -14,7 +14,15 @@ export function getMetaInfoBySourceKey(sourceKey) {
 export async function emitEvent(trigger, listeners = [], args) {
   const targetListeners = listeners.filter(l => l.trigger === trigger)
   for (const listener of targetListeners) {
-    await invokeListener(listener, args)
+    // 判断冒泡行为
+    if(listener.noPropagation) {
+      args.customEventData.detail.stopPropagation()
+    }
+
+    // 判断捕获的执行，只有执行的捕获与配置的捕获一致时。才会执行。
+    if((listener?.isCapturePhase || false) === (args?.customEventData?.detail?.isCapturePhase || false)) {
+      await invokeListener(listener, args)
+    }
   }
 }
 

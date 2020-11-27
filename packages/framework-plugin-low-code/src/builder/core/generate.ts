@@ -1,4 +1,4 @@
-import { IMaterialItem, IWebRuntimeAppData } from '../../weapps-core'
+import { IMaterialItem, IWebRuntimeAppData, serialize } from '../../weapps-core'
 import { BuildType } from '../types/common'
 import {
   generateAllPageJsxFile,
@@ -16,6 +16,7 @@ import { notice, log } from '../util/console'
 import { appTemplateDir } from '../config'
 import chalk from 'chalk'
 import { mergeDependencies } from '../../utils/dataSource'
+import { DEPLOY_MODE } from '../../index'
 
 let lastDeps: Object | null = null
 
@@ -37,6 +38,7 @@ export async function runGenerateCore(
   appKey: string,
   basename: string, // browser Router 里指定的basename
   buildTypeList: BuildType[],
+  deployMode: DEPLOY_MODE,
   extraData: {
     isComposite: boolean
     compProps: any
@@ -55,9 +57,9 @@ export async function runGenerateCore(
     Object.entries(app.npmDependencies).forEach(([name, version]) => {
       deps[name] = version
     })
-    let npmDependenceArray = app.datasources.reduce((array, datasource) => {
+    let npmDependenceArray = app.datasources?.reduce((array, datasource) => {
       return array.concat(datasource?.methods?.filter(method => method.type === 'local-function').map(method => method.calleeBody?.config?.deps || {}) || [])
-    }, [])
+    }, []) || []
     let mergedDependence = mergeDependencies(...npmDependenceArray)
     for (let key in mergedDependence) {
       deps[key] = mergedDependence[key]
@@ -71,8 +73,8 @@ export async function runGenerateCore(
       const dstDir = path.join(appBuildDir, 'src', rootPath ? `packages/${rootPath}` : '')
       await copy(['app/global-api.js', 'app/mountMpApis.js', 'app/mountAppApis.js', 'datasources'], dstDir)
       await generateAllPageJsxFile(pageInstanceList, dstDir, dependencies, extraData, buildTypeList)
-      await generateCodeFromTpl(data, dstDir, dependencies, appKey, rootPath, extraData)
-      await generateLocalFcuntions(data, dstDir)
+      await generateCodeFromTpl(data, dstDir, dependencies, appKey, rootPath, deployMode, extraData)
+      await generateLocalFcuntions(serialize(data), path.resolve(appTemplateDir, 'src'), dstDir)
       await writeLowCodeFiles(data, dstDir)
     })
   )

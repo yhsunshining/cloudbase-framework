@@ -16,13 +16,13 @@ export function loopDealWithFn<Node extends { children?: Node[] }, R>(
 }
 
 export function kebabCase(str: string) {
-  return str.replace(KEBAB_REGEX, function(match) {
+  return str.replace(KEBAB_REGEX, function (match) {
     return '-' + match.toLowerCase()
   })
 }
 
 export function camelcase(str: string, firstUpperCase = false) {
-  str = str.replace(/[_-]([a-z])/g, function(l) {
+  str = str.replace(/[_-]([a-z])/g, function (l) {
     return l[1].toUpperCase()
   })
 
@@ -71,7 +71,7 @@ export function isValidStyleBind(styleBind: IDataBind) {
   if (!styleBind) {
     return false
   }
-  if (styleBind.propertyPath === BindPropertyPath.style) {
+  if (styleBind.propertyPath === BindPropertyPath.style && styleBind.bindDataPath) {
     return true
   }
   return false
@@ -85,4 +85,8 @@ export function isValidClassNameListBind(classNameListBind: IDataBind) {
     return true
   }
   return false
+}
+
+export function checkVisible({ _visible }: { _visible: unknown }) {
+  return _visible !== false && _visible !== ''
 }

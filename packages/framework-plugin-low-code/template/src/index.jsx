@@ -1,5 +1,5 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
 import App from './router'
 import './utils/monitor-jssdk.min'
 import './index.less'
@@ -21,7 +21,7 @@ attachFastClick && attachFastClick.attach && attachFastClick.attach(document.bod
 
 // window.app.yyptReport = window.yyptReport
 
-if (yyptReport && typeof yyptReport.pgvMain == 'function')
+if (yyptReport && typeof yyptReport.pgvMain == 'function') {
   // report_url,appKey必填
   yyptReport.pgvMain({
     appKey: '<%= yyptAppKey %>', // 填入你申请的运营平台的应用key(必填)
@@ -38,6 +38,7 @@ if (yyptReport && typeof yyptReport.pgvMain == 'function')
     //  return {kv:{money:1}}; //kv:Key-Value,自定义事件Key-Value参数对	map	JSON格式，在报表页面的事件参数分析页和页面参数分析页中可以看到上报的kv值
     //},
   })
+}
 
 initGlobalVar()
 ;(function() {

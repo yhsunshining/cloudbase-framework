@@ -1,9 +1,10 @@
 import * as sdk from '@govcloud/weapps-sdk'
 import { createComputed } from 'utils'
-import { createDataVar, dataSources } from '@/datasources'
+import { createDataVar, dataSources, createDataset } from '../datasources'
 import store, { subPackageName } from '../store'
 import computed from '../store/computed'
 import common from './common'
+import { init, auth as tcbAuth } from '../datasources/tcb'
 
 const mainAppKey = '__weappsMainApp'
 const appGlobal = process.env.isMiniprogram ? getApp() : window
@@ -20,7 +21,6 @@ function createGlboalApi() {
     formActions: {},
     dataSources: {},
     pages: {},
-    widgets: {},
     session: {
       configure: sdk.configure,
       request: sdk.request,
@@ -32,8 +32,13 @@ function createGlboalApi() {
     computed: createComputed(computed.global),
     common,
     dataSources,
+    auth: tcbAuth,
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
+
+  let dataset = createDataset('$global')
+  globalAPI.dataset = dataset
+  globalAPI.state.dataset = dataset
 
   if (subPackageName) {
     // is sub app
@@ -48,7 +53,7 @@ function createGlboalApi() {
 
   // # expose some sdk modules
   const sdkModsIncluded = ['flow', 'getPageOptions', 'getLaunchOptions']
-  sdkModsIncluded.forEach(key => {
+  sdkModsIncluded.forEach((key) => {
     globalAPI[key] = sdk[key]
   })
   return globalAPI
@@ -60,15 +65,16 @@ function createPageApi() {
     computed: {},
     handler: {},
     props: {},
+    widgets: {},
     // 页面数据源变量存储位置
-    dataVar: {}
+    dataVar: {},
   }
   return $page
 }
 
 // 分app 和 wx 挂载app
-export const mountAPIs = sdks => {
-  Object.keys(sdks).forEach(item => {
+export const mountAPIs = (sdks) => {
+  Object.keys(sdks).forEach((item) => {
     app[item] = sdks[item]
   })
   return app

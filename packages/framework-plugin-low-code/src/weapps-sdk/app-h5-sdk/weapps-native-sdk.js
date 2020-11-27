@@ -11,6 +11,15 @@ let NativeSdks = [
    * 认证登陆
    */
   'faceVeriftLogin',
+  /**
+   * 跳到签名页
+   */
+  'startSignPage',
+  /**
+   * 强制竖屏 "orientation":"vertical | horizontal"
+   */
+  'setScreenOrientation'
+
 ]
 function injection(keys, obj) {
   keys.forEach(element => {

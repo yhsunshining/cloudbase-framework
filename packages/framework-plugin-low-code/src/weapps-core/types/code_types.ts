@@ -13,6 +13,7 @@ export type CodeType =
   | 'normal-module'
   | 'app-style'
   | 'style'
+  | 'theme'
 
 export type RematchModule<State> = (args: {
   sdk

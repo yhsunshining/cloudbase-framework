@@ -5,16 +5,17 @@ import { IMaterialItem } from '../../weapps-core'
 import { downloadAndInstallDependencies } from '../service/builder/webpack'
 import { copyMaterialLibraries, genCompositeComponentLibraries } from '../service/builder/copy'
 import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate'
+import { getInputProps } from '../util'
 
 export async function runHandleMaterial(
   appBuildDir: string,
   dependencies: IMaterialItem[] = [],
   materialsDir: string
 ) {
-  const allMaterials = await Promise.all([
-    handleNormalMaterial({ dependencies, materialsDir, appBuildDir }),
-    handleCompositeComponent({ dependencies, appBuildDir }),
-  ])
+  const allMaterials = [
+    await handleNormalMaterial({ dependencies, materialsDir, appBuildDir }),
+    await handleCompositeComponent({ dependencies, appBuildDir }),
+  ]
   return _.flatten(allMaterials)
 }
 
@@ -32,17 +33,13 @@ async function handleNormalMaterial({ dependencies, materialsDir, appBuildDir })
       'src/libraries',
       `${metaInfo.name}@${metaInfo.version}`
     )
+    const actionsDir = path.join(materialItemPath, 'actions')
     return {
       ...metaInfo,
-      actions: fs
-        .readdirSync(path.join(materialItemPath, 'actions'), {
-          encoding: 'utf-8',
-        })
-        .map(dirName => ({ name: dirName })),
+      actions:
+        fs.existsSync(actionsDir) && fs.readdirSync(actionsDir).map(dirName => ({ name: dirName })),
       components: fs
-        .readdirSync(path.join(materialItemPath, 'components'), {
-          encoding: 'utf-8',
-        })
+        .readdirSync(path.join(materialItemPath, 'components'))
         .map(dirName => ({ name: dirName })),
       plugins: [],
     }
@@ -51,13 +48,19 @@ async function handleNormalMaterial({ dependencies, materialsDir, appBuildDir })
 
 async function handleCompositeComponent({ dependencies, appBuildDir }) {
   console.time('handleCompositeComponent')
-  const compositeDependencies = dependencies.filter(item => item.isComposite)
+  const compositeDependencies: IMaterialItem[] = dependencies.filter(item => item.isComposite)
 
   const materialGroupVersionMap = {}
   dependencies.forEach(item => (materialGroupVersionMap[item.name] = item.version))
+  const componentsInputProps = await getInputProps(path.join(appBuildDir, 'src'), dependencies)
 
   await writeLowCodeFilesForCompositeComp(compositeDependencies, appBuildDir)
-  await genCompositeComponentLibraries(compositeDependencies, appBuildDir, materialGroupVersionMap)
+  await genCompositeComponentLibraries(
+    compositeDependencies,
+    appBuildDir,
+    materialGroupVersionMap,
+    componentsInputProps
+  )
 
   console.timeEnd('handleCompositeComponent')
   const result = compositeDependencies.map(metaInfo => {
@@ -72,10 +75,10 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
         metaInfo.components.length === 0
           ? []
           : fs
-              .readdirSync(path.join(materialItemPath, 'components'), {
-                encoding: 'utf-8',
-              })
-              .map(dirName => ({ name: dirName })),
+            .readdirSync(path.join(materialItemPath, 'components'), {
+              encoding: 'utf-8',
+            })
+            .map(dirName => ({ name: dirName })),
     }
   })
   return result

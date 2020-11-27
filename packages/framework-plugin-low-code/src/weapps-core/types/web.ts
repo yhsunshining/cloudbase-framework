@@ -1,18 +1,9 @@
-import { ActionTrigger, ActionType } from './action'
+import { ActionType } from './action'
 import { ICommonStyle } from './style'
-import { ISchema } from '@formily/react-schema-renderer/lib/types'
 import { IWeAppCode } from './lowcode'
 import { IPlugin } from './plugins'
-import { PropBindType } from './app'
+import { PropBindType, IEventModifiers, IEventListener, IAppAndPageVar } from './app'
 
-/** 变量公共定义 */
-interface IAppAndPageVar {
-  /** 各种变量 */
-  vars: {
-    /** 数据源变量 */
-    data: any[]
-  }
-}
 
 export interface IWebRuntimeAppData extends IAppAndPageVar {
   /**
@@ -83,8 +74,8 @@ export interface IPluginInstance extends IItemInstance {
   instanceFunction?: string
 }
 
-export interface IListenerInstance extends IItemInstance {
-  trigger: ActionTrigger
+export interface IListenerInstance extends IItemInstance, IEventModifiers {
+  trigger: string
   target?: string | null
   type: ActionType
   handler: {
@@ -93,10 +84,14 @@ export interface IListenerInstance extends IItemInstance {
   }
 }
 
-export interface IComponentSchemaJson extends ISchema {
+export interface IComponentSchemaJson {
   key?: string
-  path?: string
+  type?: string
+  ['x-component']?: string
   ['x-props']?: IComponentInstanceProps
+  ['x-index']?: number
+  properties: { [key: string]: IComponentSchemaJson }
+  path?: string // findComponentInTree 时动态加入
 }
 
 export interface ICommonInstanceProps extends IDataAndBindInstanceProps {
@@ -112,4 +107,11 @@ export interface ICommonInstanceProps extends IDataAndBindInstanceProps {
 export interface IComponentInstanceProps extends ICommonInstanceProps {
   sourceKey: string
   isContainer: boolean
+}
+
+export interface IPageWidgets {
+  style: Record<string, any>
+  classList: string[]
+  value?: any
+  [key: string]: any
 }

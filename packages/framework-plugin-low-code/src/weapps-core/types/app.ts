@@ -5,10 +5,22 @@ import { IPlugin } from './plugins'
 import { IDataBind } from './web'
 import { HISTORY_TYPE } from '../../index'
 
-export interface IWeAppData {
+/** 变量公共定义 */
+export interface IAppAndPageVar {
+  /** 各种变量 */
+  dataset?: {
+    state?: {}
+    param?: {}
+  }
+  vars: {
+    /** 数据源变量 */
+    data: any[]
+  }
+}
 
+export interface IWeAppData {
   selectedPageId?: string
-  historyType?: HISTORY_TYPE,
+  historyType?: HISTORY_TYPE
   pageInstanceList: IWeAppPage[]
   lowCodes: IWeAppCode[]
   npmDependencies: { [packageName: string]: string }
@@ -20,6 +32,8 @@ export interface IWeAppData {
   appConfig?: Record<string, any>
   envId: string // 云开发环境ID
   datasources: any[]
+  dataset?: IAppAndPageVar['dataset']
+  vars: IAppAndPageVar['vars']
 }
 
 export interface IWeAppPage {
@@ -60,9 +74,9 @@ export interface IWeAppComponentInstance {
     }
     listeners?: IEventListener[]
     style: CSSProperties //React.CSSProperties, should override common style
-    classNameList?: string[]
-    styleBind: IDataBind
-    classNameListBind: IDataBind
+    styleBind: IDynamicValue
+    classList: string[]
+    classListBind: IDynamicValue
     commonStyle: ICommonStyle
     styleBindPath?: string
   }
@@ -70,14 +84,19 @@ export interface IWeAppComponentInstance {
   properties?: { [key: string]: IWeAppComponentInstance }
 }
 
-export interface IEventListener {
-  trigger: ActionTrigger
+export interface IEventListener extends IEventModifiers {
+  trigger: string
   type: ActionType // listener defition location
   handler: {
     moduleName: string // namesapce, could be rematch module, material name
-    name: string // Handler name
+    name: string // Handler name or inline code
   }
   data: { [prop: string]: IDynamicValue } // user configured handler params
+}
+
+export interface IEventModifiers {
+  isCapturePhase?: boolean
+  noPropagation?: boolean // stopPropagation
 }
 
 export interface IDynamicValue {
@@ -87,7 +106,7 @@ export interface IDynamicValue {
    * local: local variables in the render function, e.g. for loop item
    */
   type?: 'static' | PropBindType // default is static
-  value: string
+  value: any | string
 }
 
 export enum PropBindType {
@@ -98,6 +117,8 @@ export enum PropBindType {
   prop = 'prop',
   slot = 'slot',
   dataVar = 'dataVar',
+  stateData = 'state',
+  paramData = 'params',
 }
 
 export enum BindPropertyPath {

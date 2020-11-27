@@ -10,11 +10,7 @@ import {
  * @param appBuildDir
  * @param plugins
  */
-export async function runHandleMpPlugin(
-  appBuildDir: string,
-  plugins: IPlugin[],
-  nodeModulesPath: string
-) {
+export async function runHandleMpPlugin(appBuildDir: string, plugins: IPlugin[]) {
   console.time('runHandleMpPlugin')
   await installMpPlugin(appBuildDir, plugins)
   console.timeEnd('runHandleMpPlugin')

@@ -1,6 +1,6 @@
-const { createHashHistory, createBrowserHistory } = require('history')
-
+import { createHashHistory, createBrowserHistory } from 'history'
 let history
+window._WEAPPS_HISTORY = history
 
 function removeS(path) {
   if (path && path[0] === '/') {
@@ -11,7 +11,7 @@ function removeS(path) {
 
 if (!process.env.isMiniprogram) {
   const createHistory =
-    process.env.buildType === 'app' || process.env.historyType === 'HASH'
+    process.env.isApp || process.env.historyType === 'HASH'
       ? createHashHistory
       : createBrowserHistory
   history = createHistory({
@@ -46,12 +46,25 @@ if (!process.env.isMiniprogram) {
 
 function generateBrowserHistory(param) {
   history = createBrowserHistory(param)
+  window._WEAPPS_HISTORY = history
   return history
 }
 
 function generateHashHistory(param) {
   history = createHashHistory(param)
+  window._WEAPPS_HISTORY = history
   return history
 }
 
-export { history, generateBrowserHistory, generateHashHistory }
+const createHistory = (basename) => {
+  if (process.env.isApp) {
+    return createHashHistory({
+      basename: '', // The base URL of the app (see below)
+    })
+  }
+  return createBrowserHistory({
+    basename,
+  })
+}
+
+export { history, createHistory, generateBrowserHistory, generateHashHistory };
