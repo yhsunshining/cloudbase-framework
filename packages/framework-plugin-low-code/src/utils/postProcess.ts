@@ -68,7 +68,7 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
 
   const methodFileNameTup: [string, string][] = []
   const tasks: Promise<any>[] = methods.map(method => {
-    const methodName = method.dsName
+    const methodName = method.name
     let fileName = methodName
     // 方法名若为 index, 则改名为 _index
     if (fileName === 'index') fileName = `_${fileName}`
