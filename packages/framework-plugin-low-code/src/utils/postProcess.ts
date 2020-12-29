@@ -39,68 +39,91 @@ export async function postProcessCloudFunction(
   let functionNames: string[] = []
   const { mode = DEPLOY_MODE.PREVIEW } = options || {}
   let promises = datasources.reduce((arr, datasource) => {
-    let subFunctions = datasource.methods.filter(
-      (mthd) => mthd.type === CLOUD_FUNCTION_TYPE
-    )
-    if (subFunctions.length) {
-      let cloudFucntionName = getAppDatasourceResourceName(
-        appData.appId,
-        datasource,
-        mode
+    const [cloudFunctionName, tasks] = generateCloudFunction(
+      cloudFunctionRoot,
+      path.join(appTemplateDir, 'cloud-functions'),
+      datasource,
+      appData.appId,
+      mode
       )
-      functionNames.push(cloudFucntionName)
-      let functionPath = path.join(cloudFunctionRoot, cloudFucntionName)
-      fs.removeSync(functionPath)
-      fs.ensureDirSync(functionPath)
-      arr.push(
-        fs.writeFile(
-          path.join(cloudFunctionRoot, `${cloudFucntionName}/index.js`),
-          tpl(
-            fs
-              .readFileSync(
-                path.resolve(appTemplateDir, 'cloud-functions', 'index.js.tpl')
-              )
-              .toString()
-          )({
-            collectionName: getDatasourceDatabaseName(datasource, mode),
-            cloudFunctions: subFunctions,
-            datasource,
-          }),
-          { flag: 'w' }
-        )
-      )
-      arr.push(
-        fs.writeFile(
-          path.join(cloudFunctionRoot, `${cloudFucntionName}/package.json`),
-          tpl(
-            fs
-              .readFileSync(
-                path.resolve(
-                  appTemplateDir,
-                  'cloud-functions',
-                  'package.json.tpl'
-                )
-              )
-              .toString()
-          )({
-            cloudFnName: cloudFucntionName,
-            cloudFnDeps: mergeDependencies(
-              ...subFunctions.map(
-                (method) => method.calleeBody?.config?.deps || {}
-              )
-            ),
-            datasource,
-          }),
-          { flag: 'w' }
-        )
-      )
-    }
-
+    if (!cloudFunctionName) return arr
+    arr.push(...tasks)
     return arr
   }, []) || []
 
   await Promise.all(promises)
   return functionNames
+}
+
+function generateCloudFunction (targetDir: string, templateDir: string, datasource: any, appId: string, mode: string) {
+  let methods = datasource.methods.filter(
+    (method) => method.type === CLOUD_FUNCTION_TYPE
+  )
+  if (!methods.length) return []
+  let cloudFunctionName = getAppDatasourceResourceName(appId, datasource, mode)
+
+  let functionPath = path.join(targetDir, cloudFunctionName)
+  fs.removeSync(functionPath)
+  fs.ensureDirSync(functionPath)
+
+  const methodFileNameTup: [string, string][] = []
+  const tasks: Promise<any>[] = methods.map(method => {
+    const methodName = method.dsName
+    let fileName = methodName
+    // 方法名若为 index, 则改名为 _index
+    if (fileName === 'index') fileName = `_${fileName}`
+    methodFileNameTup.push([methodName, fileName])
+
+    return fs.writeFile(
+      path.join(functionPath, `${methodName}.js`),
+      tpl(fs.readFileSync(path.join(templateDir, 'method.js.tpl'), 'utf8'),
+      )({
+        method,
+      }),
+      { flag: 'w' }
+    )
+  })
+  tasks.push(fs.copy(path.join(templateDir, '_utils.js'), path.join(functionPath, '_utils.js')))
+  tasks.push(
+    fs.writeFile(
+      path.join(functionPath, 'index.js'),
+      tpl(
+        fs
+          .readFileSync(
+            path.join(templateDir, 'index.js.tpl'), 'utf8'
+          )
+      )({
+        collectionName: getDatasourceDatabaseName(datasource, mode),
+        methodFileNameTup: methodFileNameTup,
+        datasource,
+      }),
+      { flag: 'w' }
+    )
+  )
+  tasks.push(
+    fs.writeFile(
+      path.join(functionPath, `package.json`),
+      tpl(
+        fs
+          .readFileSync(
+            path.join(
+              templateDir,
+              'package.json.tpl'
+            ), 'utf8'
+          )
+      )({
+        cloudFnName: cloudFunctionName,
+        cloudFnDeps: mergeDependencies(
+          ...methods.map(
+            (method) => method.calleeBody?.config?.deps || {}
+          )
+        ),
+        datasource,
+      }),
+      { flag: 'w' }
+    )
+  )
+  return [cloudFunctionName, tasks]
 }
 
 export function processCloudFunctionInputs(

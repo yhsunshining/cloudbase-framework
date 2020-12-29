@@ -1,8 +1,5 @@
-import { TCBError } from '../datasources'
+import { TCBError } from '../../datasources'
 
-/** 自定义操作函数列表 */
-export default {
-  <% datasource.methods.filter(method => method.type === 'local-function').forEach( method => { %>
-  '<%= method.name %>': <%= method.calleeBody.callee %>,
-  <% }) %>
-}
+/** 单个自定义函数生成, method.calleeBody.callee 需要是 `export function methodName(params, context){}` 形式  */
+
+<%= method.calleeBody.callee %>

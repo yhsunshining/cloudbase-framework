@@ -985,55 +985,35 @@ export async function generateCodeFromTpl(
   }
 }
 
-export async function generateLocalFcuntions(
+export async function generateLocalFunctions(
   appData: IWeAppData,
   templateDir: string,
   appBuildDir: string
 ) {
   const FUNCTION_PATH = 'local-functions'
 
-  let functionNames: string[] = []
-  // let dependencies = []
+  let dsSourceNames: string[] = []
 
   fs.ensureDirSync(path.join(appBuildDir, FUNCTION_PATH))
+  const targetDir = path.join(appBuildDir, FUNCTION_PATH)
+  const localFnTemplateDir = path.resolve(templateDir, FUNCTION_PATH)
 
-  let promises =
-    appData.datasources?.reduce((arr, datasource) => {
-      let { appId, name } = datasource
-      // let localFunctionName = getDatasourceResourceName(appId, name)
-      let localFunctionName = name
-      functionNames.push(localFunctionName)
-      arr.push(
-        fs.writeFile(
-          path.join(appBuildDir, FUNCTION_PATH, `${localFunctionName}.js`),
-          tpl(
-            fs
-              .readFileSync(
-                path.resolve(templateDir, FUNCTION_PATH, 'fn.js.tpl')
-              )
-              .toString()
-          )({
-            datasource,
-          }),
-          { flag: 'w' }
-        )
-      )
-
-      // dependencies = dependencies.concat(datasource.methods.map(method => method.calleeBody?.config?.deps || {}))
-
+  let promises: Promise<any>[] = []
+  if (appData.datasources) {
+    promises = appData.datasources.reduce((arr, datasource) => {
+      const [dsName, tasks] = generateDsLocalFunctions(targetDir, localFnTemplateDir, datasource)
+      if (!dsName) return arr
+      dsSourceNames.push(dsName)
+      arr.push(...tasks)
       return arr
-    }, []) || []
+    }, [])
+  }
+  
 
   promises.push(
     fs.writeFile(
-      path.join(appBuildDir, FUNCTION_PATH, `index.js`),
-      tpl(
-        fs
-          .readFileSync(
-            path.resolve(templateDir, FUNCTION_PATH, 'index.js.tpl')
-          )
-          .toString()
-      )(appData),
+      path.join(targetDir, `index.js`),
+      tpl(fs.readFileSync(path.join(localFnTemplateDir, 'index.js.tpl'), 'utf8'))({ dsSourceNames }),
       { flag: 'w' }
     )
   )
@@ -1046,5 +1026,40 @@ export async function generateLocalFcuntions(
 
   console.log(path.join(appBuildDir, `index.js`))
 
-  return functionNames
+  return dsSourceNames
+}
+
+
+function generateDsLocalFunctions(targetDir: string, templateDir: string, datasource: any) {
+  const { name: dsName } = datasource
+  const localMethods = datasource.methods?.filter(method => method.type === 'local-function')
+  if (!localMethods || !localMethods.length) return []
+  const methodFileNameTup: [string, string][] = []
+  const tasks: Promise<any>[] = localMethods.map((method) => {
+    const methodName = method.name
+    let fileName = methodName
+    fs.ensureDirSync(path.join(targetDir, dsName))
+    // 方法名若为 index, 则改名为 _index
+    if (fileName === 'index') fileName = `_${fileName}`
+    methodFileNameTup.push([methodName, fileName])
+
+    return fs.writeFile(
+      path.join(targetDir, dsName, `${methodName}.js`),
+      tpl(fs.readFileSync(path.resolve(templateDir, 'fn.js.tpl'), 'utf8'),
+      )({
+        method,
+      }),
+      { flag: 'w' }
+    )
+  })
+
+  tasks.push(fs.writeFile(
+    path.join(targetDir, dsName, `index.js`),
+    tpl(fs.readFileSync(path.resolve(templateDir, 'fn.index.js.tpl'), 'utf8'),
+    )({
+      methodFileNameTup,
+    }),
+    { flag: 'w' }
+  ))
+  return [dsName, tasks]
 }

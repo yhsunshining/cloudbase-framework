@@ -7,7 +7,7 @@ import {
   generateThemeVarsFile,
   generateCodeFromTpl,
   writeLowCodeFiles,
-  generateLocalFcuntions
+  generateLocalFunctions
 } from '../service/builder/generate'
 import path from 'path'
 import { installDependencies } from '../service/builder/webpack'
@@ -74,7 +74,7 @@ export async function runGenerateCore(
       await copy(['app/global-api.js', 'app/mountMpApis.js', 'app/mountAppApis.js', 'datasources'], dstDir)
       await generateAllPageJsxFile(pageInstanceList, dstDir, dependencies, extraData, buildTypeList)
       await generateCodeFromTpl(data, dstDir, dependencies, appKey, rootPath, deployMode, extraData)
-      await generateLocalFcuntions(serialize(data), path.resolve(appTemplateDir, 'src'), dstDir)
+      await generateLocalFunctions(serialize(data), path.resolve(appTemplateDir, 'src'), dstDir)
       await writeLowCodeFiles(data, dstDir)
     })
   )

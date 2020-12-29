@@ -32,7 +32,7 @@ import {
   getDataVarProfiles,
   getDatasetProfiles,
 } from '../../utils/dataSource'
-import { generateLocalFcuntions } from '../service/builder/generate'
+import { generateLocalFunctions } from '../service/builder/generate'
 import { DEPLOY_MODE } from '../../index'
 const templateDir = appTemplateDir + '/mp/'
 const em = chalk.blue.bold
@@ -157,7 +157,7 @@ export async function generateWxMp(
   await generateFiles(datasourceFileData, templateDir, projDir)
 
   console.log('Generating ' + em('local-function') + ' files')
-  await generateLocalFcuntions(mainAppData, templateDir, projDir)
+  await generateLocalFunctions(mainAppData, templateDir, projDir)
 
   // TODO generate subapps
   weapps.forEach((app) =>
