@@ -2,6 +2,7 @@ import { errorHandler, getParameterError } from '../utils'
 import Toast from './toast'
 import Modal from './modal'
 import ActionSheet from './actionSheet'
+import { getDocument } from './utils'
 
 let status = 'default'
 
@@ -15,9 +16,9 @@ function init (doc) {
   .weapps-modal__foot:after {
     content: "";position: absolute;left: 0;top: 0;right: 0;height: 1px;
     box-shadow: 0 -1px 0 0 #EBEBEB;
-    color: #D5D5D6;-webkit-transform-origin: 0 0;transform-origin: 0 0;-webkit-transform: scaleY(0.5);transform: scaleY(0.5);} 
+    color: #D5D5D6;-webkit-transform-origin: 0 0;transform-origin: 0 0;-webkit-transform: scaleY(0.5);transform: scaleY(0.5);}
   .weapps-model__btn:active {background-color: #EEEEEE}
-  .weapps-model__btn:not(:first-child):after 
+  .weapps-model__btn:not(:first-child):after
   {
     content: "";position: absolute;left: 0;top: 0;
     width: 1px;bottom: 0;border-left: 2px solid #EBEBEB;
@@ -33,14 +34,15 @@ const modal = new Modal()
 const actionSheet = new ActionSheet()
 
 function showToast (options = {}) {
-  init(document)
+  init(getDocument())
 
   const _default = {
     title: '',
     icon: 'success',
     image: '',
     duration: 1500,
-    mask: false
+    mask: false,
+    document: getDocument()
   }
   options = Object.assign({}, _default, options)
   options._type = 'toast'
@@ -74,7 +76,9 @@ function showToast (options = {}) {
 
   options.mask = !!options.mask
 
-  if (!toast.el) return toast.create(options)
+  if (!toast.el || !options.document.documentElement.contains(toast.el)) {
+    return toast.create(options)
+  }
   return toast.show(options)
 }
 
@@ -88,11 +92,12 @@ function hideToast (options = {}) {
 }
 
 function showLoading (options = {}) {
-  init(document)
+  init(getDocument())
 
   const _default = {
     title: '',
-    mask: false
+    mask: false,
+    document: getDocument()
   }
   const config = {
     icon: 'loading',
@@ -119,7 +124,9 @@ function showLoading (options = {}) {
 
   options.mask = !!options.mask
 
-  if (!toast.el) return toast.create(options)
+  if (!toast.el || !options.document.documentElement.contains(toast.el)) {
+    return toast.create(options)
+  }
   return toast.show(options)
 }
 
@@ -129,7 +136,7 @@ function hideLoading () {
 }
 
 function showModal (options = {}) {
-  init(document)
+  init(getDocument())
 
   const _default = {
     title: '',
@@ -138,7 +145,8 @@ function showModal (options = {}) {
     cancelText: '取消',
     cancelColor: '#000000',
     confirmText: '确定',
-    confirmColor: '#3CC51F'
+    confirmColor: '#3CC51F',
+    document: getDocument()
   }
   options = Object.assign({}, _default, options)
 
@@ -221,7 +229,9 @@ function showModal (options = {}) {
 
   options.showCancel = !!options.showCancel
 
-  if (!modal.el) return modal.create(options)
+  if (!modal.el || !options.document.documentElement.contains(modal.el)) {
+    return modal.create(options)
+  }
   return modal.show(options)
 }
 
@@ -231,10 +241,11 @@ function hideModal () {
 }
 
 function showActionSheet (options = {}) {
-  init(document)
+  init(getDocument())
 
   const _default = {
-    itemColor: '#000000'
+    itemColor: '#000000',
+    document: getDocument()
   }
   options = Object.assign({}, _default, options)
 
@@ -286,6 +297,9 @@ function showActionSheet (options = {}) {
   }
 
   if (!actionSheet.el) return actionSheet.create(options)
+  if (!actionSheet.el || !options.document.documentElement.contains(actionSheet.el)) {
+    return actionSheet.create(options)
+  }
   return actionSheet.show(options)
 }
 

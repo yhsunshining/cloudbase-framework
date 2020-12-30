@@ -467,27 +467,11 @@ function readDynamicData(
       })
     } else {
       to.dataBinds = to.dataBinds || []
-      if (!dv.value.startsWith('!') || dv.value === PropBindType.expression) {
-        to.dataBinds.push({
-          propertyPath: prop,
-          bindDataPath: dv.value,
-          type: dv.type,
-        })
-      } else {
-        // check "!" to be compatible with legacy data
-        const globalStateReg = /^!global./
-        let fixedValue = ''
-        if (globalStateReg.test(dv.value)) {
-          fixedValue = dv.value.replace(globalStateReg, '!app.state.')
-        } else {
-          fixedValue = dv.value.replace(/^!\w+./, '!$page.')
-        }
-        to.dataBinds.push({
-          propertyPath: prop,
-          bindDataPath: fixedValue,
-          type: PropBindType.expression,
-        })
-      }
+      to.dataBinds.push({
+        propertyPath: prop,
+        bindDataPath: dv.value,
+        type: dv.type,
+      })
       to.dataTypes.push({
         propertyPath: prop,
         type: 'bind',

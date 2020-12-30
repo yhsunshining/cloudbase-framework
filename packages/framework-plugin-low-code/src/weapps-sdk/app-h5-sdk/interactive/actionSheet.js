@@ -54,6 +54,8 @@ export default class ActionSheet {
 
   lastConfig = {}
 
+  document = document
+
   create (options = {}) {
     // style
     const { maskStyle, actionSheetStyle, menuStyle, cellStyle, cancelStyle } = this.style
@@ -67,21 +69,21 @@ export default class ActionSheet {
     this.lastConfig = config
 
     // wrapper
-    this.el = document.createElement('div')
+    this.el = config.document.createElement('div')
     this.el.className = 'weapps__actionSheet'
     this.el.style.opacity = '0'
     this.el.style.transition = 'opacity 0.2s linear'
 
     // mask
-    const mask = document.createElement('div')
+    const mask = config.document.createElement('div')
     mask.setAttribute('style', inlineStyle(maskStyle))
 
     // actionSheet
-    this.actionSheet = document.createElement('div')
+    this.actionSheet = config.document.createElement('div')
     this.actionSheet.setAttribute('style', inlineStyle(actionSheetStyle))
 
     // menu
-    this.menu = document.createElement('div')
+    this.menu = config.document.createElement('div')
     this.menu.setAttribute('style', inlineStyle({
       ...menuStyle,
       color: config.itemColor
@@ -89,7 +91,7 @@ export default class ActionSheet {
 
     // cells
     this.cells = config.itemList.map((item, index) => {
-      const cell = document.createElement('div')
+      const cell = config.document.createElement('div')
       cell.className = 'weapps-actionsheet__cell'
       cell.setAttribute('style', inlineStyle(cellStyle))
       cell.textContent = item
@@ -99,7 +101,7 @@ export default class ActionSheet {
     })
 
     // cancel
-    this.cancel = document.createElement('div')
+    this.cancel = config.document.createElement('div')
     this.cancel.setAttribute('style', inlineStyle(cancelStyle))
     this.cancel.textContent = '取消'
 
@@ -122,7 +124,7 @@ export default class ActionSheet {
     this.cancel.onclick = cb
 
     // show immediately
-    document.body.appendChild(this.el)
+    config.document.body.appendChild(this.el)
     setTimeout(() => {
       this.el.style.opacity = '1'
       setTransform(this.actionSheet, 'translate(0, 0)')
@@ -158,7 +160,7 @@ export default class ActionSheet {
         cell = this.cells[index]
       } else {
         // create new cell
-        cell = document.createElement('div')
+        cell = config.document.createElement('div')
         cell.className = 'weapps-actionsheet__cell'
         cell.setAttribute('style', inlineStyle(cellStyle))
         cell.dataset.tapIndex = index

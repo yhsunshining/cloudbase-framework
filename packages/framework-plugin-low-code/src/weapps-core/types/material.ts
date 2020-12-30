@@ -11,6 +11,7 @@ export interface IMaterialItem {
   components: ({ name: string } | ICompositedComponent)[]
   isComposite?: boolean
   // ToDo more props
+
   //==========Composited compo==========
   componentInstances?: IWeAppComponentInstance[]
 }
@@ -34,7 +35,6 @@ export interface IDependencies {
   [key: string]: string
 }
 
-
 /**
  * Component meta file
  */
@@ -44,14 +44,16 @@ export interface IComponentMeta {
   category?: string
   categoryOrder?: number
   componentOrder?: number
-  // Props to hold user input, usually 'value'
+  /**
+   * use syncProps instead
+   * @deprecated
+   */
   inputProps: {
-    [valuePropName: string]: {
-      // default: change
-      changeEvent: string
-      // how to get user input value from change event, default event.detail.value
-      valueFromEvent: string
-    }
+    [valuePropName: string]: IPropSynConfig
+  }
+  syncProps: {
+    // Props to hold user input, usually 'value'
+    [valuePropName: string]: IPropSynConfig | IPropSynConfig[]
   }
   platforms: {
     mp: {
@@ -60,6 +62,15 @@ export interface IComponentMeta {
     }
   }
   mustEmptyStyle?: boolean
+}
+
+interface IPropSynConfig {
+  // default: change
+  changeEvent: string
+  // how to get user input value from change event, default event.detail.value
+  valueFromEvent: string
+  // to add mp form-field behavior, https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/behaviors.html#%E5%86%85%E7%BD%AE%20behaviors
+  isFormField?: boolean
 }
 
 /**

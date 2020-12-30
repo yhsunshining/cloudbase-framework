@@ -13,7 +13,8 @@ export default class Modal {
     confirmColor: '#3CC51F',
     success: noop,
     fail: noop,
-    complete: noop
+    complete: noop,
+    document: document
   }
 
   style = {
@@ -77,7 +78,7 @@ export default class Modal {
     }
 
     // wrapper
-    this.el = document.createElement('div')
+    this.el = config.document.createElement('div')
     this.el.className = 'weapps__modal'
     this.el.style.position = 'relative'
     this.el.style.opacity = '0'
@@ -85,11 +86,11 @@ export default class Modal {
     this.el.style.zIndex = '999'
 
     // mask
-    const mask = document.createElement('div')
+    const mask = config.document.createElement('div')
     mask.setAttribute('style', inlineStyle(maskStyle))
 
     // modal
-    const modal = document.createElement('div')
+    const modal = config.document.createElement('div')
     modal.setAttribute('style', inlineStyle(modalStyle))
 
     // title
@@ -101,7 +102,7 @@ export default class Modal {
       ...titleStyle,
       display: 'none'
     }
-    this.title = document.createElement('div')
+    this.title = config.document.createElement('div')
     this.title.setAttribute('style', inlineStyle(titleCSS))
     this.title.textContent = config.title
 
@@ -114,12 +115,12 @@ export default class Modal {
       padding: `${calPxToREM(40)} ${calPxToREM(20)} ${calPxToREM(26)}`,
       color: config.contentColor ||'#353535'
     }
-    this.text = document.createElement('div')
+    this.text = config.document.createElement('div')
     this.text.setAttribute('style', inlineStyle(textCSS))
     this.text.textContent = config.content
 
     // foot
-    const foot = document.createElement('div')
+    const foot = config.document.createElement('div')
     foot.className = 'weapps-modal__foot'
     foot.setAttribute('style', inlineStyle(footStyle))
 
@@ -129,7 +130,7 @@ export default class Modal {
       color: config.cancelColor,
       display: config.showCancel ? 'block' : 'none'
     }
-    this.cancel = document.createElement('div')
+    this.cancel = config.document.createElement('div')
     this.cancel.className = 'weapps-model__btn'
     this.cancel.setAttribute('style', inlineStyle(cancelCSS))
     this.cancel.textContent = config.cancelText
@@ -142,7 +143,7 @@ export default class Modal {
     }
 
     // confirm button
-    this.confirm = document.createElement('div')
+    this.confirm = config.document.createElement('div')
     this.confirm.className = 'weapps-model__btn'
     this.confirm.setAttribute('style', inlineStyle(btnStyle))
     this.confirm.style.color = config.confirmColor
@@ -165,7 +166,7 @@ export default class Modal {
     this.el.appendChild(modal)
 
     // show immediately
-    document.body.appendChild(this.el)
+    config.document.body.appendChild(this.el)
     setTimeout(() => { this.el.style.opacity = '1' }, 0)
 
     return new Promise(resolve => (this.resolveHandler = resolve))
@@ -206,7 +207,6 @@ export default class Modal {
         ...textStyle,
         color: config.contentColor || titleStyle.color || ''
       }
-
       this.text.setAttribute('style', inlineStyle(textCss))
     } else {
       // block => none

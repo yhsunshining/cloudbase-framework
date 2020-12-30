@@ -40,6 +40,7 @@ class CompositeCompWrapper extends React.Component {
   constructor(props) {
     super(props);
 
+    this.compConfig = <%= compConfig %>
     this.virtualFields = Object.assign({}, props.pageVirtualFields || {}, {
     <% useComponents.forEach(compItem => {%>
       "<%= compItem.key %>": <%= compItem.var %>,
@@ -79,18 +80,22 @@ class CompositeCompWrapper extends React.Component {
       forIndexes,
       id
     } = compThis.props
-    const widgetData = compositeParent
+    let widgetData = compositeParent
       ? compositeParent.$WEAPPS_COMP.widgets[id]
       : $page.widgets[id]
     if(Array.isArray(widgetData)) {
-      return widgetData.length > 0 ? get(widgetData, forIndexes) : {}
-    } else {
-      return widgetData
+      widgetData = widgetData.length > 0 ? get(widgetData, forIndexes) : {}
     }
+    widgetData = widgetData || {}
+    widgetData.getOwnerWidget = () => compThis.node.ownerWidget
+    widgetData.getConfig = () => compThis.compConfig
+
+    return widgetData
   }
 
   createCompAPI(compThis) {
     compThis.$WEAPPS_COMP = {
+      widgetData.getConfig = () => compThis.compConfig
       widgets: compThis.widgets,
       node: compThis.node,
       handler: compThis.handler,

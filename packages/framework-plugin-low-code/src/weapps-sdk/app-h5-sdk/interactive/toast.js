@@ -11,7 +11,8 @@ export default class Toast {
     mask: false,
     success: noop,
     fail: noop,
-    complete: noop
+    complete: noop,
+    document: document
   }
 
   style = {
@@ -86,18 +87,18 @@ export default class Toast {
     }
 
     // wrapper
-    this.el = document.createElement('div')
+    this.el = config.document.createElement('div')
     this.el.className = 'weapps__toast'
     this.el.style.opacity = '0'
     this.el.style.transition = 'opacity 0.1s linear'
 
     // mask
-    this.mask = document.createElement('div')
+    this.mask = config.document.createElement('div')
     this.mask.setAttribute('style', inlineStyle(maskStyle))
     this.mask.style.display = config.mask ? 'block' : 'none'
 
     // icon
-    this.icon = document.createElement('p')
+    this.icon = config.document.createElement('p')
     if (config.image) {
       this.icon.setAttribute('style', inlineStyle({
         ...imageStyle,
@@ -113,7 +114,7 @@ export default class Toast {
     }
 
     // toast
-    this.toast = document.createElement('div')
+    this.toast = config.document.createElement('div')
     this.toast.setAttribute('style', inlineStyle({
       ...toastStyle,
       ...(config.icon === 'none' ? {
@@ -123,7 +124,7 @@ export default class Toast {
     }))
 
     // title
-    this.title = document.createElement('p')
+    this.title = config.document.createElement('p')
     this.title.setAttribute('style', inlineStyle(textStyle))
     this.title.textContent = config.title
 
@@ -134,7 +135,7 @@ export default class Toast {
     this.el.appendChild(this.toast)
 
     // show immediately
-    document.body.appendChild(this.el)
+    config.document.body.appendChild(this.el)
     setTimeout(() => { this.el.style.opacity = '1' }, 0)
     this.type = config._type
 

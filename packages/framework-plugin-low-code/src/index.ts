@@ -30,7 +30,7 @@ import {
   GenerateMpType,
 } from './builder/types/common'
 import { IMaterialItem, IPlugin } from './weapps-core'
-import { copySubpackageToApp, handleMpPlugins } from './generate'
+import { handleMpPlugins } from './generate'
 import {
   postProcessCloudFunction,
   postprocessProjectConfig,
@@ -609,15 +609,6 @@ class LowCodePlugin extends Plugin {
                   }
 
                   if (outDir) {
-                    // 打开开发者工具的目录切换为主程序目录
-                    if (
-                      generateMpType === GenerateMpType.SUBPACKAGE &&
-                      generateMpPath
-                    ) {
-                      projDir = generateMpPath
-                      await copySubpackageToApp(outDir, appId, generateMpPath)
-                    }
-
                     // 原生小程序的插件在这里进行插入
                     if (plugins) {
                       await handleMpPlugins(plugins, outDir)

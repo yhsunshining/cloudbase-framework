@@ -89,6 +89,7 @@ export async function genCompositeComponentLibraries(
               type: 'object',
               properties: compItem.dataForm || {},
             }),
+            compConfig: compItem.compConfig || {},
             emitEvents: JSON.stringify(compItem.emitEvents.map(evt => evt.eventName)),
             // @ts-ignore
             handlersImports: compItem.lowCodes.filter(

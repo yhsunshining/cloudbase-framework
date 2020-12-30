@@ -1,11 +1,10 @@
 import { CSSProperties, ICommonStyle } from './style'
-import { ActionType, ActionTrigger } from './action'
+import { ActionType } from './action'
 import { IWeAppCode } from './lowcode'
-import { IPlugin } from './plugins'
+import { IPlugin } from '../types/plugins'
 import { IDataBind } from './web'
 import { HISTORY_TYPE } from '../../index'
 
-/** 变量公共定义 */
 export interface IAppAndPageVar {
   /** 各种变量 */
   dataset?: {
@@ -17,7 +16,6 @@ export interface IAppAndPageVar {
     data: any[]
   }
 }
-
 export interface IWeAppData {
   selectedPageId?: string
   historyType?: HISTORY_TYPE
@@ -48,6 +46,7 @@ export interface IWeAppPage {
   styleBindPath: string
   lowCodes?: IWeAppCode[]
   children?: IWeAppPage[]
+  pageId?: string
 
   /**
    * @deprecated  moved to lowCodes
@@ -124,4 +123,9 @@ export enum PropBindType {
 export enum BindPropertyPath {
   style = 'style',
   classNameList = 'classNameList',
+}
+export interface ILockedPage {
+  id: string
+  username: string
+  socketId: string
 }

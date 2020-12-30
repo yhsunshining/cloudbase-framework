@@ -15,6 +15,12 @@ export type CodeType =
   | 'style'
   | 'theme'
 
+  // 后面都整合为 json
+  | 'json'
+  | 'app-config'
+  | 'page-config'
+  | 'page'
+
 export type RematchModule<State> = (args: {
   sdk
   history
