@@ -1,5 +1,5 @@
 <% dsSourceNames.forEach(dsName => { %>
-import <%=dsName.replace(/\p{P}/gu, '_')%> from './<%= dsName%>'
+import <%=dsName.replace(/\p{P}/gu, '_')%> from './<%= dsName%>/index'
 <% })%>
 
 export const localFns = {

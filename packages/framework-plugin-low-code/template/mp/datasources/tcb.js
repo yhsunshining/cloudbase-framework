@@ -128,7 +128,7 @@ export async function init() {
   const env = getConfig();
 
   if (!app) {
-    let app = new CloudBase();
+    app = new CloudBase();
     app.init({
       env: env.envID,
     });

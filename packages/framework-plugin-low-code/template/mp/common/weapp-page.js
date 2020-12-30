@@ -77,7 +77,8 @@ export function createPage(
     onLoad: function (options) {
       app.activePage = $page
       this.createReactiveState()
-      updateDatasetParams($page.id, this.options.query || {})
+
+      updateDatasetParams($page.id, options || {})
 
       // 页面创建时执行
       const hook = lifecycle.onLoad || lifecycle.onPageLoad

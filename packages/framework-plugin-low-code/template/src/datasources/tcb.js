@@ -132,7 +132,7 @@ export async function init() {
 
   if (!app) {
     if (process.env.isMiniprogram) {
-      let app = new CloudBase()
+      app = new CloudBase()
       app.init({
         env: env.envID,
       })

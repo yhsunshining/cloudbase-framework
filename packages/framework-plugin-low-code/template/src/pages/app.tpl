@@ -42,12 +42,12 @@ const pageListenerInstances = <%= pageListenerInstances %>;
 const widgetsContext = <%= widgets %>;
 const dataBinds = <%= dataBinds %>;
 
-AppLifeCycle.beforeCustomLaunch = ({query})=>{
+AppLifeCycle.beforeCustomLaunch = (query)=>{
   updateDatasetParams('$global', query || {})
   buildDataVarFetchFn('$global')
   createStateDatasrouceVar('$global',{app})
 };
-PageLifeCycle.beforePageCustomLaunch = ({query}) => {
+PageLifeCycle.beforePageCustomLaunch = (query) => {
   updateDatasetParams('<%= pageName %>', query || {})
   createStateDatasrouceVar('<%= pageName %>',{app, $page})
   buildDataVarFetchFn('<%= pageName %>');
