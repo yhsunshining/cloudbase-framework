@@ -5,17 +5,22 @@ import fs from 'fs-extra'
 import { ISchema, Schema } from '@formily/react-schema-renderer'
 import { IPackageJson } from '../types/common'
 import { IWeAppComponentInstance, toCssStyle } from '../../weapps-core'
-import { ICompositedComponent, IMaterialItem } from '../../weapps-core/types/material'
+import {
+  ICompositedComponent,
+  IMaterialItem,
+} from '../../weapps-core/types/material'
 import { pullComponentToListByInstance } from '../service/builder/generate'
+import { processLess } from './style'
+
 import os from 'os'
 const homeDir = os.homedir()
 const commandConfigPath = path.join(homeDir, '.warc')
 
 export type PromiseResult<T> = Promise<[null, T] | [Error, null]>
 export function promiseWrapper<T>(p: Promise<T>): PromiseResult<T> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     try {
-      p.then(i => resolve([null, i as T])).catch(e => resolve([e, null]))
+      p.then((i) => resolve([null, i as T])).catch((e) => resolve([e, null]))
     } catch (e) {
       resolve([e, null])
     }
@@ -47,7 +52,10 @@ export function isEmpty(i: any): boolean {
   return R.isEmpty(i) || R.isNil(i) || Number.isNaN(i)
 }
 
-export function deepDeal(src: any, reviver: (key: any, value: any, parent: any) => void) {
+export function deepDeal(
+  src: any,
+  reviver: (key: any, value: any, parent: any) => void
+) {
   // 对于 数组
   if (isArray(src)) {
     for (let i = 0, len = src.length; i < len; i++) {
@@ -74,18 +82,20 @@ export function simpleDeepClone<T>(data: any): T {
 
 export function getCurrentPackageJson() {
   try {
-    const { name, version } = fs.readJSONSync(path.resolve(process.cwd(), 'package.json'))
+    const { name, version } = fs.readJSONSync(
+      path.resolve(process.cwd(), 'package.json')
+    )
     return {
       name,
       version,
     }
-  } catch (e) { }
+  } catch (e) {}
 }
 
 export function getSelfPackageJson(): IPackageJson | undefined {
   try {
     return fs.readJSONSync(path.resolve(__dirname, '../../package.json'))
-  } catch (e) { }
+  } catch (e) {}
 }
 
 export function JsonToStringWithVariableName(copyJson: any): string {
@@ -125,45 +135,53 @@ export function removeRequireUncached(path = '') {
   }
 }
 
-
-export async function getInputProps(appBuildDir: string, dependencies: IMaterialItem[]) {
+export async function getInputProps(
+  appBuildDir: string,
+  dependencies: IMaterialItem[]
+) {
   const outputObj = {}
   await Promise.all(
-    dependencies.map(async ({ name: materialName, version, components, isComposite }) => {
-      if (isComposite) {
-        components.forEach((component) => {
-          let compItem = component as ICompositedComponent
-          const sourceKey = `${materialName}:${compItem.name}`
-          Object.keys(compItem.dataForm || {}).forEach(key => {
-            const inputProps =
-              compItem.dataForm[key]?.inputProp || compItem.dataForm[key]?.syncProps
-            if (inputProps) {
-              outputObj[sourceKey] = {
-                [key]: inputProps,
-                ...(outputObj[sourceKey] || {}),
+    dependencies.map(
+      async ({ name: materialName, version, components, isComposite }) => {
+        if (isComposite) {
+          components.forEach((component) => {
+            let compItem = component as ICompositedComponent
+            const sourceKey = `${materialName}:${compItem.name}`
+            Object.keys(compItem.dataForm || {}).forEach((key) => {
+              const inputProps =
+                compItem.dataForm[key]?.inputProp ||
+                compItem.dataForm[key]?.syncProps
+              if (inputProps) {
+                outputObj[sourceKey] = {
+                  [key]: inputProps,
+                  ...(outputObj[sourceKey] || {}),
+                }
               }
-            }
+            })
           })
-        })
-      } else {
-        const materialComponentsPath = path
-          .resolve(appBuildDir, `libraries/${materialName}@${version}/components`)
-          .replace(/packages\/\w+\//, '') // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
-        const components = await fs.readdir(materialComponentsPath)
+        } else {
+          const materialComponentsPath = path
+            .resolve(
+              appBuildDir,
+              `libraries/${materialName}@${version}/components`
+            )
+            .replace(/packages\/\w+\//, '') // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
+          const components = await fs.readdir(materialComponentsPath)
 
-        await Promise.all(
-          components.map(async name => {
-            const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
-            const sourceKey = `${materialName}:${name}`
-            const metaJson = await fs.readJson(componentMetaPath)
-            const inputProps = metaJson.inputProps || metaJson.syncProps
-            if (inputProps) {
-              outputObj[sourceKey] = inputProps
-            }
-          })
-        )
+          await Promise.all(
+            components.map(async (name) => {
+              const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
+              const sourceKey = `${materialName}:${name}`
+              const metaJson = await fs.readJson(componentMetaPath)
+              const inputProps = metaJson.inputProps || metaJson.syncProps
+              if (inputProps) {
+                outputObj[sourceKey] = inputProps
+              }
+            })
+          )
+        }
       }
-    })
+    )
   )
   return outputObj
 }
@@ -172,7 +190,7 @@ export async function getYyptConfigInfo(extraData: any) {
   let configJson
   try {
     configJson = await fs.readJSON(commandConfigPath)
-  } catch (e) { }
+  } catch (e) {}
   configJson = configJson || {
     yyptAppKey: '',
     reportUrl: '',
@@ -183,19 +201,53 @@ export async function getYyptConfigInfo(extraData: any) {
     extraData.operationService = extraData.operationService || {}
   }
 
-  const yyptAppKey = extraData.operationService.extAppId || configJson.yyptAppKey || ''
-  const reportUrl = extraData.operationService.reportUrl || configJson.reportUrl || ''
-  const yyptEnabled = extraData.operationService.yyptEnabled
-  let stopReport = false
-  if (typeof yyptEnabled === 'boolean') {
-    stopReport = !yyptEnabled
-  } else {
-    stopReport = configJson.stopReport === 'true'
-  }
+  const yyptAppKey =
+    configJson.yyptAppKey || extraData.operationService.extAppId || ''
+  const reportUrl =
+    configJson.reportUrl || extraData.operationService.reportUrl || ''
+  const stopReport =
+    configJson.stopReport === 'true' || !extraData.operationService.yyptEnabled
 
   return {
     yyptAppKey,
     reportUrl,
     stopReport,
   }
+}
+
+export async function writeLibCommonRes2file(
+  gItem: IMaterialItem,
+  codeDir: string
+) {
+  const compLibCommonResource = gItem.compLibCommonResource
+  const libCommonResFiles: any[] = []
+  libCommonResFiles.push(
+    {
+      path: path.join(
+        codeDir,
+        `class.${codeDir.includes('/mp/') ? 'wxss' : 'less'}`
+      ),
+      code: compLibCommonResource
+        ? await processLess(
+            `
+        ${compLibCommonResource.theme.variable || ''}
+        ${compLibCommonResource.class || ''}
+        ${compLibCommonResource.theme.class || ''}
+        `
+          )
+        : '',
+    },
+    {
+      path: path.join(codeDir, 'const.js'),
+      code: compLibCommonResource ? compLibCommonResource.const.code : '',
+    },
+    {
+      path: path.join(codeDir, 'tools.js'),
+      code: compLibCommonResource ? compLibCommonResource.tools.code : '',
+    }
+  )
+  libCommonResFiles.map(async (item) => {
+    await fs.ensureFile(item.path)
+    await fs.writeFile(item.path, item.code)
+  })
 }

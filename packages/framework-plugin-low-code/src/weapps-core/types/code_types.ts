@@ -14,6 +14,7 @@ export type CodeType =
   | 'app-style'
   | 'style'
   | 'theme'
+  | 'lib'
 
   // 后面都整合为 json
   | 'json'

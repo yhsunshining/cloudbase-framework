@@ -56,7 +56,7 @@ export async function generateWxMp(
     projDir,
     appId,
     isProduction,
-    materialLibs: {},
+    materialLibs: materials,
     isMixMode,
   }
   await cleanProj(
@@ -73,13 +73,7 @@ export async function generateWxMp(
   })
 
   // 安装依赖库
-  const materialLibs = await installMaterials(
-    materials,
-    projDir,
-    allAppUsedComps,
-    weapps,
-    buildContext
-  )
+  await installMaterials(projDir, allAppUsedComps, weapps, buildContext)
 
   const wxmlDataPrefix = getWxmlDataPrefix(!isProduction)
   const operationLabel = em('Wexin MiniProgram Generated')
@@ -96,19 +90,16 @@ export async function generateWxMp(
     'app.js': { yyptConfig: yyptConfig },
     'app.json': { content: appConfig },
     'app.wxss': {
-      importStyles: Object.entries(materialLibs).reduce(
-        (styles: string[], [name, meta]) => {
-          styles = styles.concat(
-            meta.styles.map((stylePath) =>
-              stylePath && !stylePath.startsWith('/')
-                ? `/materials/${meta.name}/${stylePath}`
-                : stylePath
-            ) || []
-          )
-          return styles
-        },
-        []
-      ),
+      importStyles: materials.reduce((styles, lib) => {
+        styles = styles.concat(
+          (lib.styles || []).map((stylePath) =>
+            stylePath && !stylePath.startsWith('/')
+              ? `/materials/${lib.name}/${stylePath}`
+              : stylePath
+          ) || []
+        )
+        return styles
+      }, [] as string[]),
     },
     'project.config.json': { content: projConfig },
     'package.json': {
@@ -198,9 +189,14 @@ export async function generateWxMp(
 
   function resolveNpmDeps() {
     const deps = weapps.map((app) => app.npmDependencies)
-    Object.entries(materialLibs).map(([name, lib]) =>
-      deps.push(lib.dependencies)
-    )
+    materials.map((lib) => deps.push((lib as any).dependencies))
+
+    // 合并组件库的公共npm
+    materials.map((compLb) => {
+      if (compLb.isComposite && compLb.compLibCommonResource) {
+        deps.push(compLb.compLibCommonResource.npm || {})
+      }
+    })
     return deps.reduce((combined, cur) => {
       return { ...combined, ...cur }
     }, {})
@@ -233,6 +229,7 @@ async function generatePkg(
       const usingComponents = {}
       const wxml = generateWxml(
         page.componentInstances,
+        `Page ${weapp.rootPath}/${page.id}`,
         wxmlDataPrefix,
         { ...ctx, rootPath },
         usingComponents

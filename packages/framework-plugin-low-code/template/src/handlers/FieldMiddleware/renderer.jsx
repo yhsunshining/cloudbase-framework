@@ -163,12 +163,16 @@ export const CompRenderer = observer(function (props) {
     const fieldData = { ...wData }
 
     // bindStyle
-    const bindStyle = fieldData.style || {}
+    let bindStyle = fieldData.style || {}
     // 复合组件第一层需要将最外层样式 style 挂到节点上
     let cssStyle = commonStyle
     if (isInComposite && wData && !wData.parent) {
       cssStyle = {
         ...cssStyle,
+        ...(codeContext.$WEAPPS_COMP.props?.style || {}),
+      }
+      bindStyle = {
+        ...bindStyle,
         ...(codeContext.$WEAPPS_COMP.props?.style || {}),
       }
     }

@@ -13,11 +13,11 @@ function resolveWidgetProp(props) {
     style: styleToCss(props.style),
     className: classList.join ? classList.join(' ') : classList
   }
-  const extraProps = ['id', 'classList', 'parent', 'children', 'widgetType',
-    '_disposers', '_parentId', '_forItems' ]
+  const extraProps = ['classList', '_forItems']
   extraProps.map(prop => {
     delete data[prop]
   })
+
   Object.keys(data).map(prop => {
     if (data[prop] instanceof Function || data[prop] === undefined) {
       delete data[prop]
@@ -36,9 +36,71 @@ export function resolveWidgetData(props) {
 
 
 export function createWidgets(widgetProps, dataBinds, widgetHolder, ownerMpInst) {
-  const nodeTree = createWidgetTree(widgetProps, dataBinds)
-  const widgets = runFor(widgetProps, dataBinds, nodeTree, {}, null, null, [], widgetHolder, ownerMpInst)
-  return widgets
+  const rootNode = createWidgetDataTree(widgetProps, dataBinds)
+  return createSubWidgetTree(rootNode, widgetProps, dataBinds, ownerMpInst, widgetHolder)
+}
+
+/**
+ * @param ownerMpInst The MP page or component instance the widgets belongs to
+ * @param ownerForWidgetHolder null for the virtual root node(first run)
+ * @param curForNode a component node or a virtual root tree node
+ * @returns {widgets: {id1:[], id2}, rootWidget: {children: [], _disposers: [], ...otherProps}}
+ */
+function createSubWidgetTree(curForNode, widgetProps, dataBinds, ownerMpInst, widgetHolder = {},
+  index = 0, forItems = {}, ownerForWidgetHolder = null,
+  failedBinds = [], defaultParent = { children: observable([]), _disposers: [] }) {
+  const indexPostfix = (forItems.lists || []).slice().reverse().map(list => idSeparator + list.currentIndex).join('')
+
+  // traverse down the tree to set up all widgets
+  dfsTree(curForNode, (node) => {
+    const parentForWidgetArr = ownerForWidgetHolder && ownerForWidgetHolder[node.id] || []
+    const existedWidget = index < parentForWidgetArr.length ? parentForWidgetArr[index] : null  // try to reuse previous node when rerun for
+
+    if (node.forCount === curForNode.forCount) { // Leaf node
+      let w = existedWidget
+      if (!existedWidget) {
+        const parentNode = node.parent
+        let parentWidget = null
+        if (parentNode) {
+          parentWidget = widgetHolder[parentNode.id] || ownerForWidgetHolder[parentNode.id]
+        }
+        w = createAWidget(widgetProps[node.id], node.id + indexPostfix, parentWidget, ownerMpInst)
+        if (!parentWidget) {
+          defaultParent.children.push(w)
+        }
+        parentForWidgetArr.push(w)
+      } else {
+        disposeWidget(existedWidget, true)
+      }
+      setUpWidateDataBinds(w, dataBinds[node.id], forItems, failedBinds)
+      widgetHolder[node.id] = w
+    } else if (!existedWidget) {
+      const len = parentForWidgetArr.push(observable([]))
+      widgetHolder[node.id] = parentForWidgetArr[len - 1]
+    } else {
+      // Reuse existed for widget array
+      widgetHolder[node.id] = existedWidget
+    }
+  })
+
+  // run for of next level
+  dfsTree(curForNode, (node) => {
+    if (node.forCount === curForNode.forCount + 1 && dataBinds[node.id] && dataBinds[node.id]._waFor) {
+      // find the node bound with next level for
+      const parent = node.parent ? widgetHolder[node.parent.id] : defaultParent
+      const dispose = runFor(node, widgetProps, dataBinds, ownerMpInst, forItems, widgetHolder, failedBinds, parent)
+      parent._disposers.push(dispose)  // Add the for bind dispose to the parent node of forNode
+    }
+  })
+
+  // Retry failed databinds
+  const len = failedBinds.length
+  for (let i = 0; i < len; i++) {
+    const setUpDataBind = failedBinds.shift()
+    setUpDataBind()
+  }
+
+  return { widgets: widgetHolder, rootWidget: widgetHolder[curForNode.id] || defaultParent }
 }
 
 /**
@@ -49,11 +111,8 @@ export function createWidgets(widgetProps, dataBinds, widgetHolder, ownerMpInst)
  * @param {*} parentWidget
  * @returns top level widgets or for dispose
  */
-function runFor(widgetProps, dataBinds, curForNode, forItems, parentForWidgets, parentWidget, failedBinds, widgetHolder, ownerMpInst) {
+function runFor(curForNode, widgetProps, dataBinds, ownerMpInst, forItems, ownerForWidgetHolder, failedBinds, defaultParent) {
   const nodeId = curForNode.id
-  if (!curForNode.value) {  // Root virtual node
-    return createSubTree(curForNode, {}, 0, widgetHolder)
-  }
   const dispose = autorun(() => {
     let forList = []
     try {
@@ -69,20 +128,24 @@ function runFor(widgetProps, dataBinds, curForNode, forItems, parentForWidgets, 
     forList.forEach(e => { })
 
     untracked(() => {
-      disposeWidgets(parentForWidgets[curForNode.id])
+      // dispose widgets before reused instead
+      // disposeWidgets(parentForWidgets[curForNode.id])
 
-      // clean widgets array of previous for run
+      // clean extra widgets of previous for run
       dfsTree(curForNode, (node) => {
-        const arr = parentForWidgets[node.id]
-        arr.splice(forList.length, arr.length)
+        const arr = ownerForWidgetHolder[node.id]
+        const extraWidgets = arr.splice(forList.length, arr.length)
+        //console.log('@@ delete widgets', node.id, extraWidgets)
+
+        if (node.id === curForNode.id) {  // clean the root widget.children only(recursive)
+          extraWidgets.map(w => {
+            disposeWidget(w)
+            const { children } = w.parent || defaultParent
+            children.remove(w)
+            // w.parent = null
+          })
+        }
       })
-      // clean widget.children
-      if (parentWidget) {
-        const curNodeChildren = parentWidget.children.filter(node => node.id.split(idSeparator)[0] === curForNode.id)
-        const extraChildren2del = curNodeChildren.slice(forList.length)
-        // Remove extra children only
-        parentWidget.children = parentWidget.children.filter(node => extraChildren2del.indexOf(node) === -1)
-      }
 
       forList.forEach((item, index) => {
         let { lists = [], itemsById = {}, } = forItems
@@ -90,93 +153,62 @@ function runFor(widgetProps, dataBinds, curForNode, forItems, parentForWidgets, 
           lists: [{ currentItem: item, currentIndex: index }, ...lists],
           itemsById: { ...itemsById, [nodeId]: item },
         }
-        const widgets = createSubTree(curForNode, _forItems, index)
-        widgets[curForNode.id]._forItems = _forItems
+        const { rootWidget } = createSubWidgetTree(curForNode, widgetProps, dataBinds, ownerMpInst, {}, index, _forItems, ownerForWidgetHolder, failedBinds, defaultParent)
+        rootWidget._forItems = _forItems
       })
-
     })
-
   })
 
   return dispose
+}
 
-  function createSubTree(curForNode, forItems, index, widgetHolder) {
-    const widgets = widgetHolder || {}
-    const indexPostfix = (forItems.lists || []).slice().reverse().map(list => idSeparator + list.currentIndex).join('')
+function createAWidget(props, id, parent, ownerMpInst) {
 
-    // traverse down the tree to set up all widgets
-    dfsTree(curForNode, (node, parentNode) => {
-      const parentForWidgetArr = parentForWidgets && parentForWidgets[node.id] || []
-      const prevWidget = index < parentForWidgetArr.length ? parentForWidgetArr[index] : null  // try to reuse previous node when rerun for
+  const w = observable(props)
 
-      if (node.forCount === curForNode.forCount) { // Leaf node
-        let w = prevWidget
-        if (!prevWidget) {
-          w = observable(widgetProps[node.id])
-          w.id = node.id + indexPostfix
-          if (node === curForNode) {
-            w._disposers = []
-          }
-          mountBuiltinWigetsAPI(w, ownerMpInst)
-          w.children = []
-          const parent = parentNode ? widgets[parentNode.id] : parentWidget
-          if (parent) {
-            w.parent = parent
-            parent.children.push(w)
-          }
-          parentForWidgetArr.push(w)
-        }
-        widgets[node.id] = w
+  // Builtin props
+  Object.defineProperty(w, 'id', { value: id })
+  const { widgetType } = w
+  delete w.widgetType
+  Object.defineProperty(w, 'widgetType', { value: widgetType })
 
-        // Setup data binds
-        Object.keys(dataBinds[node.id] || {}).map(prop => {
-          if (prop === '_waFor') { return }
-          const setUpDataBind = () => {
-            let firstRunError = null
-            const dispose = autorun(() => {
-              try {
-                // Computed data bind in the next tick since data bind may read widgets data
-                w[prop] = dataBinds[node.id][prop](forItems.lists, forItems.itemsById)
-              } catch (e) {
-                firstRunError = e
-                console.error(`Error computing data bind ${node.id}.${prop}`, e)
-              }
-            })
-            if (firstRunError) {
-              dispose()
-              failedBinds.push(setUpDataBind)
-            } else {
-              curForNode.id && widgets[curForNode.id]._disposers.push(dispose)
-            }
-          }
-          setUpDataBind()
-        })
-      } else if (!prevWidget) {
-        const len = parentForWidgetArr.push(observable([]))
-        widgets[node.id] = parentForWidgetArr[len - 1]
-      } else {
-        widgets[node.id] = prevWidget
-      }
-    })
-
-    // run for of next level
-    dfsTree(curForNode, (node, parentNode) => {
-      if (node.forCount === curForNode.forCount + 1 && dataBinds[node.id] && dataBinds[node.id]._waFor) {
-        widgets[node.id]._disposers = { dataBinds: [] }
-        const dispose = runFor(widgetProps, dataBinds, node, forItems, widgets, node.parent && widgets[node.parent.id], failedBinds, null, ownerMpInst)
-        curForNode.id && widgets[curForNode.id]._disposers.push(dispose)
-      }
-    })
-
-    // Retry failed databinds
-    const len = failedBinds.length
-    for (let i = 0; i < len; i++) {
-      const setUpDataBind = failedBinds.shift()
-      setUpDataBind()
-    }
-
-    return widgets
+  //w._disposers = []
+  //w.children = []
+  Object.defineProperty(w, 'children', { value: observable([]) })
+  Object.defineProperty(w, '_disposers', { value: observable([]) })
+  if (parent) {
+    //w.parent = parent
+    Object.defineProperty(w, 'parent', { value: parent })
+    parent.children.push(w)
   }
+  delete w._parentId
+  mountBuiltinWigetsAPI(w, ownerMpInst)
+  return w
+}
+
+function setUpWidateDataBinds(w, dataBinds, forItems, failedBinds) {
+  Object.keys(dataBinds || {}).map(prop => {
+    if (prop === '_waFor') { return }
+    const setUpDataBind = () => {
+      let firstRunError = null
+      const dispose = autorun(() => {
+        try {
+          // Computed data bind in the next tick since data bind may read widgets data
+          w[prop] = dataBinds[prop](forItems.lists, forItems.itemsById)
+        } catch (e) {
+          firstRunError = e
+          console.error(`Error computing data bind ${w.id}.${prop}`, e)
+        }
+      })
+      if (firstRunError) {
+        dispose()
+        failedBinds.push(setUpDataBind)
+      } else {
+        w._disposers.push(dispose)
+      }
+    }
+    setUpDataBind()
+  })
 }
 
 export function findForItemsOfWidget(widget) {
@@ -200,7 +232,7 @@ export function mpCompToWidget(owner, comp) {
 /**
  * Add parent, children to widget
  */
-function createWidgetTree(widgets, dataBinds) {
+function createWidgetDataTree(widgets, dataBinds) {
   const virtualRoot = { children: [], forCount: 0 }
   const nodes = Object.keys(widgets).reduce((result, id) => {
     const w = widgets[id]
@@ -248,16 +280,12 @@ function dfsTree(node, fn, parent) {
   node.children.map(e => dfsTree(e, fn, node.value ? node : null))
 }
 
-// dispose autorun
-function disposeWidgets(widgets) {
-  widgets.forEach((widget) => {
-    const disposers = widget._disposers
-    if (disposers) {
-      disposers.map(dispose => dispose())
-      disposers.splice(0, disposers.length)
-    }
-    disposeWidgets(widget.children)
-  })
+// dispose autorun, widget can be the virtual root widget
+export function disposeWidget(widget, noRecursive) {
+  const disposers = widget._disposers
+  disposers.map(dispose => dispose())
+  disposers.splice(0, disposers.length)
+  !noRecursive && widget.children.forEach(w => disposeWidget(w))
 }
 
 /* export function createInitData(widgets, dataBinds, keyPrefix = '') {

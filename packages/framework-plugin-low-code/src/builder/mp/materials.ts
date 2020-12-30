@@ -3,12 +3,11 @@ import { inspect } from 'util'
 import * as fs from 'fs-extra'
 import {
   IMaterialItem,
-  IMaterialLibMeta,
   ICompositedComponent,
   IWeAppComponentInstance,
   compositedComponentApi,
   getCompositedComponentClass,
-  IWeAppData,
+  ICompLibCommonResource,
 } from '../../weapps-core'
 import { materialsDirName, sharedMaterialsDir, appTemplateDir } from '../config'
 import {
@@ -25,37 +24,30 @@ import generateFiles from '../util/generateFiles'
 import { writeCode2file } from './lowcode'
 import { downloadZip } from '../util/net'
 import NameMangler from '../util/name-mangler'
-import { IUsedComps, IAppUsedComp } from '../types/common'
+import { IWeAppData } from '../../weapps-core'
+import { IUsedComps } from '../types/common'
+import { writeLibCommonRes2file } from '../util'
 
 const templateDir = appTemplateDir + '/mp/'
 
-export interface IMaterialLibs {
-  [libName: string]: IMaterialLibMeta
-}
 export async function installMaterials(
-  dependencies: IMaterialItem[] = [],
   projDir: string,
   usedComps: IUsedComps,
   weapps: IWeAppData[],
   ctx: IBuildContext
 ) {
-  const localPkg = getCurrentPackageJson()
-  const materialsInfo: IMaterialLibs = {} // {[pkgName]: {name, title, components: {[name]: {title, platforms: {}}}}}
-  ctx.materialLibs = materialsInfo
-
-  const compositedLibs = dependencies.filter(
-    (lib) => lib.isComposite && usedComps[lib.name]
-  )
-
+  let { materialLibs } = ctx
   const weappsList = ctx.isMixMode
     ? weapps
     : weapps.filter((item) => !item.rootPath)
 
   // #1 Download uploaded libs
+  const localPkg = getCurrentPackageJson()
   await Promise.all(
-    dependencies
+    materialLibs
       .filter((lib) => !lib.isComposite && usedComps[lib.name])
-      .map(async ({ name, version, mpPkgUrl }) => {
+      .map(async (lib) => {
+        const { name, version, mpPkgUrl } = lib
         let materialsSrcDir = ''
         const materialId = `${name}@${version}`
 
@@ -85,37 +77,43 @@ export async function installMaterials(
             )
             // #2 link material to current project
             await fs.copy(materialsSrcDir, targetDir)
-            materialsInfo[name] = fs.readJSONSync(
-              path.join(targetDir, 'meta.json')
-            )
+            const libMeta = fs.readJSONSync(path.join(targetDir, 'meta.json'))
+            if (!lib.components) {
+              lib.components = Object.keys(libMeta.components).map((name) => ({
+                name,
+                meta: libMeta.components[name],
+              })) as any
+            }
+            lib.styles = libMeta.styles
+            lib.dependencies = libMeta.dependencies
           })
         )
       })
   )
 
-  // #2 Generate composited libs
-  compositedLibs.map((m) => {
-    const lib: IMaterialLibMeta = {
-      name: m.name,
-      isComposite: !!m.isComposite,
-      title: m.name,
-      version: m.version,
-      desc: 'Composisted components',
-      styles: [],
-      dependencies: {},
-      components: {},
-    }
+  // clean unused comps
+  materialLibs = ctx.materialLibs.filter((lib) => usedComps[lib.name])
+  ctx.materialLibs = materialLibs
+  materialLibs.map((lib) => {
+    lib.components = lib.components.filter((comp) =>
+      usedComps[lib.name].has(comp.name)
+    )
+  })
 
-    m.components.map((component) => {
-      let cmp = component as ICompositedComponent
-      lib.components[cmp.name] = cmp.meta
+  // populate cmp.materialName
+  materialLibs.map((lib) => {
+    lib.components.map((comp) => {
+      comp.materialName = lib.name
+    })
+  })
 
-      if (usedComps[lib.name] && usedComps[lib.name].has(cmp.name)) {
-        Object.entries(cmp.npmDependencies).map(([name, version]) => {
-          lib.dependencies[name] = version
-        })
-      }
-
+  // Collection infomation from components to lib meta
+  const compositedLibs = materialLibs.filter(
+    (lib) => lib.isComposite && usedComps[lib.name]
+  )
+  compositedLibs.map((lib) => {
+    lib.dependencies = lib.dependencies || {}
+    lib.components.map((cmp: ICompositedComponent) => {
       cmp.meta.syncProps = {}
       const { dataForm = {} } = cmp
       for (const prop in dataForm) {
@@ -130,28 +128,31 @@ export async function installMaterials(
           path: cmp.name + '/index',
         },
       }
-    })
 
-    materialsInfo[lib.name] = lib
+      lib.dependencies = { ...lib.dependencies, ...cmp.npmDependencies }
+    })
   })
 
-  compositedLibs.map((lib) => {
+  // #2 Generate composited libs
+  compositedLibs.map(async (lib) => {
     console.log('Generate composited library ' + lib.name)
-    return lib.components.map((component) => {
-      let cmp = component as ICompositedComponent
-      if (!usedComps[lib.name] || !usedComps[lib.name].has(cmp.name)) {
-        return
-      }
+    await writeLibCommonRes2file(
+      lib,
+      path.join(ctx.projDir, materialsDirName, lib.name, 'libCommonRes')
+    )
+    return lib.components.map((cmp: ICompositedComponent) => {
       weappsList.forEach((app) => {
-        generateCompositeComponent(cmp, lib.name, {
-          ...ctx,
-          rootPath: app.rootPath || '', // 主包是没有 rootPath 的
-        })
+        generateCompositeComponent(
+          cmp,
+          {
+            ...ctx,
+            rootPath: app.rootPath || '', // 主包是没有 rootPath 的
+          },
+          lib.compLibCommonResource
+        )
       })
     })
   })
-
-  return materialsInfo
 }
 
 // 递归查询复合组件所使用的组件
@@ -206,9 +207,10 @@ async function downloadMaterial(zipUrl: string, dstFolder: string) {
 
 async function generateCompositeComponent(
   compositedComp: ICompositedComponent,
-  materialName: string,
-  ctx: IBuildContext
+  ctx: IBuildContext,
+  compLibCommonResource?: ICompLibCommonResource
 ) {
+  const { materialName } = compositedComp
   const outDir = path.join(
     ctx.projDir,
     ctx.rootPath || '', // 混合模式下，可能会有 rootPath
@@ -226,6 +228,7 @@ async function generateCompositeComponent(
   const cmpContainer = Object.values(compositedComp.componentInstances)[0]
   const wxml = generateWxml(
     compositedComp.componentInstances,
+    'Component ' + materialName + ':' + compositedComp.name,
     wxmlDataPrefix,
     ctx,
     usingComponents,
@@ -233,8 +236,13 @@ async function generateCompositeComponent(
       if (cmp === cmpContainer) {
         // Set className & style passed from parent for root component
         const { attributes } = node
-        attributes[getClassAttrName(node.name)] +=
-          ' ' + getCompositedComponentClass(compositedComp) + ' {{className}}'
+        const classAttrName = getClassAttrName(node.name)
+        const oldClass = attributes[classAttrName]
+        attributes[classAttrName] =
+          getCompositedComponentClass(compositedComp) +
+          ' ' +
+          oldClass +
+          ' {{className}}'
         attributes.style += ';{{style}}'
       }
     }
@@ -281,7 +289,7 @@ async function generateCompositeComponent(
     'index.json': { usingComponents },
     'index.wxml': {
       // raw: JSON.stringify(page.componentInstances),
-      wrapperClass: getCompositedComponentClass(compositedComp),
+      // wrapperClass: getCompositedComponentClass(compositedComp),
       content: wxml,
     },
     'index.wxss': {},
@@ -293,11 +301,19 @@ async function generateCompositeComponent(
   compositedComp.lowCodes
     .filter((mod) => mod.name !== '____index____')
     .map((mod) => {
+      let themeCode
+      if (mod.type === 'style' && compLibCommonResource) {
+        themeCode = `
+         ${compLibCommonResource.theme.variable || ''}
+         ${compLibCommonResource.class || ''}
+         ${compLibCommonResource.theme.class || ''}
+      `
+      }
       return writeCode2file(
         mod,
         path.join(outDir, 'lowcode'),
         { comp: compositedComp },
-        '',
+        themeCode,
         ctx
       )
     })
@@ -318,11 +334,16 @@ export function getWxmlTag(
   nameMangler?: NameMangler
 ) {
   const { moduleName, name } = cmp
-  const cmpMeta = ctx.materialLibs[moduleName].components[name]
-  if (!cmpMeta.platforms) {
+  const cmpMeta = ctx.materialLibs
+    .find((lib) => lib.name === moduleName)
+    ?.components?.find((comp) => comp.name === name)?.meta || {
+    platforms: undefined,
+  }
+
+  if (!cmpMeta?.platforms) {
     return { tagName: name.toLocaleLowerCase() }
   }
-  let { tagName, path: compPath } = cmpMeta.platforms.mp || {}
+  let { tagName, path: compPath } = cmpMeta?.platforms?.mp || {}
   if (compPath) {
     // 小程序混合模式时，组件库会存在子包内
     const rootPath = ctx.rootPath || ''

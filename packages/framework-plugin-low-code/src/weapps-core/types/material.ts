@@ -1,16 +1,32 @@
 import { IWeAppComponentInstance } from './app'
 import { IWeAppCode } from './lowcode'
 
+export interface ICompLibCommonResource {
+  theme: {
+    variable: string
+    class: string
+  }
+  // 公共资源
+  class: string
+  const: IWeAppCode // 组件库公共变量
+  tools: IWeAppCode // 组件库公共方法
+  npm: { [key: string]: string } // 组件库公共npm依赖
+}
+
 // Material data structure in database
 export interface IMaterialItem {
+  compLibCommonResource: ICompLibCommonResource
   name: string
   version: string
   srcZipUrl: string
   mpPkgUrl: string // package url containing mp components
   actions: { name: string }[]
-  components: ({ name: string } | ICompositedComponent)[]
+  components: ICompositedComponent[]
   isComposite?: boolean
   // ToDo more props
+  // props specified in {materials-proj}/src/mp/meta.json
+  styles?: string[] // styles to import in the app.wxss
+  dependencies?: {} // npm deps of the lib
 
   //==========Composited compo==========
   componentInstances?: IWeAppComponentInstance[]
@@ -72,22 +88,6 @@ interface IPropSynConfig {
   valueFromEvent: string
   // to add mp form-field behavior, https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/behaviors.html#%E5%86%85%E7%BD%AE%20behaviors
   isFormField?: boolean
-}
-
-/**
- * Generated material lib meta file for mp
- *
- * Parsed materials info
- */
-export interface IMaterialLibMeta {
-  name: string
-  title: string
-  version: string
-  desc: string
-  styles: string[] // styles to import in the app.wxss
-  dependencies: {} // npm deps of the lib
-  isComposite: boolean
-  components: { [componentName: string]: IComponentMeta }
 }
 
 export const compositedComponentApi = 'this.$WEAPPS_COMP'

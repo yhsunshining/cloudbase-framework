@@ -47,7 +47,7 @@ import {
   IComponentInputProps,
   ISyncProp,
 } from '../../types/common'
-import { getYyptConfigInfo } from '../../util'
+import { getYyptConfigInfo, writeLibCommonRes2file } from '../../util'
 
 import {
   getDatasourceProfiles,
@@ -859,6 +859,25 @@ export async function writeLowCodeFilesForCompositeComp(
   console.log(chalk.blue.bold('Writing composite component lowcode files:'))
   await Promise.all(
     compositeGroups.map(async (gItem) => {
+      await writeLibCommonRes2file(
+        gItem,
+        path.join(
+          appBuildDir,
+          'src',
+          'libraries',
+          `${gItem.name}@${gItem.version}`,
+          'libCommonRes'
+        )
+      )
+      const compLibCommonResource = gItem.compLibCommonResource
+      let themeCode = ''
+      if (compLibCommonResource) {
+        themeCode = `
+          ${compLibCommonResource.theme.variable || ''}
+          ${compLibCommonResource.class || ''}
+          ${compLibCommonResource.theme.class || ''}
+        `
+      }
       return await Promise.all(
         gItem.components.map(async (component) => {
           let cItem = component as ICompositedComponent
@@ -874,7 +893,8 @@ export async function writeLowCodeFilesForCompositeComp(
                 cItem.name,
                 'lowcode'
               ),
-              cItem
+              cItem,
+              themeCode
             )
           )
         })
@@ -885,7 +905,8 @@ export async function writeLowCodeFilesForCompositeComp(
   async function writeCode2file(
     mod: IWeAppCode,
     lowcodeDir: string,
-    comp: ICompositedComponent
+    comp: ICompositedComponent,
+    themeCode?: string
   ) {
     const pageId = comp.name + '_' + comp.id
     const file = path.join(lowcodeDir, getCodeModuleFilePath(pageId, mod))
@@ -896,7 +917,7 @@ export async function writeLowCodeFilesForCompositeComp(
     if (mod.type === 'style') {
       codeContent = `.${getCompositedComponentClass(comp)} { ${mod.code} }` // pageId 作为组件样式的 scope
       try {
-        codeContent = await processLess(codeContent)
+        codeContent = await processLess(`${themeCode ? themeCode : ''}\n${codeContent}`)
       } catch (e) {
         console.error(`样式转换失败 [${pageId}] :`, e, codeContent)
       }

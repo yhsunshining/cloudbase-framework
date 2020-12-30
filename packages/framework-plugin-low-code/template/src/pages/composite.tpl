@@ -20,6 +20,9 @@ import handler$<%= handler.name %> from "./lowcode/handler/<%= handler.name %>.j
 import <%= compItem.var %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/components/<%= compItem.name %>";
 <%}) %>
 
+import * as constObj from '../../libCommonRes/const'
+import * as toolsObj from '../../libCommonRes/tools'
+
 import "./lowcode/style.less";
 
 const pluginInstances = [];
@@ -62,6 +65,7 @@ class CompositeCompWrapper extends React.Component {
     const dataBinds = <%= dataBinds %>
     const defaultProps = <%= JSON.stringify(defaultProps, null, 2) %>
     this.propsData = observable(Object.assign({}, defaultProps, this.props.data || {}))
+    this.$WEAPPS_COMP.lib = { const: constObj, tools: toolsObj }
     this.$WEAPPS_COMP.props = { ...this.props, events: this.events, data: this.propsData }
     this.state = this.$WEAPPS_COMP.state = observable(getStateFn.bind(this)())
     this.computed = this.$WEAPPS_COMP.computed = createComputed(computed, this)
@@ -103,6 +107,7 @@ class CompositeCompWrapper extends React.Component {
       widgets: compThis.widgets,
       node: compThis.node,
       handler: compThis.handler,
+      lib: { const: constObj, tools: toolsObj },
       get props() {
         return {...compThis.props, events: compThis.events, data: compThis.propsData }
       },

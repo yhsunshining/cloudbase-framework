@@ -1,9 +1,9 @@
 import { observable } from 'mobx'
-import { createEventHandlers, createComputed } from './util'
-import { createWidgets, mpCompToWidget } from './widget'
+import { createEventHandlers, createComputed ,deepEqual} from './util'
+import { createWidgets, mpCompToWidget ,disposeWidget} from './widget'
 import mergeRenderer from './merge-renderer'
 
-export function createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config) {
+export function createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config, libCommonRes) {
 
   return Component({
     options: {
@@ -46,23 +46,23 @@ export function createComponent(behaviors, properties, events, handler, dataBind
           }, {}),
           node: null,
         }  // The weapps API for component
+        this._pageActive = true
       },
       attached() {
         const owner = this.selectOwnerComponent()
         const weappInstance = this.getWeAppInst()
+        weappInstance.lib = libCommonRes
         weappInstance.node = mpCompToWidget(owner, this)
 
         // Mount more APIs
-        weappInstance.node.getDom = (fields) => {
-          return rootWigdget.getDom(fields)
-        }
+        this.mountBuiltinAPIs(weappInstance.node)
 
         weappInstance.node.getConfig = () => config
 
         weappInstance.state = observable(stateFn.call(this))  // May depend on this.props.data.xxx
         weappInstance.computed = createComputed(computedFuncs, this)
-        const widgets = createWidgets(widgetProps, dataBindsBindContext(dataBinds, this), weappInstance.widgets, this)
-        const rootWigdget = widgets[Object.keys(widgetProps).find(id => !widgetProps[id]._parentId)]
+        const { widgets, rootWidget: virtualRootWidget } = createWidgets(widgetProps, dataBindsBindContext(dataBinds, this), weappInstance.widgets, this)
+        this._virtualRootWidget = virtualRootWidget
 
         try {
           lifeCycle.onAttached && lifeCycle.onAttached.call(this)
@@ -70,12 +70,14 @@ export function createComponent(behaviors, properties, events, handler, dataBind
           console.error('Component lifecycle(attached) error', this.is, e)
         }
 
-        this.initMergeRenderer(widgets)
+        this._disposers = this.initMergeRenderer(widgets)
       },
       ready() {
         lifeCycle.onReady && lifeCycle.onReady.call(this)
       },
       detached() {
+        this._disposers.forEach(dispose => dispose())
+        disposeWidget(this._virtualRootWidget)
         lifeCycle.onDetached && lifeCycle.onDetached.call(this)
       }
     },
@@ -98,6 +100,14 @@ export function createComponent(behaviors, properties, events, handler, dataBind
       getWeAppInst() {
         return this.$WEAPPS_COMP
       },
+      mountBuiltinAPIs(widget) {
+        // Mount more APIs
+        widget.getDom = (fields) => {
+          return this._virtualRootWidget.children[0].getDom(fields)
+        }
+
+        widget.getConfig = () => config
+      }
     },
     observers: createObservers(Object.keys(properties))
   })
@@ -106,7 +116,12 @@ export function createComponent(behaviors, properties, events, handler, dataBind
 function createObservers(props) {
   return props.reduce((observers, prop) => {
     observers[prop] = function (newVal) {
-      this.getWeAppInst().props.data[prop] = newVal
+      const data = this.getWeAppInst().props.data
+      if (!deepEqual(data[prop], newVal)) {
+        data[prop] = newVal
+      } else {
+        // console.log('Same comp prop will not trigger observer', prop, newVal)
+      }
     }
     return observers
   }, {})

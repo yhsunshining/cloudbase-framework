@@ -10,7 +10,6 @@ import {
 import { js2xml } from 'xml-js'
 import {
   textContentPropName,
-  varSeparator,
   getClassAttrName,
   builtinWigetProps,
   builtinMpEvents,
@@ -23,44 +22,44 @@ import NameMangler from '../util/name-mangler'
 
 const error = chalk.redBright
 
-export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
-  if (bind.value == null) {
-    console.warn(error('Bad wxml attribute bind'), bind)
-  }
+// export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
+//   if (bind.value == null) {
+//     console.warn(error('Bad wxml attribute bind'), bind)
+//   }
 
-  let attrVal = ''
-  const { type, value = '' } = bind
-  if (type === PropBindType.state) {
-    const isGlobalSt = value.startsWith('global.')
-    const bindTarget = isGlobalSt
-      ? wxmlDataPrefix.appState
-      : wxmlDataPrefix.pageState
-    attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
-  } else if (type === PropBindType.forItem) {
-    attrVal = wxmlDataPrefix.forItem + value
-  } else if (type === PropBindType.expression) {
-    // FIXME using ast to replace code
-    attrVal = value
-      .replace(/\bapp.state./g, wxmlDataPrefix.appState + '.')
-      .replace(/\$page.state./g, wxmlDataPrefix.pageState + '.')
-      .replace(/\$comp.state./g, wxmlDataPrefix.pageState + '.')
-      .replace(/\bapp.computed./g, wxmlDataPrefix.appComputed + '.')
-      .replace(/\$page.computed./g, wxmlDataPrefix.pageComputed + '.')
-      .replace(/\$comp.computed./g, wxmlDataPrefix.pageComputed + '.')
-      .replace(/\$page.widgets./g, wxmlDataPrefix.widgetProp)
-      .replace(/\bforItems./g, wxmlDataPrefix.forItem)
-      .replace(/\$comp.props.data./g, '')
-  } else if (type === PropBindType.computed) {
-    const isGlobalSt = value.startsWith('global.')
-    const bindTarget = isGlobalSt
-      ? wxmlDataPrefix.appComputed
-      : wxmlDataPrefix.pageComputed
-    attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
-  } else if (type === PropBindType.prop) {
-    attrVal = value
-  }
-  return `{{${transpileJsExpr(attrVal)}}}`
-}
+//   let attrVal = ''
+//   const { type, value = '' } = bind
+//   if (type === PropBindType.state) {
+//     const isGlobalSt = value.startsWith('global.')
+//     const bindTarget = isGlobalSt
+//       ? wxmlDataPrefix.appState
+//       : wxmlDataPrefix.pageState
+//     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
+//   } else if (type === PropBindType.forItem) {
+//     attrVal = wxmlDataPrefix.forItem + value
+//   } else if (type === PropBindType.expression) {
+//     // FIXME using ast to replace code
+//     attrVal = value
+//       .replace(/\bapp.state./g, wxmlDataPrefix.appState + '.')
+//       .replace(/\$page.state./g, wxmlDataPrefix.pageState + '.')
+//       .replace(/\$comp.state./g, wxmlDataPrefix.pageState + '.')
+//       .replace(/\bapp.computed./g, wxmlDataPrefix.appComputed + '.')
+//       .replace(/\$page.computed./g, wxmlDataPrefix.pageComputed + '.')
+//       .replace(/\$comp.computed./g, wxmlDataPrefix.pageComputed + '.')
+//       .replace(/\$page.widgets./g, wxmlDataPrefix.widgetProp)
+//       .replace(/\bforItems./g, wxmlDataPrefix.forItem)
+//       .replace(/\$comp.props.data./g, '')
+//   } else if (type === PropBindType.computed) {
+//     const isGlobalSt = value.startsWith('global.')
+//     const bindTarget = isGlobalSt
+//       ? wxmlDataPrefix.appComputed
+//       : wxmlDataPrefix.pageComputed
+//     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
+//   } else if (type === PropBindType.prop) {
+//     attrVal = value
+//   }
+//   return `{{${transpileJsExpr(attrVal)}}}`
+// }
 
 interface INode {
   type: string
@@ -75,6 +74,7 @@ interface INode {
 
 export function generateWxml(
   widgets: { [key: string]: IWeAppComponentInstance },
+  docTag: string,
   wxmlDataPrefix,
   ctx: IBuildContext,
   usingComponents,
@@ -115,9 +115,27 @@ export function generateWxml(
         }
         continue
       }
-      const materialLib = ctx.materialLibs[xComponent.moduleName]
+      const componentKey = xComponent.moduleName + ':' + xComponent.name
+      const helpMsg = `Please check component(${id}) in component tree of ${docTag}.`
+
+      const materialLib = ctx.materialLibs.find(
+        (lib) => lib.name === xComponent.moduleName
+      )
       if (!materialLib) {
-        console.error('Component lib not found', xComponent)
+        console.error(
+          error(`Component lib(${xComponent.moduleName}) not found. ${helpMsg}`)
+        )
+        continue
+      }
+      const componentProto = materialLib.components.find(
+        (comp) => comp.name === xComponent.name
+      )
+      if (!componentProto) {
+        console.error(
+          error(
+            `Component(${xComponent.name}) not found in lib(${xComponent.moduleName}). ${helpMsg}`
+          )
+        )
         continue
       }
       const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler)
@@ -166,9 +184,7 @@ export function generateWxml(
         _order: xIndex || 0,
         _parent: parent,
       }
-      const { mustEmptyStyle } =
-        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] ||
-        {}
+      const { mustEmptyStyle } = componentProto.meta || {}
       if (mustEmptyStyle) {
         delete node.attributes.style
       }
@@ -190,7 +206,31 @@ export function generateWxml(
         node.attributes['wx:for-index'] = wxmlDataPrefix.forIndex + id
         node.attributes['wx:key'] = 'id'
       }
+      const compSchema = componentProto.dataForm
       for (const prop in data) {
+        if (compSchema) {
+          const fieldDef = compSchema[prop]
+          if (!fieldDef) {
+            console.log(
+              error(
+                `Prop(${prop}) does not exist on ${componentKey}. ${helpMsg}`
+              )
+            )
+            continue
+          }
+          if (fieldDef.readOnly) {
+            if (fieldDef.hasOwnProperty('default')) {
+              node.attributes[prop] = fieldDef.default
+            } else {
+              console.error(
+                error(
+                  `Readonly property(${prop}) of ${componentKey} must have a default value. ${helpMsg}`
+                )
+              )
+            }
+            continue
+          }
+        }
         xmlJsonSetCustomAttr(
           node,
           prop,
@@ -200,9 +240,7 @@ export function generateWxml(
       }
 
       // Event binding
-      const { inputProps, syncProps } =
-        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] ||
-        {}
+      const { inputProps, syncProps } = componentProto.meta || {}
       const syncConfigs = syncProps || inputProps || {}
       Object.entries(syncConfigs).map(([prop, config]) => {
         const configs = Array.isArray(config) ? config : [config]
@@ -221,6 +259,16 @@ export function generateWxml(
         ] = getMpEventHanlderName(id, evtName, modifiers)
       })
 
+      // 扩展组件配置
+      const compConfig = componentProto.compConfig
+      if (compConfig && compConfig.pluginConfig) {
+        if (compConfig.pluginConfig.attributes) {
+          Object.assign(node.attributes, compConfig.pluginConfig.attributes)
+        }
+        if (compConfig.pluginConfig.componentPath) {
+          usingComponents[tagName] = compConfig.pluginConfig.componentPath
+        }
+      }
       // find ancestor nodes with for lists to mount data-for-indexes
       /* let curNode = node
       const nodeIdsWithFor: string[] = []

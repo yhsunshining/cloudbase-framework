@@ -92,6 +92,7 @@ const options = {
     app: ['Google Chrome', '--incognito', '--other-flag'],
   },
   openPage: basename,
+  disableHostCheck: true
 }
 
 function startDevServer(conf) {

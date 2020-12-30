@@ -33,8 +33,6 @@ export function createPage(
     const result = { ...lifecycle }
     const nameMaps = [
       ['onReady', 'onPageReady'],
-      ['onHide', 'onPageHide'],
-      ['onUnload', 'onPageUnload'],
     ]
     nameMaps.forEach(e => {
       if (!result[e[0]] && result[e[1]]) {
@@ -46,20 +44,33 @@ export function createPage(
   }
 
   return Component({
+    _componentType: 'page',
     data: Object.keys(widgets).reduce((initData, id) => {
       initData[id] = resolveWidgetData(widgets[id])
       return initData
     }, {}),
     lifetimes: {
       attached() {
-        this.initMergeRenderer(widgets)
+        this._pageActive = true
+        this._disposers = this.initMergeRenderer(widgets)
       }
     },
+    pageLifetimes: {
+      // 组件所在页面的生命周期函数，定义下给运营平台上报用
+      show: function() { },
+      hide: function() { },
+    },
+
     methods: {
+      _pageActive: true,
       /** page lifecycles **/
       ...extractLifecyles(),
-      onLoad: function (options) {
+      ...evtHandlers,
+      ...mergeRenderer,
+      onLoad(options) {
         app.activePage = $page
+        this._pageActive = true
+
         let query = decodePageQuery(options || {})
         updateDatasetParams($page.id, query)
         // 页面创建时执行
@@ -69,15 +80,24 @@ export function createPage(
         const hook = lifecycle.onLoad || lifecycle.onPageLoad
         hook && hook.call(this, query)
       },
-      onShow: function () {
+      onUnload() {
+        this._disposers.forEach(dispose => dispose())
+
+        const hook = lifecycle.onUnload || lifecycle.onPageUnload
+        hook && hook.call(this)
+      },
+      onShow() {
         app.activePage = $page
+        this._pageActive = true
 
         const hook = lifecycle.onShow || lifecycle.onPageShow
         hook && hook.call(this)
       },
-
-      ...evtHandlers,
-      ...mergeRenderer,
+      onHide() {
+        const hook = lifecycle.onHide || lifecycle.onPageHide
+        hook && hook.call(this)
+        this._pageActive = false
+      },
       getWeAppInst: () => $page,
     },
   })

@@ -4,6 +4,9 @@ import { concatClassList, px2rpx } from '../../../common/style'
 import lifeCycle from './lowcode/lifecycle'
 import stateFn from './lowcode/state'
 import computedFuncs from './lowcode/computed'
+import * as constObj from '../libCommonRes/const'
+import * as toolsObj from '../libCommonRes/tools'
+
 <% handlers.forEach(h => {%>
 import _handler<%= h %> from './lowcode/handler/<%= h %>' <%}) %>
 
@@ -46,4 +49,4 @@ const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
 
 const config = <%= JSON.stringify(config || {})%>
 
-createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config)
+createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config, { const: constObj, tools: toolsObj })

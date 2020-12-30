@@ -116,7 +116,9 @@ export function createWidgetProps(
       // skip slot component
       return
     }
-    const materialLib = ctx.materialLibs[xComponent.moduleName]
+    const materialLib = ctx.materialLibs.find(
+      (lib) => lib.name === xComponent.moduleName
+    )
     if (!materialLib) {
       console.error('Component lib not found', xComponent)
       return
@@ -139,21 +141,28 @@ export function createEventHanlders(
   walkThroughWidgets(widgets, (id, widget, parentId) => {
     const { xComponent } = widget
     const xProps =
-      widget.xProps || ({} as Required<IWeAppComponentInstance>['xProps'])
+    widget.xProps || ({} as Required<IWeAppComponentInstance>['xProps'])
     if (!xComponent) {
       // skip slot component
       return
     }
-    const materialLib = ctx.materialLibs[xComponent.moduleName]
+    const materialLib = ctx.materialLibs.find(
+      (lib) => lib.name === xComponent.moduleName
+    )
     if (!materialLib) {
       console.error('Component lib not found', xComponent)
       return
     }
-    // eslint-disable-next-line prefer-const
+    const compProto = materialLib.components.find(
+      (comp) => comp.name === xComponent.name
+    )
+    if (!compProto) {
+      return
+    }
+
     const listeners = (xProps.listeners || []).slice()
     // Generate form input value change builtin handler
-    const { inputProps, syncProps } =
-      materialLib.components[xComponent.name] || {}
+    const { inputProps, syncProps } = compProto.meta || {}
     const syncConfigs = syncProps || inputProps || {}
     for (const valuProp in syncConfigs) {
       const config = syncConfigs[valuProp]
@@ -203,7 +212,9 @@ export function createDataBinds(
       // skip slot component
       return
     }
-    const materialLib = ctx.materialLibs[xComponent.moduleName]
+    const materialLib = ctx.materialLibs.find(
+      (lib) => lib.name === xComponent.moduleName
+    )
     if (!materialLib) {
       console.error('Component lib not found', xComponent)
       return
@@ -248,6 +259,7 @@ function setDataBind(target, prop: string, val: IDynamicValue) {
     if (jsExpr) {
       target[prop] = jsExpr
     }
+
     const propsKeepPropBindInJs = ['_waFor', '_waIf']
     if (
       val.type === PropBindType.prop &&

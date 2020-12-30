@@ -291,6 +291,27 @@ export default class wxReportSdk {
       };
       _this.originPage(page);
     };
+
+    Component = (component) => {
+      if (component._componentType === 'page') {
+        const _this = this
+        const _onShow = component.pageLifetimes.show || function() { }
+        const _onHide = component.pageLifetimes.hide || function() { }
+        let pageOnShowTime = 0
+        component.pageLifetimes.show = function() {
+          pageOnShowTime = Date.now()
+          if (_this.config.autoReportPV) {
+            _this.pagePV(_this.config.commonPageEId, { et: '1' })
+          }
+          return _onShow.apply(this, arguments)
+        }
+        component.pageLifetimes.hide = function() {
+          _this._wrapPagePV(pageOnShowTime)
+          return _onHide.apply(this, arguments)
+        }
+      }
+      _this.originComponent(component)
+    };
   }
 
   // 集中收集 logs 方法

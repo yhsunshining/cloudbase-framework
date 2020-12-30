@@ -45,7 +45,7 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
     merge(projConfig, projectConfigJson)
     merge(projConfig, {
       packOptions: {
-        ignore: Object.values(ctx.materialLibs)
+        ignore: ctx.materialLibs
           .filter((lib) => !lib.isComposite)
           .map((lib) => `materials/${lib.name}/meta.json`)
           .map((value) => ({ type: 'file', value })),

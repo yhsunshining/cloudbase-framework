@@ -27,10 +27,12 @@ export default function(originParams = {}) {
       res.header = res.headers
       delete res.headers
       originParams.success && originParams.success(res)
+      originParams.complete && originParams.complete(res)
       return res
     })
     .catch(err => {
       originParams.fail && originParams.fail(err)
+      originParams.complete && originParams.complete(res)
       return Promise.reject(err)
     })
 }
