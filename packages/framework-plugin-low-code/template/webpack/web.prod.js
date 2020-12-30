@@ -1,10 +1,10 @@
-const path = require('path');
-const webpack = require('webpack');
-const TerserPlugin = require('terser-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
-const themeVars = require('./themeVars');
+const path = require('path')
+const webpack = require('webpack')
+const TerserPlugin = require('terser-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin')
+const themeVars = require('./themeVars')
 
 module.exports = function (options) {
   const {
@@ -20,8 +20,8 @@ module.exports = function (options) {
       meta: {},
     },
     definePlugin = {},
-  } = options;
-  const isDevelopment = mode !== 'production';
+  } = options
+  const isDevelopment = mode !== 'production'
   let plugins = [
     new HtmlWebpackPlugin({
       template: htmlTemplatePath,
@@ -44,9 +44,9 @@ module.exports = function (options) {
       )
     ),
     new webpack.optimize.ModuleConcatenationPlugin(),
-  ];
+  ]
   if (isDevelopment) {
-    plugins.concat([new HardSourceWebpackPlugin()]);
+    plugins.concat([new HardSourceWebpackPlugin()])
   } else {
     plugins = plugins.concat([
       new webpack.HashedModuleIdsPlugin({
@@ -58,7 +58,7 @@ module.exports = function (options) {
         SSR: false,
         WEBPACK_ENV: 'production',
       }),
-    ]);
+    ])
   }
   return {
     context,
@@ -150,7 +150,7 @@ module.exports = function (options) {
                       // todo
                       selectorBlackList: ['.weui-picker__indicator'],
                     }),
-                  ];
+                  ]
                 },
               },
             },
@@ -232,19 +232,18 @@ module.exports = function (options) {
                 test: /[\\/]node_modules[\\/]/,
                 // cacheGroupKey here is `commons` as the key of the cacheGroup
                 name(module, chunks, cacheGroupKey) {
-                  const moduleFileName = module
-                    .identifier()
-                    .split('/')
-                    .reduceRight((item) => item);
+                  const { name: moduleFileName } = path
+                    .parse(module.identifier())
+                    .reduceRight((item) => item)
                   const allChunksNames = chunks
                     .map((item) => item.name)
-                    .join('~');
-                  return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
+                    .join('~')
+                  return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`
                 },
                 chunks: 'all',
               },
             },
           },
         },
-  };
-};
+  }
+}

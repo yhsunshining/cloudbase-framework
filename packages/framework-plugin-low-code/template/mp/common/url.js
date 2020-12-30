@@ -6,11 +6,12 @@ export function urlJoinParams(url, params) {
   const separate = url.indexOf('?') === -1 ? '?' : '&'
   const tempStr = Object.keys(params)
     .map(key => {
-      if (typeof params[key] === 'object') {
-        params[key] = JSON.stringify(params[key])
+      let value = params[key]
+      if (typeof value === 'object') {
+        value = JSON.stringify(value)
       }
-      if (params[key] !== undefined) {
-        return `${key}=${params[key]}`
+      if (value != undefined) {
+        return `${key}=${encodeURIComponent(value)}`
       }
       return ''
     })

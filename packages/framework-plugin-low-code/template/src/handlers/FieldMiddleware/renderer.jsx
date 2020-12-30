@@ -1,19 +1,20 @@
 import * as React from 'react'
-import { useContext, useCallback, createContext } from 'react'
+import { useContext, useCallback, createContext, useRef } from 'react'
 import { observer } from 'mobx-react-lite'
-import { set, cloneDeep, get } from 'lodash'
 import { emitEvent } from '../actionHandler/utils'
 import { translateStyleToRem, checkVisible } from '@govcloud/weapps-core'
+import { get, set } from 'lodash'
 import { $page } from '../../app/global-api'
+import { getDom } from '../utils/widgets'
 
 export const ForContext = createContext({})
 
 export const CompRenderer = observer(function (props) {
   const { id: compId, xProps, virtualFields, slots = {}, codeContext } = props
 
-  const isComposite = !!props.codeContext
+  const isInComposite = !!props.codeContext
   // 判断 widgets 是从 page 来的，还是组件来的
-  const widgetsData = !isComposite
+  const widgetsData = !isInComposite
     ? $page.widgets[compId]
     : codeContext.$WEAPPS_COMP.widgets[compId]
 
@@ -78,6 +79,12 @@ export const CompRenderer = observer(function (props) {
       })
       const emitWithForItems = (trigger, evt) => emit(trigger, evt, forItems)
       delete forItemData.style
+
+      // 获取当前元素的 ref
+      const currentWidget = Array.isArray(widgetsData)
+        ? get(widgetsData, forItemsIndexes)
+        : widgetsData
+      const domRef = setGetDomApi(currentWidget, isInComposite)
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
@@ -88,11 +95,8 @@ export const CompRenderer = observer(function (props) {
             emit={emitWithForItems}
             compositeParent={codeContext}
             forIndexes={forItemsIndexes}
-            $node={
-              Array.isArray(widgetsData)
-                ? get(widgetsData, forItemsIndexes)
-                : widgetsData
-            }
+            $node={currentWidget}
+            domRef={domRef}
           >
             {props.children}
           </Field>
@@ -122,6 +126,13 @@ export const CompRenderer = observer(function (props) {
 
   // 修正 forIndexes
   const forIndexes = getForIndexes(parentForItems, widgetsData)
+
+  // 获取 Element Ref
+  const currentWidget = Array.isArray(widgetsData)
+    ? get(widgetsData, forIndexes)
+    : widgetsData
+  const domRef = setGetDomApi(currentWidget, props)
+
   return (
     <Field
       data={fieldData}
@@ -131,9 +142,8 @@ export const CompRenderer = observer(function (props) {
       emit={emitWithForItems}
       compositeParent={codeContext}
       forIndexes={forIndexes}
-      $node={
-        Array.isArray(widgetsData) ? get(widgetsData, forIndexes) : widgetsData
-      }
+      $node={currentWidget}
+      domRef={domRef}
     >
       {props.children}
     </Field>
@@ -156,7 +166,7 @@ export const CompRenderer = observer(function (props) {
     const bindStyle = fieldData.style || {}
     // 复合组件第一层需要将最外层样式 style 挂到节点上
     let cssStyle = commonStyle
-    if (isComposite && wData && !wData.parent) {
+    if (isInComposite && wData && !wData.parent) {
       cssStyle = {
         ...cssStyle,
         ...(codeContext.$WEAPPS_COMP.props?.style || {}),
@@ -212,4 +222,33 @@ function getDeepArrLen(arr, len = 0) {
   } else {
     return len
   }
+}
+
+function setGetDomApi(currentWidget, props) {
+  if (!currentWidget) return React.createRef()
+  const isComposite = !currentWidget.widgetType.startsWith('gsd-h5-react')
+  const isInComposite = !!props.codeContext
+
+  // 如果当前是复合组件，不做 getDom 的挂载
+  if (!isComposite) {
+    if (!currentWidget.domRef) {
+      currentWidget.domRef = React.createRef()
+    }
+    if (!currentWidget.getDom) {
+      currentWidget.getDom = (options) =>
+        getDom(currentWidget.domRef.current, options)
+    }
+
+    if (
+      isInComposite && // 当前在复合组件内
+      !currentWidget.parent && // 当前节点为复合组件的根节点
+      props.codeContext.node && // 复合组件的 node 已经创建
+      !props.codeContext.node.getDom // 复合组件的 node 未挂载 getDom 方法
+    ) {
+      props.codeContext.node.domRef = currentWidget.domRef
+      props.codeContext.node.getDom = currentWidget.getDom
+    }
+  }
+
+  return currentWidget.domRef
 }

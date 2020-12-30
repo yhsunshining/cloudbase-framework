@@ -31,27 +31,25 @@ export function createEventHandlers(evtListeners) {
     evtHandlers[name] = function (event) {
       const self = this
       // The page event handler
-      const forItems = findForItemsOfWidget(mpCompToWidget(self, event.currentTarget))
+      const { lists, itemsById} = findForItemsOfWidget(mpCompToWidget(self, event.currentTarget)) || {}
       listeners.forEach(l => {
         let { data = {}, boundData = {} } = l
         data = { ...data }
         for (const k in boundData) {
-          data[k] = boundData[k](forItems)
+          data[k] = boundData[k](lists, itemsById)
         }
-        l.handler.call(self, { event, forItems, data })
+        l.handler.call(self, { event, lists, forItems: itemsById, data })
       })
     }
   }
   return evtHandlers
 }
 
-const varSeparator = '.'
-
-export function getDeep(target, key) {
+export function getDeep(target, key, keySeparator = '.') {
   if (key == null) {
     return target
   }
-  const keys = (key + '').split(varSeparator)
+  const keys = (key + '').split(keySeparator)
   let prop = target[keys[0]]
   for (let i = 1; i < keys.length; i++) {
     prop = prop[keys[i]]
@@ -74,4 +72,23 @@ export function touchObj(obj) {
   } else if (obj) {
     Object.keys(obj).forEach(key => touchObj(obj[key]))
   }
+}
+
+export function throttle(fn, limit) {
+  let lastExecTime = 0
+  let timer = null
+  const throttled = function () {
+    const idledDuration = Date.now() - lastExecTime
+    if (idledDuration >= limit) {
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
+      lastExecTime = Date.now()
+      fn()
+    } else if (!timer) {
+     timer = setTimeout(throttled, limit - idledDuration)
+    }
+  }
+  return throttled
 }

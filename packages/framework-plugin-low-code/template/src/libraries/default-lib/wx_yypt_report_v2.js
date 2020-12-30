@@ -230,7 +230,7 @@ class wxReportSdk {
           let src, col, line;
           let errs = err.match(/\(.+?\)/);
           if (errs && errs.length) errs = errs[0];
-          errs = errs.replace(/\w.+js/g, $1 => {
+          errs = (errs || '').replace(/\w.+js/g, $1 => {
             src = $1;
             return '';
           });

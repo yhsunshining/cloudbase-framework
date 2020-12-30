@@ -9,19 +9,27 @@ import {
   compositedComponentApi,
 } from '../../weapps-core'
 import { processLessToRpx } from '../util/style'
+import { IBuildContext } from './BuildContext'
+
 export async function writeCode2file(
   mod: IWeAppCode,
   lowcodeRootDir: string,
   opts: { pageId?: string; appDir?: string; comp?: ICompositedComponent } = {},
-  themeCode?: ''
+  themeCode?: '',
+  ctx?: IBuildContext
 ) {
   const { pageId = 'global', appDir, comp } = opts
-  const file = path.join(lowcodeRootDir, getCodeModuleFilePath(pageId, mod, { style: '.wxss' }))
+  const file = path.join(
+    lowcodeRootDir,
+    getCodeModuleFilePath(pageId, mod, { style: '.wxss' })
+  )
   let code = mod.code
   if (mod.type !== 'style' && mod.type !== 'theme') {
     if (appDir) {
       // Generate app lowcode
-      const baseDir = path.relative(path.dirname(file), appDir).replace(/\\/g, '/')
+      const baseDir = path
+        .relative(path.dirname(file), appDir)
+        .replace(/\\/g, '/')
       let weappsApiPrefix = `import { app, process } from '${baseDir}/app/weapps-api'` // windows compatibility
       if (pageId !== 'global') {
         weappsApiPrefix += `\nimport { $page } from '${baseDir}/pages/${pageId}/api'`
@@ -33,7 +41,10 @@ export async function writeCode2file(
         mod.type === 'handler-fn' ? '../' : ''
       }../../../../common/process'\nimport app from '${
         mod.type === 'handler-fn' ? '../' : ''
-      }../../../../common/weapp-sdk'\n${code.replace(/\$comp/g, compositedComponentApi)}`
+      }../../../../common/weapp-sdk'\n${code.replace(
+        /\$comp/g,
+        compositedComponentApi
+      )}`
     }
   } else {
     if (comp) {
@@ -47,6 +58,13 @@ export async function writeCode2file(
     }
     console.log(chalk.green(file))
   }
+
+  // 混合模式下，引用公共路径要多增加一层，并加多一层命名
+  if (ctx?.isMixMode && ctx?.rootPath) {
+    code = code.replace(/..\/..\/..\/common\//g, '../../../../common/')
+    code = code.replace(/..\/..\/..\/app\//g, '../../../../app/')
+  }
+
   await fs.ensureFile(file)
   await fs.writeFile(file, code)
 }

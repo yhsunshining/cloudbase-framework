@@ -5,12 +5,11 @@ import {
   toCssStyle,
   compositedComponentApi,
   ActionType,
-  IEventModifiers,
 } from '../../weapps-core'
 import { walkThroughWidgets } from '../util/weapp'
 import { IBuildContext } from './BuildContext'
 import { getMpEventHanlderName } from './wxml'
-import { builtinWigetProps, builtinMpEvents } from '../config/mp'
+import { builtinWigetProps } from '../config/mp'
 
 export function extractWidgetProps(
   props: Required<IWeAppComponentInstance>['xProps']
@@ -125,6 +124,7 @@ export function createWidgetProps(
 
     widgetProps[id] = extractWidgetProps(xProps as any)
     widgetProps[id]._parentId = parentId
+    widgetProps[id]._order = widget.xIndex
     widgetProps[id].widgetType = xComponent.moduleName + ':' + xComponent.name
   })
   return widgetProps
@@ -152,21 +152,26 @@ export function createEventHanlders(
     // eslint-disable-next-line prefer-const
     const listeners = (xProps.listeners || []).slice()
     // Generate form input value change builtin handler
-    const { inputProps = {} } = materialLib.components[xComponent.name] || {}
-    for (const valuProp in inputProps) {
-      const { changeEvent, valueFromEvent = 'event.detail.value' } = inputProps[
-        valuProp
-      ]
-      listeners.unshift({
-        trigger: changeEvent,
-        handler: {
-          moduleName: '',
-          // name: `({ event }) => { $page.widgets.${id}.${valuProp} = ${valueFromEvent} }`,
-          name: `function({ event }) { getDeep(${componentApi}.widgets.${id}, event.target.dataset.forIndexes).${valuProp} = ${valueFromEvent} }`,
-        },
-        type: ActionType.Inline,
-        data: {},
-      })
+    const { inputProps, syncProps } =
+      materialLib.components[xComponent.name] || {}
+    const syncConfigs = syncProps || inputProps || {}
+    for (const valuProp in syncConfigs) {
+      const config = syncConfigs[valuProp]
+      const configs = Array.isArray(config) ? config : [config]
+      configs.forEach(
+        ({ changeEvent, valueFromEvent = 'event.detail.value' }) => {
+          listeners.unshift({
+            trigger: changeEvent,
+            handler: {
+              moduleName: '',
+              // name: `({ event }) => { $page.widgets.${id}.${valuProp} = ${valueFromEvent} }`,
+              name: `function({ event }) { mpCompToWidget(this, event.currentTarget).${valuProp} = ${valueFromEvent} }`,
+            },
+            type: ActionType.Inline,
+            data: {},
+          })
+        }
+      )
     }
 
     listeners.forEach((l) => {
@@ -242,6 +247,14 @@ function setDataBind(target, prop: string, val: IDynamicValue) {
     const jsExpr = generateDataBind(val)
     if (jsExpr) {
       target[prop] = jsExpr
+    }
+    const propsKeepPropBindInJs = ['_waFor', '_waIf']
+    if (
+      val.type === PropBindType.prop &&
+      propsKeepPropBindInJs.indexOf(prop) === -1
+    ) {
+      // Do not generate propBind since it's bound directly in wxml except for _waFor
+      delete target[prop]
     }
   }
 }

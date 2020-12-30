@@ -14,10 +14,12 @@ import {
   getClassAttrName,
   builtinWigetProps,
   builtinMpEvents,
+  builtinMpTags,
 } from '../config/mp'
 import { IBuildContext } from './BuildContext'
 import { getWxmlTag } from './materials'
 import { walkThroughWidgets } from '../util/weapp'
+import NameMangler from '../util/name-mangler'
 
 const error = chalk.redBright
 
@@ -30,7 +32,9 @@ export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
   const { type, value = '' } = bind
   if (type === PropBindType.state) {
     const isGlobalSt = value.startsWith('global.')
-    const bindTarget = isGlobalSt ? wxmlDataPrefix.appState : wxmlDataPrefix.pageState
+    const bindTarget = isGlobalSt
+      ? wxmlDataPrefix.appState
+      : wxmlDataPrefix.pageState
     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
   } else if (type === PropBindType.forItem) {
     attrVal = wxmlDataPrefix.forItem + value
@@ -48,7 +52,9 @@ export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
       .replace(/\$comp.props.data./g, '')
   } else if (type === PropBindType.computed) {
     const isGlobalSt = value.startsWith('global.')
-    const bindTarget = isGlobalSt ? wxmlDataPrefix.appComputed : wxmlDataPrefix.pageComputed
+    const bindTarget = isGlobalSt
+      ? wxmlDataPrefix.appComputed
+      : wxmlDataPrefix.pageComputed
     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
   } else if (type === PropBindType.prop) {
     attrVal = value
@@ -57,14 +63,14 @@ export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
 }
 
 interface INode {
-  type: string,
-  name: string,
+  type: string
+  name: string
   attributes: {
     [key: string]: any
-  },
-  elements: INode[],
-  _order: number,
-  _parent: INode | null,
+  }
+  elements: INode[]
+  _order: number
+  _parent: INode | null
 }
 
 export function generateWxml(
@@ -74,6 +80,9 @@ export function generateWxml(
   usingComponents,
   nodeTransform?: (cmp: IWeAppComponentInstance, node) => void
 ) {
+  const nameMangler = ctx.isProduction
+    ? new NameMangler({ blackList: builtinMpTags })
+    : undefined
   const xmlJson = { elements: createXml(widgets) }
 
   function createXml(
@@ -92,8 +101,12 @@ export function generateWxml(
       }
       if (!xComponent) {
         // slot prop
-        const slotNodes = createXml(properties as Required<IWeAppComponentInstance>['properties'], parent, parentForNodes)
-        slotNodes.forEach(node => {
+        const slotNodes = createXml(
+          properties as Required<IWeAppComponentInstance>['properties'],
+          parent,
+          parentForNodes
+        )
+        slotNodes.forEach((node) => {
           node.attributes.slot = id
           parent?.elements?.push(node)
         })
@@ -107,7 +120,7 @@ export function generateWxml(
         console.error('Component lib not found', xComponent)
         continue
       }
-      const { tagName, path } = getWxmlTag(xComponent, ctx.materialLibs)
+      const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler)
       if (path) {
         usingComponents[tagName] = path
       }
@@ -119,7 +132,7 @@ export function generateWxml(
           attributes: { name: data0.name.value },
           elements: [],
           _order: xIndex || 0,
-          _parent: null
+          _parent: null,
         })
         continue
       }
@@ -129,14 +142,23 @@ export function generateWxml(
       }
 
       const attrPrefix = `${wxmlDataPrefix.widgetProp}${id}${curForNodes
-        .map(forNodeId => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
+        .map((forNodeId) => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
         .join('')}.`
+
+      const idAttr =
+        curForNodes.length < 1
+          ? id
+          : `{{'${id}'${curForNodes
+              .map(
+                (forNodeId) => `+ '-' + ${wxmlDataPrefix.forIndex}${forNodeId}`
+              )
+              .join('')}}}`
 
       const node: INode = {
         type: 'element',
         name: tagName,
         attributes: {
-          id,
+          id: idAttr,
           style: `{{${attrPrefix}style}}`,
           [getClassAttrName(tagName)]: `{{${attrPrefix}className}}`,
         },
@@ -145,47 +167,62 @@ export function generateWxml(
         _parent: parent,
       }
       const { mustEmptyStyle } =
-        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] || {}
+        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] ||
+        {}
       if (mustEmptyStyle) {
         delete node.attributes.style
       }
 
       if (directives.waIf && directives.waIf.value) {
-        node.attributes['wx:if'] = `{{${attrPrefix}_waIf}}`
+        node.attributes['wx:if'] = getAttrBind(
+          directives.waIf,
+          `${attrPrefix}_waIf`
+        )
       }
 
       if (directives.waFor && directives.waFor.value) {
-        node.attributes['wx:for'] = `{{${wxmlDataPrefix.widgetProp}${id}${parentForNodes
-          .map(forNodeId => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
-          .join('')}}}`
+        node.attributes['wx:for'] = getAttrBind(
+          directives.waFor,
+          `${wxmlDataPrefix.widgetProp}${id}${parentForNodes
+            .map((forNodeId) => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
+            .join('')}`
+        )
         node.attributes['wx:for-index'] = wxmlDataPrefix.forIndex + id
-        // node.attributes['wx:key'] = 'id'
+        node.attributes['wx:key'] = 'id'
       }
       for (const prop in data) {
-        const { type, value } = data[prop]
-        const attrVal = type === PropBindType.prop ? value : `${attrPrefix}${prop}`
-        xmlJsonSetCustomAttr(node, prop, `{{${attrVal}}}`)
+        xmlJsonSetCustomAttr(
+          node,
+          prop,
+          getAttrBind(data[prop], `${attrPrefix}${prop}`),
+          xComponent
+        )
       }
 
       // Event binding
-      const { inputProps } =
-        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] || {}
-      Object.entries(inputProps || {}).map(([prop, config]) => {
-        const evtName = config.changeEvent
-        node.attributes[`bind:${evtName}`] = getMpEventHanlderName(id, evtName)
+      const { inputProps, syncProps } =
+        ctx.materialLibs[xComponent.moduleName].components[xComponent.name] ||
+        {}
+      const syncConfigs = syncProps || inputProps || {}
+      Object.entries(syncConfigs).map(([prop, config]) => {
+        const configs = Array.isArray(config) ? config : [config]
+        configs.forEach(({ changeEvent: evtName }) => {
+          node.attributes[`bind:${evtName}`] = getMpEventHanlderName(
+            id,
+            evtName
+          )
+        })
       })
-      listeners.forEach(l => {
+      listeners.forEach((l) => {
         const evtName = getMpEventName(l.trigger)
         const modifiers = l
-        node.attributes[getMpEventAttr(evtName, modifiers)] = getMpEventHanlderName(
-          id,
-          evtName,
-          modifiers
-        )
+        node.attributes[
+          getMpEventAttr(evtName, modifiers)
+        ] = getMpEventHanlderName(id, evtName, modifiers)
       })
 
       // find ancestor nodes with for lists to mount data-for-indexes
-      let curNode = node
+      /* let curNode = node
       const nodeIdsWithFor: string[] = []
       while (curNode) {
         if (curNode.attributes['wx:for']) {
@@ -196,10 +233,16 @@ export function generateWxml(
       if (nodeIdsWithFor.length) {
         node.attributes['data-for-ids'] = nodeIdsWithFor.join(varSeparator)
         node.attributes['data-for-indexes'] = nodeIdsWithFor
-          .map(id => `{{${wxmlDataPrefix.forIndex}${id}}}`)
+          .map((id) => `{{${wxmlDataPrefix.forIndex}${id}}}`)
           .join(varSeparator)
-      }
-      node.elements = node.elements.concat(createXml(properties as Required<IWeAppComponentInstance>['properties'], node, curForNodes))
+      }*/
+      node.elements = node.elements.concat(
+        createXml(
+          properties as Required<IWeAppComponentInstance>['properties'],
+          node,
+          curForNodes
+        )
+      )
       nodeTransform && nodeTransform(widgets[id], node)
       elements.push(node)
     }
@@ -217,10 +260,11 @@ export function generateWxml(
   })
 }
 
-function xmlJsonSetCustomAttr(node, prop: string, value: string) {
+function xmlJsonSetCustomAttr(node, prop: string, value: string, comp) {
   if (builtinWigetProps.indexOf(prop) > -1) {
     console.error(
-      error('Builtin prop ' + prop + ' is not allowed for component ' + node.attributes.id)
+      error('Builtin prop(' + prop + ') is not allowed for custom component'),
+      comp
     )
     return
   }
@@ -267,9 +311,9 @@ export function getMpEventHanlderName(
   if (builtinMpEvents.indexOf(evtName) === -1) {
     modifier = {}
   }
-  return `on${widgetId}$${getMpEventName(evtName)}${modifier.isCapturePhase ? '$cap' : ''}${
-    modifier.noPropagation ? '$cat' : ''
-    }`
+  return `on${widgetId}$${getMpEventName(evtName)}${
+    modifier.isCapturePhase ? '$cap' : ''
+  }${modifier.noPropagation ? '$cat' : ''}`
 }
 
 /* onid3click,  */
@@ -297,4 +341,10 @@ export function getUsedComponents(
     usedCmps[moduleName].add(name)
   })
   return usedCmps
+}
+
+function getAttrBind(dVale: IDynamicValue, widgetBind: string) {
+  const { type, value } = dVale
+  const attrVal = type === PropBindType.prop ? value : widgetBind
+  return `{{${attrVal}}}`
 }

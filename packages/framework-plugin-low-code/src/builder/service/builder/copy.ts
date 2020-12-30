@@ -20,7 +20,10 @@ import {
   getOriginComponentAndActionList,
 } from './generate'
 
-export async function copyEntryFile(appBuildDir: string, appContent: IWebRuntimeAppData) {
+export async function copyEntryFile(
+  appBuildDir: string,
+  appContent: IWebRuntimeAppData
+) {
   const entryFilePath = path.resolve(appTemplateDir, './src/index.jsx')
   const content = await fs.readFile(entryFilePath)
   await fs.writeFile(
@@ -47,10 +50,17 @@ export async function copyMaterialLibraries(
       let targetDir = path.join(materialsDir, materialNameVersion, 'src')
       // 当前本地目录是素材库的时候，直接用本地的
       if (localPkg && localPkg.name === name && localPkg.version === version) {
-        console.log('当前本地目录是素材库的时候，直接用本地的', materialNameVersion)
+        console.log(
+          '当前本地目录是素材库的时候，直接用本地的',
+          materialNameVersion
+        )
         targetDir = path.join(process.cwd(), 'src')
       }
-      const librariesDir = path.join(appBuildDir, 'src/libraries', materialNameVersion)
+      const librariesDir = path.join(
+        appBuildDir,
+        'src/libraries',
+        materialNameVersion
+      )
       await fs.copy(targetDir, librariesDir)
     })
   )
@@ -65,17 +75,27 @@ export async function genCompositeComponentLibraries(
   await Promise.all(
     dependencies.map(async ({ name, version, components }) => {
       const materialNameVersion = `${name}@${version}`
-      const librariesDir = path.join(appBuildDir, 'src/libraries', materialNameVersion)
+      const librariesDir = path.join(
+        appBuildDir,
+        'src/libraries',
+        materialNameVersion
+      )
       await Promise.all(
         components.map(async (component) => {
           let compItem = component as ICompositedComponent
-          const wrapperClass = getCompositedComponentClass(compItem as ICompositedComponent)
+          const wrapperClass = getCompositedComponentClass(
+            compItem as ICompositedComponent
+          )
           const componentSchemaJson = {
             type: 'object',
             // @ts-ignore
             properties: readCmpInstances(compItem.componentInstances),
           }
-          const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
+          const {
+            widgets,
+            dataBinds,
+            componentSchema,
+          } = getComponentSchemaString(
             componentSchemaJson,
             true,
             componentsInputProps,
@@ -90,18 +110,23 @@ export async function genCompositeComponentLibraries(
               properties: compItem.dataForm || {},
             }),
             compConfig: compItem.compConfig || {},
-            emitEvents: JSON.stringify(compItem.emitEvents.map(evt => evt.eventName)),
+            emitEvents: JSON.stringify(
+              compItem.emitEvents.map((evt) => evt.eventName)
+            ),
             // @ts-ignore
             handlersImports: compItem.lowCodes.filter(
-              codeItem => codeItem.type === 'handler-fn' && codeItem.name !== '____index____'
+              (codeItem) =>
+                codeItem.type === 'handler-fn' &&
+                codeItem.name !== '____index____'
             ),
             // @ts-ignore
             useComponents: (function () {
               const list: {
-                moduleName,
-                name,
-                key,
-                var, version
+                moduleName
+                name
+                key
+                var
+                version
               }[] = []
               // @ts-ignore
               JSON.stringify(compItem.componentInstances, (key, value) => {
@@ -126,7 +151,10 @@ export async function genCompositeComponentLibraries(
             pageListenerInstances: getListenersString(compItem.listeners, true),
           }
 
-          const dest = path.resolve(librariesDir, `./components/${compItem.name}/index.jsx`)
+          const dest = path.resolve(
+            librariesDir,
+            `./components/${compItem.name}/index.jsx`
+          )
           const template = await fs.readFile(
             path.resolve(appTemplateDir, './src/pages/composite.tpl'),
             {

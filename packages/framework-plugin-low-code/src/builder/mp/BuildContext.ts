@@ -9,4 +9,6 @@ export interface IBuildContext {
   projDir: string
   materialLibs: IMaterialLibs
   isProduction: boolean
+  isMixMode: boolean
+  rootPath?: string
 }

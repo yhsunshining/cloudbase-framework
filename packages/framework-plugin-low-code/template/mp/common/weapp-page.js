@@ -1,7 +1,9 @@
-import { observable, autorun } from 'mobx'
-import { createComputed, createEventHandlers, touchObj } from './util'
-import { resolveWidgetData, createWidgets } from './widget'
+import { observable } from 'mobx'
+import { createComputed, createEventHandlers } from './util'
+import { createWidgets, resolveWidgetData } from './widget'
+import mergeRenderer from './merge-renderer'
 import { createDataVar, buildDataVarFetchFn, createDataset, updateDatasetParams, createStateDatasrouceVar } from '../datasources/index'
+
 
 
 export function createPage(
@@ -25,33 +27,7 @@ export function createPage(
   createWidgets(widgetProps, dataBinds, widgets)
   let fetchDataVar = buildDataVarFetchFn($page.id) || function() {}
 
-  // page data
-  const dataFactory = {
-    /* <%= dataPropNames.pageState %>: () => pageState,
-    <%= dataPropNames.appState %>: () => app.state,
-    <%= dataPropNames.pageComputed %>: () => pageComputed,
-    <%= dataPropNames.appComputed %>: () => app.computed,
-    */
-  }
-
-  for (const id in widgets) {
-    const props = widgets[id]
-    dataFactory['<%= dataPropNames.widgetProp %>' + id] = () => resolveWidgetData(props)
-  }
-
   const evtHandlers = createEventHandlers(evtListeners)
-
-  function createInitData() {
-    const data = {}
-    for (const k in dataFactory) {
-      try {
-        data[k] = dataFactory[k]()
-      } catch (e) {
-        console.warn(`Create init data(${k}) error:`, e)
-      }
-    }
-    return data
-  }
 
   function extractLifecyles() {
     const result = { ...lifecycle }
@@ -69,59 +45,47 @@ export function createPage(
     return result
   }
 
-  return {
-    ...extractLifecyles(),
-    data: createInitData(),
-    mobxDisposers: {}, // ToDo dispose me
-    /** lifecycles **/
-    onLoad: function (options) {
-      app.activePage = $page
-      this.createReactiveState()
-
-      updateDatasetParams($page.id, options || {})
-
-      // 页面创建时执行
-      const hook = lifecycle.onLoad || lifecycle.onPageLoad
-      fetchDataVar()
-      createStateDatasrouceVar($page.id, {app, $page})
-
-      hook && hook.call(this, options)
-    },
-    onShow: function () {
-      app.activePage = $page
-
-      // 页面创建时执行
-      const hook = lifecycle.onShow || lifecycle.onPageShow
-      hook && hook.call(this)
-    },
-
-    ...evtHandlers,
-
-    createReactiveState() {
-      for (const k in dataFactory) {
-        autorun(r => {
-          this.requestRender({ [k]: dataFactory[k]() })
-        })
+  return Component({
+    data: Object.keys(widgets).reduce((initData, id) => {
+      initData[id] = resolveWidgetData(widgets[id])
+      return initData
+    }, {}),
+    lifetimes: {
+      attached() {
+        this.initMergeRenderer(widgets)
       }
     },
+    methods: {
+      /** page lifecycles **/
+      ...extractLifecyles(),
+      onLoad: function (options) {
+        app.activePage = $page
+        let query = decodePageQuery(options || {})
+        updateDatasetParams($page.id, query)
+        // 页面创建时执行
+        fetchDataVar()
+        createStateDatasrouceVar($page.id, {app, $page})
 
-    // setData merging
-    pendingData: null,
-    requestRender(data) {
-      if (!this.pendingData) {
-        this.pendingData = {}
-        wx.nextTick(() => {
-          const label = 'Set data ' + Object.keys(this.pendingData).join(',')
-            <% if (debug) {%> console.time(label) <%} %>
-              this.setData(this.pendingData, () => {
-            <% if (debug) {%> console.timeEnd(label) <%} %>
-          })
-          this.pendingData = null
-        })
-      }
-      touchObj(data)  // Touch all props to monitor data deeply, FIXME
-      Object.assign(this.pendingData, data)
+        const hook = lifecycle.onLoad || lifecycle.onPageLoad
+        hook && hook.call(this, query)
+      },
+      onShow: function () {
+        app.activePage = $page
+
+        const hook = lifecycle.onShow || lifecycle.onPageShow
+        hook && hook.call(this)
+      },
+
+      ...evtHandlers,
+      ...mergeRenderer,
+      getWeAppInst: () => $page,
     },
-    getWeAppInst: () => $page,
-  }
+  })
+}
+
+function decodePageQuery(query) {
+  return Object.keys(query).reduce((decoded, key) => {
+    decoded[key] = decodeURIComponent(query[key])
+    return decoded
+  }, {})
 }

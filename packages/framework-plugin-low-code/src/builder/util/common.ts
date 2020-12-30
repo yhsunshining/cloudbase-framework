@@ -127,7 +127,7 @@ export function removeRequireUncached(path = '') {
 
 
 export async function getInputProps(appBuildDir: string, dependencies: IMaterialItem[]) {
-  const inputProps = {}
+  const outputObj = {}
   await Promise.all(
     dependencies.map(async ({ name: materialName, version, components, isComposite }) => {
       if (isComposite) {
@@ -135,11 +135,12 @@ export async function getInputProps(appBuildDir: string, dependencies: IMaterial
           let compItem = component as ICompositedComponent
           const sourceKey = `${materialName}:${compItem.name}`
           Object.keys(compItem.dataForm || {}).forEach(key => {
-            const inputProp = compItem.dataForm[key]?.inputProp
-            if (inputProp) {
-              inputProps[sourceKey] = {
-                [key]: inputProp,
-                ...(inputProps[sourceKey] || {}),
+            const inputProps =
+              compItem.dataForm[key]?.inputProp || compItem.dataForm[key]?.syncProps
+            if (inputProps) {
+              outputObj[sourceKey] = {
+                [key]: inputProps,
+                ...(outputObj[sourceKey] || {}),
               }
             }
           })
@@ -154,13 +155,17 @@ export async function getInputProps(appBuildDir: string, dependencies: IMaterial
           components.map(async name => {
             const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
             const sourceKey = `${materialName}:${name}`
-            inputProps[sourceKey] = (await fs.readJson(componentMetaPath)).inputProps
+            const metaJson = await fs.readJson(componentMetaPath)
+            const inputProps = metaJson.inputProps || metaJson.syncProps
+            if (inputProps) {
+              outputObj[sourceKey] = inputProps
+            }
           })
         )
       }
     })
   )
-  return inputProps
+  return outputObj
 }
 
 export async function getYyptConfigInfo(extraData: any) {

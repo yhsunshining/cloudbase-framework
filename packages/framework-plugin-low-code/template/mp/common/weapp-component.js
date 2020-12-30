@@ -1,51 +1,11 @@
-import { observable, autorun } from 'mobx'
-import { createEventHandlers, createComputed, touchObj, getDeep } from './util'
-import { createInitData, resolveWidgetData, createWidgets, mpCompToWidget} from './widget'
+import { observable } from 'mobx'
+import { createEventHandlers, createComputed } from './util'
+import { createWidgets, mpCompToWidget } from './widget'
+import mergeRenderer from './merge-renderer'
 
-export function createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps0, lifeCycle, stateFn, computedFuncs) {
+export function createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config) {
 
-  function createObservers(props){
-    return props.reduce((observers, prop) => {
-      observers[prop] = function(newVal) {
-        <%= compApi %>.props.data[prop] = newVal
-      }
-      return observers
-    }, {})
-  }
-
-  function createPropEvents(events, self) {
-    const protectEventKeys = [
-      'touchstart', //	手指触摸动作开始
-      'touchmove', //		手指触摸后移动
-      'touchcancel', //		手指触摸动作被打断，如来电提醒，弹窗
-      'touchend', //		手指触摸动作结束
-      'tap', //		手指触摸后马上离开
-      'longpress', //		手指触摸后，超过350ms再离开，如果指定了事件回调函数并触发了这个事件，tap事件将不被触发	1.5.0
-      'longtap', //		手指触摸后，超过350ms再离开（推荐使用longpress事件代替）
-      'transitionend', //		会在 WXSS transition 或 wx.createAnimation 动画结束后触发
-      'animationstart', //		会在一个 WXSS animation 动画开始时触发
-      'animationiteration', //		会在一个 WXSS animation 一次迭代结束时触发
-      'animationend', //		会在一个 WXSS animation 动画完成时触发
-      'touchforcechange', // 在支持 3D Touch 的 iPhone 设备，重按时会触发
-    ]
-    const result = {}
-    events.forEach(evt => {
-      const isProtectKey = protectEventKeys.some(key => key === evt.name)
-      if (isProtectKey) {
-        result[evt.name] = function() {}
-      } else {
-        result[evt.name] = function(evtDetail) {
-          if (evt.getValueFromEvent) {
-            self.setData({value: evt.getValueFromEvent({detail: evtDetail})})
-          }
-          self.triggerEvent(evt.name, evtDetail)
-        }
-      }
-    })
-    return result
-  }
-
-  return {
+  return Component({
     options: {
       virtualHost: true,
       multipleSlots: true,
@@ -66,11 +26,11 @@ export function createComponent(behaviors, properties, events, handler, dataBind
       ...properties,
     },
 
-    data: createInitData(widgetProps0, dataBinds, '<%= dataPropNames.widgetProp %>'),
+    data: {},
 
     lifetimes: {
       created() {
-        const $comp = <%= compApi %> = {
+        const $comp = this.$WEAPPS_COMP = {
           state: {},
           computed: {},
           widgets: {},
@@ -85,40 +45,32 @@ export function createComponent(behaviors, properties, events, handler, dataBind
             return result
           }, {}),
           node: null,
-        }  // The weapps API for component, 'this' in component lowcode
-
-        this._dataBinds = Object.keys(dataBinds).reduce((result, widgetId) => {
-          result[widgetId] = Object.keys(dataBinds[widgetId]).reduce((result, prop) => {
-            result[prop] = dataBinds[widgetId][prop].bind(this)
-            return result
-          }, {})
-          return result
-        }, {})
-
+        }  // The weapps API for component
       },
       attached() {
         const owner = this.selectOwnerComponent()
-        <%= compApi %>.node = mpCompToWidget(owner, this)
+        const weappInstance = this.getWeAppInst()
+        weappInstance.node = mpCompToWidget(owner, this)
 
-        const pageState = observable(stateFn.call(this))
-        const pageComputed = createComputed(computedFuncs, this)
-
-        <%= compApi %>.state = pageState
-        <%= compApi %>.computed = pageComputed
-        const widgetProps = createWidgets(widgetProps0, this._dataBinds, <%= compApi %>.widgets)
-
-        const dataFactory = {
-          // <%= dataPropNames.pageState %>: () => pageState,
-          // <%= dataPropNames.pageComputed %>: () => pageComputed,
-        }
-        for (const id in widgetProps) {
-          const props = widgetProps[id]
-          dataFactory['<%= dataPropNames.widgetProp %>' + id] = () => resolveWidgetData(props)
+        // Mount more APIs
+        weappInstance.node.getDom = (fields) => {
+          return rootWigdget.getDom(fields)
         }
 
-        this.createReactiveState(dataFactory)
+        weappInstance.node.getConfig = () => config
 
-        lifeCycle.onAttached && lifeCycle.onAttached.call(this)
+        weappInstance.state = observable(stateFn.call(this))  // May depend on this.props.data.xxx
+        weappInstance.computed = createComputed(computedFuncs, this)
+        const widgets = createWidgets(widgetProps, dataBindsBindContext(dataBinds, this), weappInstance.widgets, this)
+        const rootWigdget = widgets[Object.keys(widgetProps).find(id => !widgetProps[id]._parentId)]
+
+        try {
+          lifeCycle.onAttached && lifeCycle.onAttached.call(this)
+        } catch (e) {
+          console.error('Component lifecycle(attached) error', this.is, e)
+        }
+
+        this.initMergeRenderer(widgets)
       },
       ready() {
         lifeCycle.onReady && lifeCycle.onReady.call(this)
@@ -128,39 +80,76 @@ export function createComponent(behaviors, properties, events, handler, dataBind
       }
     },
 
-    pageLifetimes: {},
+    pageLifetimes: {
+      show() {
+        lifeCycle.onPageShow && lifeCycle.onPageShow.call(this)
+      },
+      hide() {
+        lifeCycle.onPageHide && lifeCycle.onPageHide.call(this)
+      },
+      resize(size) {
+        lifeCycle.onPageResize && lifeCycle.onPageResize.call(this, size)
+      }
+    },
 
     methods: {
       ...createEventHandlers(evtListeners),
-      createReactiveState(dataFactory) {
-        for (const k in dataFactory) {
-          autorun(r => {
-            this.requestRender({ [k]: dataFactory[k]() })
-          })
-        }
-      },
-
-      // setData merging
-      pendingData: null,
-      requestRender(data) {
-        if (!this.pendingData) {
-          this.pendingData = {}
-          wx.nextTick(() => {
-            const label = `Component(${<%= compApi %>.node.widgetType}-${this.id}) set data(${Object.keys(this.pendingData).join(',')})`
-            <% if(debug) {%>console.time(label)<%} %>
-            this.setData(this.pendingData, () => {
-              <% if(debug) {%>console.timeEnd(label)<%} %>
-            })
-            this.pendingData = null
-          })
-        }
-        touchObj(data)  // Touch all props to monitor data deeply, FIXME
-        Object.assign(this.pendingData, data)
-      },
+      ...mergeRenderer,
       getWeAppInst() {
-        return <%= compApi %>
+        return this.$WEAPPS_COMP
       },
     },
     observers: createObservers(Object.keys(properties))
-  }
+  })
+}
+
+function createObservers(props) {
+  return props.reduce((observers, prop) => {
+    observers[prop] = function (newVal) {
+      this.getWeAppInst().props.data[prop] = newVal
+    }
+    return observers
+  }, {})
+}
+
+function dataBindsBindContext(dataBinds, self) {
+  return Object.keys(dataBinds).reduce((result, widgetId) => {
+    result[widgetId] = Object.keys(dataBinds[widgetId]).reduce((result, prop) => {
+      result[prop] = dataBinds[widgetId][prop].bind(self)
+      return result
+    }, {})
+    return result
+  }, {})
+}
+
+function createPropEvents(events, self) {
+  const protectEventKeys = [
+    'touchstart', //	手指触摸动作开始
+    'touchmove', //		手指触摸后移动
+    'touchcancel', //		手指触摸动作被打断，如来电提醒，弹窗
+    'touchend', //		手指触摸动作结束
+    'tap', //		手指触摸后马上离开
+    'longpress', //		手指触摸后，超过350ms再离开，如果指定了事件回调函数并触发了这个事件，tap事件将不被触发	1.5.0
+    'longtap', //		手指触摸后，超过350ms再离开（推荐使用longpress事件代替）
+    'transitionend', //		会在 WXSS transition 或 wx.createAnimation 动画结束后触发
+    'animationstart', //		会在一个 WXSS animation 动画开始时触发
+    'animationiteration', //		会在一个 WXSS animation 一次迭代结束时触发
+    'animationend', //		会在一个 WXSS animation 动画完成时触发
+    'touchforcechange', // 在支持 3D Touch 的 iPhone 设备，重按时会触发
+  ]
+  const result = {}
+  events.forEach(evt => {
+    const isProtectKey = protectEventKeys.some(key => key === evt.name)
+    if (isProtectKey) {
+      result[evt.name] = function () { }
+    } else {
+      result[evt.name] = function (evtDetail) {
+        if (evt.getValueFromEvent) {
+          self.setData({ value: evt.getValueFromEvent({ detail: evtDetail }) })
+        }
+        self.triggerEvent(evt.name, evtDetail)
+      }
+    }
+  })
+  return result
 }

@@ -1,8 +1,8 @@
 import chalk from 'chalk'
 import path from 'path'
 import { inspect } from 'util'
+import * as fs from 'fs-extra'
 import {
-  compositedComponentApi,
   IMaterialItem,
   IWeAppData,
   loopDealWithFn,
@@ -13,7 +13,7 @@ import {
 import { appTemplateDir } from '../config'
 import { getWxmlDataPrefix } from '../config/mp'
 import generateFiles from '../util/generateFiles'
-import { installMaterials } from './materials'
+import { extractUsedCompsRecursively, installMaterials } from './materials'
 import {
   installDependencies,
   getMainAppDataByList,
@@ -34,6 +34,9 @@ import {
 } from '../../utils/dataSource'
 import { generateLocalFunctions } from '../service/builder/generate'
 import { DEPLOY_MODE } from '../../index'
+import { IAppUsedComp, IUsedComps } from '../types/common'
+import { handleMixMaterials } from './mixMode'
+
 const templateDir = appTemplateDir + '/mp/'
 const em = chalk.blue.bold
 const error = chalk.redBright
@@ -46,26 +49,35 @@ export async function generateWxMp(
   plugins: IPlugin[],
   isProduction: boolean,
   deployMode: DEPLOY_MODE,
-  extraData: any
+  extraData: any,
+  isMixMode: boolean
 ) {
   const buildContext: IBuildContext = {
     projDir,
     appId,
     isProduction,
     materialLibs: {},
+    isMixMode,
   }
+  await cleanProj(
+    projDir,
+    weapps.map((app) => app.rootPath).filter((dir) => !!dir) as string[]
+  )
+
   let mainAppData = weapps[0]
   const yyptConfig = await getYyptConfigInfo(extraData)
-  const usedComps: { [libName: string]: Set<string> } = {}
-  weapps.forEach((app) => {
-    app.pageInstanceList.forEach((p) =>
-      getUsedComponents(p.componentInstances, usedComps)
-    )
+  const { appUsedComps, allAppUsedComps } = handleUsedComponents({
+    buildContext,
+    weapps,
+    materials,
   })
+
+  // 安装依赖库
   const materialLibs = await installMaterials(
     materials,
     projDir,
-    usedComps,
+    allAppUsedComps,
+    weapps,
     buildContext
   )
 
@@ -113,15 +125,17 @@ export async function generateWxMp(
       dataPropNames: wxmlDataPrefix,
       debug: !buildContext.isProduction,
     },
-    'common/weapp-component.js': {
+    'common/weapp-component.js': {},
+    'common/merge-renderer.js': {
       dataPropNames: wxmlDataPrefix,
-      compApi: compositedComponentApi,
       debug: !buildContext.isProduction,
     },
     'common/process.js': {},
+    'weapps-common/process.js': {},
+    'weapps-common/data-patch.js': {},
   }
   console.log('Generating ' + em('project') + ' files')
-  await generateFiles(appFileData, templateDir, projDir)
+  await generateFiles(appFileData, templateDir, projDir, buildContext)
 
   const datasourceFileData = {
     'datasources/database.js': {},
@@ -154,21 +168,27 @@ export async function generateWxMp(
     },
   }
   console.log('Generating ' + em('datasources') + ' files')
-  await generateFiles(datasourceFileData, templateDir, projDir)
+  await generateFiles(datasourceFileData, templateDir, projDir, buildContext)
 
   console.log('Generating ' + em('local-function') + ' files')
   await generateLocalFunctions(mainAppData, templateDir, projDir)
 
-  // TODO generate subapps
-  weapps.forEach((app) =>
+  // 生成子包
+  weapps.forEach((app, index) =>
     generatePkg(
       app,
       projDir + '/' + (app.rootPath || ''),
       buildContext,
-      pageConfigs
+      pageConfigs[index]
     )
   )
-  //await generateApp(weapps, projDir, buildContext)
+
+  // 混合模式则清理未使用的组件库
+  if (isMixMode) {
+    const compositedLibs = materials.filter((item) => item.isComposite)
+    await handleMixMaterials(projDir, weapps, appUsedComps, compositedLibs)
+  }
+
   await installDependencies(projDir)
 
   await handleMpPlugins()
@@ -209,13 +229,12 @@ async function generatePkg(
   await Promise.all(
     weapp.pageInstanceList.map(async (page) => {
       // # Generating page
-      const rootPath = weapp.rootPath
-      const targetPageId = rootPath ? `${rootPath}/${page.id}` : page.id
+      const rootPath = weapp.rootPath || ''
       const usingComponents = {}
       const wxml = generateWxml(
         page.componentInstances,
         wxmlDataPrefix,
-        ctx,
+        { ...ctx, rootPath },
         usingComponents
       )
       const pageFileData = {
@@ -234,7 +253,7 @@ async function generatePkg(
         },
         'index.json': {
           usingComponents,
-          extra: getAppendableJson(pageConfigs[targetPageId]),
+          extra: getAppendableJson(pageConfigs[page.id]),
         },
         'index.wxml': {
           // raw: JSON.stringify(page.componentInstances),
@@ -257,17 +276,22 @@ async function generatePkg(
       await generateFiles(
         pageFileData,
         templateDir + '/page',
-        path.join(appRoot, 'pages', page.id)
+        path.join(appRoot, 'pages', page.id),
+        ctx
       )
     })
   )
 
   // #3 writing lowcode files
-  await writeLowCodeFiles(weapp, appRoot)
-  await generateFramework(weapp, appRoot)
+  await writeLowCodeFiles(weapp, appRoot, ctx)
+  await generateFramework(weapp, appRoot, ctx)
 }
 
-async function generateFramework(appData: IWeAppData, outDir: string) {
+async function generateFramework(
+  appData: IWeAppData,
+  outDir: string,
+  ctx: IBuildContext
+) {
   const allCodeModules = {}
   loopDealWithFn(appData.pageInstanceList, (p) => {
     allCodeModules[p.id] = p.lowCodes
@@ -283,17 +307,21 @@ async function generateFramework(appData: IWeAppData, outDir: string) {
     },
     'app/common.js': {
       mods: appData.lowCodes
-        .filter((m) => m.type === 'normal-module' && !m.system)
+        .filter((m) => m.type === 'normal-module' && m.name !== '____index____')
         .map((m) => m.name),
     },
   }
   console.log('Generate app framework')
-  await generateFiles(fileData, templateDir, outDir)
+  await generateFiles(fileData, templateDir, outDir, ctx)
 }
 
 const THEME = 'theme'
 const STYLE = 'style'
-export async function writeLowCodeFiles(appData: IWeAppData, outDir: string) {
+export async function writeLowCodeFiles(
+  appData: IWeAppData,
+  outDir: string,
+  ctx: IBuildContext
+) {
   console.log('Writing ' + em('lowcode') + ' files:')
   const lowcodeRootDir = path.join(outDir, 'lowcode')
   const themeStyle = generateDefaultTheme(appData)
@@ -315,17 +343,85 @@ export async function writeLowCodeFiles(appData: IWeAppData, outDir: string) {
             m,
             lowcodeRootDir,
             { pageId: page.id, appDir: outDir },
-            themeStyle.code
+            themeStyle.code,
+            ctx
           )
         )
     })
   )
 }
 
+// {a: 1} -> , "a": 1
 function getAppendableJson(obj) {
   if (obj && Object.keys(obj).length > 0) {
     const str = JSON.stringify(obj)
     return ',\n' + str.substr(1, str.length - 2)
   }
   return ''
+}
+
+// 处理使用到的组件
+function handleUsedComponents({
+  buildContext,
+  weapps,
+  materials,
+}: {
+  buildContext: IBuildContext
+  weapps: IWeAppData[]
+  materials: IMaterialItem[]
+}) {
+  const appUsedComps: IAppUsedComp[] = weapps.map((app) => {
+    const usedComps: IUsedComps = {}
+    app.pageInstanceList.forEach((p) =>
+      getUsedComponents(p.componentInstances, usedComps)
+    )
+    return {
+      rootPath: app.rootPath || '',
+      usedComps,
+    }
+  })
+  // merge all app/subapp used
+  let allAppUsedComps: IUsedComps = appUsedComps.reduce((comps, item) => {
+    Object.keys(item.usedComps).forEach((libName) => {
+      comps[libName] = new Set([
+        ...Array.from(item.usedComps[libName]),
+        ...Array.from(comps[libName] || []),
+      ])
+    })
+    return comps
+  }, {})
+  const compositedLibs = materials.filter(
+    (lib) => lib.isComposite && allAppUsedComps[lib.name]
+  )
+  allAppUsedComps = extractUsedCompsRecursively(
+    allAppUsedComps,
+    [],
+    compositedLibs
+  )
+  if (buildContext.isMixMode) {
+    appUsedComps.forEach((item) => {
+      const appCompositedLibs = materials.filter(
+        (lib) => lib.isComposite && item.usedComps[lib.name]
+      )
+      item.usedComps = extractUsedCompsRecursively(
+        item.usedComps,
+        [],
+        appCompositedLibs
+      )
+    })
+  }
+
+  return {
+    appUsedComps,
+    allAppUsedComps,
+  }
+}
+
+async function cleanProj(projDir: string, subAppDirs: string[]) {
+  const dirs2del = ['pages', 'lowcode', 'materials', ...subAppDirs]
+  console.log('Clean files:')
+  for (const dir of dirs2del) {
+    console.log(path.join(projDir, dir))
+    await fs.remove(path.join(projDir, dir))
+  }
 }

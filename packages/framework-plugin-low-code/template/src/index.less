@@ -1,21 +1,6 @@
 // 针对小程序样式做适配
 // 请注意与weapps/src/pages/editor/components/Main/EditAndPreview/index.iframe.scss的一致性，以确保小程序端样式与
-page {
-  // 修复小程序 Picker 组件滑动体验问题
-  touch-action: pan-y;
-
-  // 修复默认图片大小
-  image {
-    width: auto;
-    height: auto;
-  }
-
-  // 修复按钮默认边框样式
-  .wx-button::after {
-    border: none;
-  }
-
-  view, element, text, image {
-    box-sizing: border-box;
-  }
+body {
+  margin: 0;
+  padding: 0;
 }

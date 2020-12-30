@@ -1,5 +1,5 @@
 import { createComponent } from '../../../common/weapp-component'
-import { getDeep } from '../../../common/util'
+import { mpCompToWidget } from '../../../common/widget'
 import { concatClassList, px2rpx } from '../../../common/style'
 import lifeCycle from './lowcode/lifecycle'
 import stateFn from './lowcode/state'
@@ -14,7 +14,7 @@ const evtListeners = {<% Object.entries(eventHandlers).map(([handlerName, listen
     <%listeners.map(l=> { %>{
       handler: <% if (l.type == 'rematch') {%> _handler<%= l.handler %> <%} else if (l.type == 'prop-event') {%> function({event, data = {}}) { <%= compApi %>.props.events.<%= l.handler %>({...event.detail, ...data}) } <%} else {%> <%= l.handler %> <%} %>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
-      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(forItems) => (<%= expr %>),
+      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems) => (<%= expr %>),
         <%}) %>}
     },<%})%>
   ],<%})%>
@@ -40,8 +40,10 @@ const handler = {<% handlers.forEach(h => {%>
 
 const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
   <%= id %>: { <% Object.entries(widgetBinds).map(([prop, expr]) => { %>
-    <%= prop %>: function (forItems) { return <%= expr %>; },<% }) %>
+    <%= prop %>: function (lists, forItems) { return <%= expr %>; },<% }) %>
   },<%}) %>
 }
 
-Component(createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs))
+const config = <%= JSON.stringify(config || {})%>
+
+createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config)

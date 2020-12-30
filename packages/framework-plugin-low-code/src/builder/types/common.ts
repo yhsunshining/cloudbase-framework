@@ -45,13 +45,18 @@ export const buildAsWebByBuildType = (buildTypeList: BuildType[] = []) => {
   )
 }
 
-export type IComponentInputProps = Record<
-  string,
-  Record<
-    string,
-    {
-      changeEvent: string
-      valueFromEvent: string
-    }
-  >
->
+export interface IAppUsedComp {
+  rootPath: string
+  usedComps: IUsedComps
+}
+export type IUsedComps = { [libName: string]: Set<string> }
+
+export interface ISyncProp {
+  changeEvent: string
+  valueFromEvent: string
+}
+export type IComponentInputProps = {
+  [componentName: string]: {
+    [syncName: string]: ISyncProp | ISyncProp[]
+  }
+}

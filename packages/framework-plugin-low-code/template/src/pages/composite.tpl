@@ -4,7 +4,7 @@ import { observable } from "mobx";
 
 import { AppRender } from "handlers/render";
 import { createComputed } from "../../../../utils";
-import { createWidgets, retryDataBinds } from 'handlers/utils'
+import { createWidgets, retryDataBinds, WidgetsContext } from 'handlers/utils'
 import { get } from 'lodash'
 import getStateFn from "./lowcode/state.js";
 import computed from "./lowcode/computed.js";
@@ -40,7 +40,7 @@ class CompositeCompWrapper extends React.Component {
   constructor(props) {
     super(props);
 
-    this.compConfig = <%= compConfig %>
+    this.compConfig = <%= JSON.stringify(compConfig, null, 2) %>
     this.virtualFields = Object.assign({}, props.pageVirtualFields || {}, {
     <% useComponents.forEach(compItem => {%>
       "<%= compItem.key %>": <%= compItem.var %>,
@@ -65,10 +65,14 @@ class CompositeCompWrapper extends React.Component {
     this.$WEAPPS_COMP.props = { ...this.props, events: this.events, data: this.propsData }
     this.state = this.$WEAPPS_COMP.state = observable(getStateFn.bind(this)())
     this.computed = this.$WEAPPS_COMP.computed = createComputed(computed, this)
-    this.node = this.$WEAPPS_COMP.node = this.createWidgetNode(this)
+    this.node = this.$WEAPPS_COMP.node = this.createWidgetNode(this) || {}
     this.widgets = createWidgets(widgetContext, dataBinds)
     // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
     retryDataBinds()
+    Object.keys(this.widgets || {}).forEach(widgetId => {
+      // 将实例 ownerWidget 挂到内部组件上。内部组件就可以通过 $comp.node.ownerWidget 获取到所在的组件实例
+      this.widgets[widgetId].ownerWidget = this.node
+    })
     this.pageListenerInstances = [];
     this.createCompAPI(this)
   }
@@ -122,16 +126,18 @@ class CompositeCompWrapper extends React.Component {
 
   render() {
     return (
-      <AppRender
-        className={this.props.className}
-        virtualFields={this.virtualFields}
-        componentSchema={this.componentSchema}
-        codeContext={this}
-      />
+      <WidgetsContext.Provider value={{ parent: this }}>
+        <AppRender
+          className={this.props.className}
+          virtualFields={this.virtualFields}
+          componentSchema={this.componentSchema}
+          codeContext={this}
+        />
+      </WidgetsContext.Provider>
     );
   }
 }
 
 export default observer((props) => (
-  <CompositeCompWrapper {...props}></CompositeCompWrapper>
+   <CompositeCompWrapper {...props}></CompositeCompWrapper>
 ));

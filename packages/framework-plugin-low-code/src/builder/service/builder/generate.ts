@@ -42,7 +42,11 @@ import {
   generateDefaultStyle,
   defaultThemeCode,
 } from '../../util/style'
-import { buildAsWebByBuildType, IComponentInputProps } from '../../types/common'
+import {
+  buildAsWebByBuildType,
+  IComponentInputProps,
+  ISyncProp,
+} from '../../types/common'
 import { getYyptConfigInfo } from '../../util'
 
 import {
@@ -71,7 +75,10 @@ export async function generateAppStyleLessFile(
   for (const appData of allAppDataList) {
     if (appData.codeModules) {
       // 兼容 'app-style'
-      const content = `@import "./lowcode/style.less";`
+      let content = `@import "./lowcode/style.less";\n\n`
+      content += await fs.readFile(appLessPath, {
+        encoding: 'utf8',
+      })
       await fs.writeFile(appLessPath, `${content}${os.EOL}`, {
         encoding: 'utf8',
       })
@@ -492,21 +499,28 @@ export function getComponentSchemaString(
       }
 
       // 组件双向绑定
-      const inputProps = componentInputProps[xProps.sourceKey]
-      if (inputProps) {
+      const syncProps = componentInputProps[xProps.sourceKey]
+      if (syncProps) {
         if (!xProps.listenerInstances) xProps.listenerInstances = []
-        Object.keys(inputProps).forEach((key) => {
-          const { changeEvent, valueFromEvent } = inputProps[key]
-          // 双向绑定需要优先第一个执行
-          xProps.listenerInstances.unshift({
-            trigger: changeEvent,
-            instanceFunction: `${REPLACE_SIGN}function({ event, forItems }) {
-              const wid = ${isComposite ? 'this.widgets' : '$page.widgets'}.${
-              schema.key
-            };
-              const widgetData = (forItems.forIndexes && forItems.forIndexes.length > 0) ? get(wid, forItems.forIndexes) : wid;
-              widgetData.${key} = ${valueFromEvent};
-            }.bind(this)${REPLACE_SIGN}`,
+        Object.keys(syncProps).forEach((key) => {
+          let syncPropArr: ISyncProp[] = []
+          const syncProp = syncProps[key]
+
+          // 统一转成数组处理
+          if (!Array.isArray(syncProp)) {
+            syncPropArr = [syncProp]
+          }
+
+          syncPropArr.forEach(({ changeEvent, valueFromEvent }) => {
+            // 双向绑定需要优先第一个执行，否则会出现输入框的拼音被打断的问题
+            xProps.listenerInstances.unshift({
+              trigger: changeEvent,
+              instanceFunction: `${REPLACE_SIGN}function({ event, forItems }) {
+    const wid = ${isComposite ? 'this.widgets' : '$page.widgets'}.${schema.key};
+    const widgetData = (forItems.forIndexes && forItems.forIndexes.length > 0) ? get(wid, forItems.forIndexes) : wid;
+    widgetData.${key} = ${valueFromEvent};
+  }.bind(this)${REPLACE_SIGN}`,
+            })
           })
         })
       }
@@ -1001,19 +1015,24 @@ export async function generateLocalFunctions(
   let promises: Promise<any>[] = []
   if (appData.datasources) {
     promises = appData.datasources.reduce((arr, datasource) => {
-      const [dsName, tasks] = generateDsLocalFunctions(targetDir, localFnTemplateDir, datasource)
+      const [dsName, tasks] = generateDsLocalFunctions(
+        targetDir,
+        localFnTemplateDir,
+        datasource
+      )
       if (!dsName) return arr
       dsSourceNames.push(dsName)
       arr.push(...tasks)
       return arr
     }, [])
   }
-  
 
   promises.push(
     fs.writeFile(
       path.join(targetDir, `index.js`),
-      tpl(fs.readFileSync(path.join(localFnTemplateDir, 'index.js.tpl'), 'utf8'))({ dsSourceNames }),
+      tpl(
+        fs.readFileSync(path.join(localFnTemplateDir, 'index.js.tpl'), 'utf8')
+      )({ dsSourceNames }),
       { flag: 'w' }
     )
   )
@@ -1029,10 +1048,15 @@ export async function generateLocalFunctions(
   return dsSourceNames
 }
 
-
-function generateDsLocalFunctions(targetDir: string, templateDir: string, datasource: any) {
+function generateDsLocalFunctions(
+  targetDir: string,
+  templateDir: string,
+  datasource: any
+) {
   const { name: dsName } = datasource
-  const localMethods = datasource.methods?.filter(method => method.type === 'local-function')
+  const localMethods = datasource.methods?.filter(
+    (method) => method.type === 'local-function'
+  )
   if (!localMethods || !localMethods.length) return []
   const methodFileNameTup: [string, string][] = []
   const tasks: Promise<any>[] = localMethods.map((method) => {
@@ -1045,21 +1069,23 @@ function generateDsLocalFunctions(targetDir: string, templateDir: string, dataso
 
     return fs.writeFile(
       path.join(targetDir, dsName, `${methodName}.js`),
-      tpl(fs.readFileSync(path.resolve(templateDir, 'fn.js.tpl'), 'utf8'),
-      )({
+      tpl(fs.readFileSync(path.resolve(templateDir, 'fn.js.tpl'), 'utf8'))({
         method,
       }),
       { flag: 'w' }
     )
   })
 
-  tasks.push(fs.writeFile(
-    path.join(targetDir, dsName, `index.js`),
-    tpl(fs.readFileSync(path.resolve(templateDir, 'fn.index.js.tpl'), 'utf8'),
-    )({
-      methodFileNameTup,
-    }),
-    { flag: 'w' }
-  ))
+  tasks.push(
+    fs.writeFile(
+      path.join(targetDir, dsName, `index.js`),
+      tpl(
+        fs.readFileSync(path.resolve(templateDir, 'fn.index.js.tpl'), 'utf8')
+      )({
+        methodFileNameTup,
+      }),
+      { flag: 'w' }
+    )
+  )
   return [dsName, tasks]
 }

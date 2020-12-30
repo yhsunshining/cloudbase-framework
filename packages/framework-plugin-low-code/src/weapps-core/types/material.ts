@@ -21,6 +21,7 @@ export interface ICompositedComponent {
   name: string
   materialName: string
   componentInstances: { [key: string]: IWeAppComponentInstance }
+  compConfig: Record<string, any>
   dataForm: any
   emitEvents: any[]
   listeners: any[]

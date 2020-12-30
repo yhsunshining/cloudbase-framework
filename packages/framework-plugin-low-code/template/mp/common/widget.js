@@ -14,9 +14,14 @@ function resolveWidgetProp(props) {
     className: classList.join ? classList.join(' ') : classList
   }
   const extraProps = ['id', 'classList', 'parent', 'children', 'widgetType',
-    '_disposers', '_parentId', '_forItems', 'findWidgets', 'getWidgetsByType', 'getDom']
+    '_disposers', '_parentId', '_forItems' ]
   extraProps.map(prop => {
     delete data[prop]
+  })
+  Object.keys(data).map(prop => {
+    if (data[prop] instanceof Function || data[prop] === undefined) {
+      delete data[prop]
+    }
   })
   return data
 }
@@ -291,6 +296,9 @@ function mountBuiltinWigetsAPI(widget, owner) {
     return this.findWidgets(w => w.widgetType === type, includeInvisibleDescendants)
   }
 
+  /**
+   * Similar to selectOwnerComponent of WX MP: https://developers.weixin.qq.com/miniprogram/dev/reference/api/Component.html
+   */
   widget.getOwnerWidget = function () {
     return owner && owner.getWeAppInst().node
   }

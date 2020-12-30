@@ -4,23 +4,23 @@
 export function getWxmlDataPrefix(debug = false) {
   return !debug
     ? {
-      appState: 'g',
-      pageState: 'p',
-      appComputed: 't',
-      pageComputed: 'c',
-      widgetProp: '',
-      forItem: 'f',
-      forIndex: 'i',
-    }
+        appState: 'g',
+        pageState: 'p',
+        appComputed: 't',
+        pageComputed: 'c',
+        widgetProp: '',
+        forItem: 'f',
+        forIndex: 'i',
+      }
     : {
-      appState: 'appState',
-      pageState: 'pageState',
-      appComputed: 'appComputed',
-      pageComputed: 'pageComputed',
-      widgetProp: '',
-      forItem: 'forItem_',
-      forIndex: 'forIndex_',
-    }
+        appState: 'appState',
+        pageState: 'pageState',
+        appComputed: 'appComputed',
+        pageComputed: 'pageComputed',
+        widgetProp: '',
+        forItem: 'forItem_',
+        forIndex: 'forIndex_',
+      }
 }
 
 // variable separator in wxml attribute

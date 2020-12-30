@@ -17,16 +17,16 @@ import {
   WebpackModeType,
 } from '../types/common'
 export { buildAsWebByBuildType } from '../types/common'
-import { getPluginType } from '../service/builder/plugin'
 import { runGenerateCore } from './generate'
 import { runHandleMaterial } from './material'
 import { runCopy } from './copy'
 import { createDoneCallBack, runPrepare } from './prepare'
-import { runHandleKbonePlugin, runHandleMpPlugin } from './plugin'
 import { runWebpackCore } from './webpack'
-import { generateWxMp } from '../mp'
+import { generateWxMp } from '../mp/index'
 import path from 'path'
 import { DEPLOY_MODE } from '../../index'
+import { handleMixMode } from '../mp/mixMode'
+import chalk from 'chalk'
 
 export type BuildAppProps = {
   dependencies: IMaterialItem[]
@@ -38,7 +38,7 @@ export type BuildAppProps = {
   buildTypeList: BuildType[]
   mode?: WebpackModeType
   watch?: boolean
-  generateMpType?: GenerateMpType
+  generateMpType: GenerateMpType
   generateMpPath?: string
   isCleanDistDir?: boolean
   plugins?: IPlugin[]
@@ -85,19 +85,38 @@ export async function buildWebApp(
 
   const startTime = Date.now()
   if (buildTypeList.includes(BuildType.MP)) {
+    const isMixMode = generateMpType === 'subpackage' && !!generateMpPath
     appBuildDir = path.join(appBuildDir, 'mp')
+    const apps = [mainAppSerializeData, ...subAppSerializeDataList]
     try {
       const outDir = await generateWxMp(
-        [mainAppSerializeData, ...subAppSerializeDataList],
+        apps,
         appBuildDir,
         appKey,
         dependencies,
         plugins,
         mode === WebpackModeType.PRODUCTION,
         deployMode,
-        extraData
+        extraData,
+        isMixMode
       )
-      cb && cb(null, { outDir, timeElapsed: Date.now() - startTime })
+      // 如果是混合模式，则将特定的目录复制到工程下
+      // 针对 app.json / package.json 则采用 merge 的操作
+      if (isMixMode) {
+        console.log(chalk.green('【混合模式】'), generateMpPath)
+        await handleMixMode({
+          apps,
+          generateMpPath,
+          appBuildDir,
+          plugins,
+        })
+      }
+
+      cb &&
+        cb(null, {
+          outDir: isMixMode && generateMpPath ? generateMpPath : outDir,
+          timeElapsed: Date.now() - startTime,
+        })
       return outDir
     } catch (e) {
       cb && cb(e)

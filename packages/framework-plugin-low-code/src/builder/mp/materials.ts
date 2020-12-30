@@ -1,6 +1,5 @@
 import * as path from 'path'
 import { inspect } from 'util'
-import symlinkDir from 'symlink-dir'
 import * as fs from 'fs-extra'
 import {
   IMaterialItem,
@@ -9,6 +8,7 @@ import {
   IWeAppComponentInstance,
   compositedComponentApi,
   getCompositedComponentClass,
+  IWeAppData,
 } from '../../weapps-core'
 import { materialsDirName, sharedMaterialsDir, appTemplateDir } from '../config'
 import {
@@ -24,6 +24,8 @@ import { generateWxml, getUsedComponents } from './wxml'
 import generateFiles from '../util/generateFiles'
 import { writeCode2file } from './lowcode'
 import { downloadZip } from '../util/net'
+import NameMangler from '../util/name-mangler'
+import { IUsedComps, IAppUsedComp } from '../types/common'
 
 const templateDir = appTemplateDir + '/mp/'
 
@@ -33,20 +35,26 @@ export interface IMaterialLibs {
 export async function installMaterials(
   dependencies: IMaterialItem[] = [],
   projDir: string,
-  usedComps: { [libName: string]: Set<string> },
+  usedComps: IUsedComps,
+  weapps: IWeAppData[],
   ctx: IBuildContext
 ) {
   const localPkg = getCurrentPackageJson()
   const materialsInfo: IMaterialLibs = {} // {[pkgName]: {name, title, components: {[name]: {title, platforms: {}}}}}
   ctx.materialLibs = materialsInfo
 
-  const compositedLibs = dependencies.filter(lib => lib.isComposite && usedComps[lib.name])
-  extractUsedCompsRecursively(usedComps, [])
+  const compositedLibs = dependencies.filter(
+    (lib) => lib.isComposite && usedComps[lib.name]
+  )
+
+  const weappsList = ctx.isMixMode
+    ? weapps
+    : weapps.filter((item) => !item.rootPath)
 
   // #1 Download uploaded libs
   await Promise.all(
     dependencies
-      .filter(lib => !lib.isComposite && usedComps[lib.name])
+      .filter((lib) => !lib.isComposite && usedComps[lib.name])
       .map(async ({ name, version, mpPkgUrl }) => {
         let materialsSrcDir = ''
         const materialId = `${name}@${version}`
@@ -56,19 +64,37 @@ export async function installMaterials(
           // If the target materials is current developing one skip download
           materialsSrcDir = path.join(process.cwd(), 'build', 'mp')
         } else {
-          materialsSrcDir = path.join(sharedMaterialsDir, `${name}-mp@${version}`)
+          materialsSrcDir = path.join(
+            sharedMaterialsDir,
+            `${name}-mp@${version}`
+          )
           await downloadMaterial(mpPkgUrl, materialsSrcDir)
         }
-        const targetDir = path.join(projDir, materialsDirName, name)
-        console.log(`Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`)
-        // #2 link material to current project
-        await fs.copy(materialsSrcDir, targetDir)
-        materialsInfo[name] = fs.readJSONSync(path.join(targetDir, 'meta.json'))
+
+        // 混合模式下，各个子包获取自己使用过的组件和复合组件（会出现冗余）
+        return Promise.all(
+          weappsList.map(async (app) => {
+            const targetDir = path.join(
+              projDir,
+              app.rootPath || '',
+              materialsDirName,
+              name
+            )
+            console.log(
+              `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
+            )
+            // #2 link material to current project
+            await fs.copy(materialsSrcDir, targetDir)
+            materialsInfo[name] = fs.readJSONSync(
+              path.join(targetDir, 'meta.json')
+            )
+          })
+        )
       })
   )
 
   // #2 Generate composited libs
-  compositedLibs.map(m => {
+  compositedLibs.map((m) => {
     const lib: IMaterialLibMeta = {
       name: m.name,
       isComposite: !!m.isComposite,
@@ -90,12 +116,12 @@ export async function installMaterials(
         })
       }
 
-      cmp.meta.inputProps = {}
+      cmp.meta.syncProps = {}
       const { dataForm = {} } = cmp
       for (const prop in dataForm) {
-        const { inputProp } = dataForm[prop]
-        if (inputProp) {
-          cmp.meta.inputProps[prop] = inputProp
+        const { inputProp, syncProp } = dataForm[prop]
+        if (syncProp || inputProp) {
+          cmp.meta.syncProps[prop] = syncProp || inputProp
         }
       }
 
@@ -109,49 +135,68 @@ export async function installMaterials(
     materialsInfo[lib.name] = lib
   })
 
-  compositedLibs.map(lib => {
+  compositedLibs.map((lib) => {
     console.log('Generate composited library ' + lib.name)
     return lib.components.map((component) => {
       let cmp = component as ICompositedComponent
       if (!usedComps[lib.name] || !usedComps[lib.name].has(cmp.name)) {
         return
       }
-      generateCompositeComponent(cmp, lib.name, ctx)
+      weappsList.forEach((app) => {
+        generateCompositeComponent(cmp, lib.name, {
+          ...ctx,
+          rootPath: app.rootPath || '', // 主包是没有 rootPath 的
+        })
+      })
     })
   })
 
   return materialsInfo
+}
 
-  function extractUsedCompsRecursively(
-    comps: { [libName: string]: Set<string> },
-    checkedComps: ICompositedComponent[]
-  ) {
-    const libsUsedByApp = Object.keys(comps)
-    libsUsedByApp.forEach(libName => {
-      const cmpNames = comps[libName]
-      const lib = compositedLibs.find(lib => lib.name == libName)
-      if (!lib || !lib.isComposite) return
-      cmpNames.forEach(cmpName => {
-        const cmp = lib.components.find(c => c.name === cmpName) as ICompositedComponent
-        if (!cmp) {
-          console.warn('Component not found', libName + ':' + cmpName)
-          return
+// 递归查询复合组件所使用的组件
+export function extractUsedCompsRecursively(
+  comps: IUsedComps,
+  checkedComps: ICompositedComponent[],
+  compositedLibs: IMaterialItem[],
+  outputComps?: IUsedComps
+) {
+  let usedComps = (outputComps || comps) as IUsedComps
+
+  const libsUsedByApp = Object.keys(comps)
+  libsUsedByApp.forEach((libName) => {
+    const cmpNames = comps[libName]
+    const lib = compositedLibs.find((lib) => lib.name == libName)
+    if (!lib || !lib.isComposite) return
+    cmpNames.forEach((cmpName) => {
+      const cmp = lib.components.find(
+        (c) => c.name === cmpName
+      ) as ICompositedComponent
+      if (!cmp) {
+        console.warn('Component not found', libName + ':' + cmpName)
+        return
+      }
+      if (checkedComps.indexOf(cmp) > -1) return
+      checkedComps.push(cmp)
+      const cmpsUsedByThisComp = getUsedComponents(cmp.componentInstances)
+      const libs = Object.keys(cmpsUsedByThisComp)
+      libs.forEach((libName) => {
+        if (!usedComps[libName]) {
+          usedComps[libName] = cmpsUsedByThisComp[libName]
+        } else {
+          cmpsUsedByThisComp[libName].forEach((n) => usedComps[libName].add(n))
         }
-        if (checkedComps.indexOf(cmp) > -1) return
-        checkedComps.push(cmp)
-        const cmpsUsedByThisComp = getUsedComponents(cmp.componentInstances)
-        const libs = Object.keys(cmpsUsedByThisComp)
-        libs.forEach(libName => {
-          if (!usedComps[libName]) {
-            usedComps[libName] = cmpsUsedByThisComp[libName]
-          } else {
-            cmpsUsedByThisComp[libName].forEach(n => usedComps[libName].add(n))
-          }
-        })
-        extractUsedCompsRecursively(cmpsUsedByThisComp, checkedComps)
       })
+      extractUsedCompsRecursively(
+        cmpsUsedByThisComp,
+        checkedComps,
+        compositedLibs,
+        usedComps
+      )
     })
-  }
+  })
+
+  return usedComps
 }
 
 async function downloadMaterial(zipUrl: string, dstFolder: string) {
@@ -164,8 +209,16 @@ async function generateCompositeComponent(
   materialName: string,
   ctx: IBuildContext
 ) {
-  const outDir = path.join(ctx.projDir, materialsDirName, materialName, compositedComp.name)
-  console.log(`Generating composited component ${materialName}:${compositedComp.name} to ${outDir}`)
+  const outDir = path.join(
+    ctx.projDir,
+    ctx.rootPath || '', // 混合模式下，可能会有 rootPath
+    materialsDirName,
+    materialName,
+    compositedComp.name
+  )
+  console.log(
+    `Generating composited component ${materialName}:${compositedComp.name} to ${outDir}`
+  )
 
   const wxmlDataPrefix = getWxmlDataPrefix(!ctx.isProduction)
   // # Generating page
@@ -188,26 +241,32 @@ async function generateCompositeComponent(
   )
 
   // prepare form field change events
-  const { inputProps } = compositedComp.meta
+  const { syncProps } = compositedComp.meta
   const formEvents = {}
-  Object.keys(inputProps).map(prop => {
-    const { changeEvent = 'change', valueFromEvent = 'event.detail.value' } = inputProps[prop]
-    formEvents[changeEvent] = valueFromEvent
+  Object.keys(syncProps).map((prop) => {
+    const config = syncProps[prop]
+    const configs = Array.isArray(config) ? config : [config]
+
+    configs.forEach(({ changeEvent, valueFromEvent, isFormField }) => {
+      if (isFormField) {
+        formEvents[changeEvent] = valueFromEvent
+      }
+    })
   })
 
   const pageFileData = {
     'index.js': {
       propDefs: compositedComp.dataForm,
       handlers: compositedComp.lowCodes
-        .filter(m => m.type === 'handler-fn' && m.name !== '____index____')
-        .map(m => m.name),
+        .filter((m) => m.type === 'handler-fn' && m.name !== '____index____')
+        .map((m) => m.name),
       eventHandlers: createEventHanlders(
         compositedComp.componentInstances,
         compositedComponentApi,
         ctx
       ),
       protectEventKeys: builtinMpEvents,
-      emitEvents: compositedComp.emitEvents.map(evt => evt.eventName),
+      emitEvents: compositedComp.emitEvents.map((evt) => evt.eventName),
       widgetProps: createWidgetProps(compositedComp.componentInstances, ctx),
       compApi: compositedComponentApi,
       jsonSchemaType2jsClass,
@@ -217,6 +276,7 @@ async function generateCompositeComponent(
       stringifyObj: inspect,
       dataPropNames: wxmlDataPrefix,
       formEvents: Object.keys(formEvents).length > 0 ? formEvents : null,
+      config: compositedComp.compConfig,
     },
     'index.json': { usingComponents },
     'index.wxml': {
@@ -227,13 +287,19 @@ async function generateCompositeComponent(
     'index.wxss': {},
   }
   // Generating file by template and data
-  await generateFiles(pageFileData, templateDir + '/component', outDir)
+  await generateFiles(pageFileData, templateDir + '/component', outDir, ctx)
 
   // #3 writing lowcode files
   compositedComp.lowCodes
-    .filter(mod => mod.name !== '____index____')
-    .map(mod => {
-      return writeCode2file(mod, path.join(outDir, 'lowcode'), { comp: compositedComp })
+    .filter((mod) => mod.name !== '____index____')
+    .map((mod) => {
+      return writeCode2file(
+        mod,
+        path.join(outDir, 'lowcode'),
+        { comp: compositedComp },
+        '',
+        ctx
+      )
     })
   // await writeLowCodeFiles(weapp, appRoot)
   // await generateFramework(weapp, appRoot)
@@ -247,27 +313,35 @@ async function generateCompositeComponent(
  * }
  */
 export function getWxmlTag(
-  cmp: IWeAppComponentInstance['xComponent'],
-  materialLibs: IMaterialLibs
+  cmp: Required<IWeAppComponentInstance>['xComponent'],
+  ctx: IBuildContext,
+  nameMangler?: NameMangler
 ) {
-  if (cmp) {
-
-    const { moduleName, name } = cmp
-    const cmpMeta = materialLibs[moduleName].components[name]
-    try {
-      // eslint-disable-next-line prefer-const
-      let { tagName, path } = cmpMeta.platforms.mp
-      if (!tagName) {
-        tagName = (path ? moduleName + '-' + name : name).toLocaleLowerCase()
-      }
-      return {
-        tagName,
-        path: path && !path.startsWith('/') ? `/materials/${moduleName}/${path}` : path,
-      }
-    } catch (e) {
-      return { tagName: name.toLowerCase(), path: null }
+  const { moduleName, name } = cmp
+  const cmpMeta = ctx.materialLibs[moduleName].components[name]
+  if (!cmpMeta.platforms) {
+    return { tagName: name.toLocaleLowerCase() }
+  }
+  let { tagName, path: compPath } = cmpMeta.platforms.mp || {}
+  if (compPath) {
+    // 小程序混合模式时，组件库会存在子包内
+    const rootPath = ctx.rootPath || ''
+    compPath = compPath.startsWith('/')
+      ? compPath
+      : `${ctx.isMixMode ? '/' + rootPath : ''}/materials/${
+          cmp.moduleName
+        }/${compPath}`
+    tagName = moduleName + '-' + name
+    if (nameMangler) {
+      tagName = nameMangler.mangle(tagName)
     }
-  } else {
-    throw new Error('invalid component')
+  }
+  if (!tagName) {
+    // console.error('No wml tagName provided for ', cmp.moduleName, cmp.name)
+    tagName = name.toLocaleUpperCase()
+  }
+  return {
+    tagName,
+    path: compPath,
   }
 }

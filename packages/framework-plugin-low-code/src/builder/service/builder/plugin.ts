@@ -2,6 +2,7 @@ import * as fs from 'fs-extra'
 import { IPlugin } from '../../../weapps-core'
 import * as path from 'path'
 import _ from 'lodash'
+import { mergeSubPackages } from '../../util/mp'
 
 // 安装原生小程序类的插件
 export async function installMpPlugin(appBuildDir: string, plugins: IPlugin[]) {
@@ -31,42 +32,6 @@ export async function installMpPlugin(appBuildDir: string, plugins: IPlugin[]) {
 
   // 这里的 mergeAppJson 是不生效的，只能到 wa-watch 里 merge
   // GOTO webpack compile callback
-}
-
-// 将后面的子包配置合并到前面
-// 暂时不考虑 root 会重名的情况
-export function mergeSubPackages(baseAppJsonPath: string, mergeAppJsonPath: string) {
-  const baseJson = fs.readJSONSync(baseAppJsonPath)
-  const mergeJson = fs.readJSONSync(mergeAppJsonPath)
-  if (!getSubPackages(mergeJson)) return
-
-  const newJson = { ...baseJson }
-
-  if (!baseJson.subPackages) {
-    newJson.subPackages = getSubPackages(mergeJson)
-  } else {
-    getSubPackages(mergeJson).forEach(mergeItem => {
-      // 找到重复的进行合并再去重
-      const targetItemIdx = newJson.subPackages.findIndex(item => {
-        return item.root === mergeItem.root
-      })
-      if (newJson.subPackages[targetItemIdx]) {
-        const pages = _.uniq([].concat(newJson.subPackages[targetItemIdx].pages, mergeItem.pages))
-        newJson.subPackages[targetItemIdx].pages = pages
-      } else {
-        newJson.subPackages.push(mergeItem)
-      }
-    })
-  }
-
-  console.log('插件的 appJson 合并', newJson.subPackages)
-
-  fs.writeJSONSync(baseAppJsonPath, newJson, { spaces: 2 })
-
-  // 处理兼容
-  function getSubPackages(json) {
-    return json.subpackages || json.subPackages
-  }
 }
 
 /**
