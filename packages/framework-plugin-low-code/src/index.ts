@@ -294,14 +294,14 @@ class LowCodePlugin extends Plugin {
 
     this._initDir()
 
-    if (this._resolvedInputs.runtime === RUNTIME.CI) {
-      this._logFilePath = path.resolve(this.api.projectPath, LOG_FILE)
-      fs.removeSync(this._logFilePath)
-      fs.ensureFileSync(this._logFilePath)
-      let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' })
-      process.stdout.pipe(logStream)
-      process.stderr.pipe(logStream)
-    }
+    // if (this._resolvedInputs.runtime === RUNTIME.CI) {
+    //   this._logFilePath = path.resolve(this.api.projectPath, LOG_FILE)
+    //   fs.removeSync(this._logFilePath)
+    //   fs.ensureFileSync(this._logFilePath)
+    //   let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' })
+    //   process.stdout.pipe(logStream)
+    //   process.stderr.pipe(logStream)
+    // }
 
     this.api.logger.debug(`low-code plugin construct at ${Date.now()}`)
     this._time(TIME_LABEL.LOW_CODE)
