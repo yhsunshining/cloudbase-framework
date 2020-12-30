@@ -1,3 +1,11 @@
+/**
+ * Tencent is pleased to support the open source community by making CloudBaseFramework - 云原生一体化部署工具 available.
+ *
+ * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ *
+ * Please refer to license text included with this package for license details.
+ */
+
 import fs, { PathLike } from 'fs-extra'
 import path from 'path'
 import { Plugin, PluginServiceApi } from '@cloudbase/framework-core'
@@ -286,16 +294,13 @@ class LowCodePlugin extends Plugin {
 
     this._initDir()
 
-    if (
-      this._resolvedInputs.runtime === RUNTIME.CI &&
-      this._resolvedInputs.debug
-    ) {
+    if (this._resolvedInputs.runtime === RUNTIME.CI) {
       this._logFilePath = path.resolve(this.api.projectPath, LOG_FILE)
       fs.removeSync(this._logFilePath)
       fs.ensureFileSync(this._logFilePath)
       let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' })
-      process.stdout.write = logStream.write.bind(logStream) as any
-      process.stderr.write = logStream.write.bind(logStream) as any
+      process.stdout.pipe(logStream)
+      process.stderr.pipe(logStream)
     }
 
     this.api.logger.debug(`low-code plugin construct at ${Date.now()}`)
