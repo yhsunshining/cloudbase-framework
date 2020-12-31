@@ -645,6 +645,7 @@ function generateListnerInstances(
 ) {
   return listenerInstances.map((listener: IListenerInstance) => {
     const generatedListener: any = {
+      key: listener.key,
       trigger: listener.trigger,
       isCapturePhase: listener.isCapturePhase,
       noPropagation: listener.noPropagation,
@@ -917,7 +918,9 @@ export async function writeLowCodeFilesForCompositeComp(
     if (mod.type === 'style') {
       codeContent = `.${getCompositedComponentClass(comp)} { ${mod.code} }` // pageId 作为组件样式的 scope
       try {
-        codeContent = await processLess(`${themeCode ? themeCode : ''}\n${codeContent}`)
+        codeContent = await processLess(
+          `${themeCode ? themeCode : ''}\n${codeContent}`
+        )
       } catch (e) {
         console.error(`样式转换失败 [${pageId}] :`, e, codeContent)
       }

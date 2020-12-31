@@ -430,7 +430,7 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
 function readListeners(listeners: IWeAppPage['listeners'] = []) {
   return listeners.map((l) => {
     const act: IListenerInstance = {
-      key: '',
+      key: l.key || '',
       sourceKey: l.handler.moduleName + ':' + l.handler.name,
       trigger: l.trigger,
       type: l.type,
