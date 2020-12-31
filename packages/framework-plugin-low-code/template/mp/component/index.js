@@ -15,9 +15,9 @@ const widgetProps = <%= stringifyObj(widgetProps, {depth: null}) %>
 const evtListeners = {<% Object.entries(eventHandlers).map(([handlerName, listeners])=>{%>
   <%= handlerName%>: [
     <%listeners.map(l=> { %>{
-      handler: <% if (l.type == 'rematch') {%> _handler<%= l.handler %> <%} else if (l.type == 'prop-event') {%> function({event, data = {}}) { <%= compApi %>.props.events.<%= l.handler %>({...event.detail, ...data}) } <%} else {%> <%= l.handler %> <%} %>,
+      handler: <% if (l.type == 'rematch') {%> _handler<%= l.handler %> <%} else {%> <%= l.handler %> <%} %>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
-      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems) => (<%= expr %>),
+      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems, event) => (<%= expr %>),
         <%}) %>}
     },<%})%>
   ],<%})%>
@@ -43,7 +43,7 @@ const handler = {<% handlers.forEach(h => {%>
 
 const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
   <%= id %>: { <% Object.entries(widgetBinds).map(([prop, expr]) => { %>
-    <%= prop %>: function (lists, forItems) { return <%= expr %>; },<% }) %>
+    <%= prop %>: function (lists, forItems, event) { return <%= expr %>; },<% }) %>
   },<%}) %>
 }
 

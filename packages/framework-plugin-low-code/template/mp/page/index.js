@@ -17,14 +17,14 @@ const evtListeners = {<% Object.entries(eventHanlders).map(([handlerName, listen
       handler: <% if (l.type === 'rematch') {%> handlers.<%= l.handler %> <%} else if (l.type == 'material') {%> function(...args) { return require('../../materials/<%= l.handlerModule %>/actions/<%= l.handler %>/index').default(...args) } <%} else {%> <%= l.handler %> <%} %>,
       // handler: <% if (l.type === 'rematch') {%> handlers.<%}%><%=l.handler%>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
-      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems) => (<%= expr %>),
+      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems, event) => (<%= expr %>),
         <%}) %>}
     },<%})%>
   ],<%})%>
 }
 const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
   <%= id %>: { <% Object.entries(widgetBinds).map(([prop, expr]) => { %>
-    <%= prop %>: function (lists, forItems) { return <%= expr %>; },<% }) %>
+    <%= prop %>: function (lists, forItems, event) { return <%= expr %>; },<% }) %>
   },<%}) %>
 }
 

@@ -31,12 +31,12 @@ export function createEventHandlers(evtListeners) {
     evtHandlers[name] = function (event) {
       const self = this
       // The page event handler
-      const { lists, itemsById} = findForItemsOfWidget(mpCompToWidget(self, event.currentTarget)) || {}
+      const { lists, itemsById } = findForItemsOfWidget(mpCompToWidget(self, event.currentTarget)) || {}
       listeners.forEach(l => {
         let { data = {}, boundData = {} } = l
         data = { ...data }
         for (const k in boundData) {
-          data[k] = boundData[k](lists, itemsById)
+          data[k] = boundData[k](lists, itemsById, event)
         }
         l.handler.call(self, { event, lists, forItems: itemsById, data })
       })

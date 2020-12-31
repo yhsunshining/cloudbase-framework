@@ -141,7 +141,7 @@ export function createEventHanlders(
   walkThroughWidgets(widgets, (id, widget, parentId) => {
     const { xComponent } = widget
     const xProps =
-    widget.xProps || ({} as Required<IWeAppComponentInstance>['xProps'])
+      widget.xProps || ({} as Required<IWeAppComponentInstance>['xProps'])
     if (!xComponent) {
       // skip slot component
       return
@@ -187,8 +187,23 @@ export function createEventHanlders(
       const handlerName = getMpEventHanlderName(id, l.trigger, l)
       eventHanlders[handlerName] = eventHanlders[handlerName] || []
       const params = generatedDynamicData(l.data)
+      let handler = l.handler.name
+      switch (l.type) {
+        case ActionType.Platform: {
+          handler = `function({data}){ return app.${l.handler.name}(data)}`
+          break
+        }
+        case ActionType.Datasource: {
+          handler = `function({data}){ return app.dataSources.$call({data})}`
+          break
+        }
+        case ActionType.PropEvent: {
+          handler = `function({event, data = {}}){ return ${componentApi}.props.events.${l.handler.name}({...event.detail, ...data}) }`
+          break
+        }
+      }
       eventHanlders[handlerName].push({
-        handler: l.handler.name,
+        handler: handler,
         handlerModule: l.handler.moduleName,
         data: params.staticProps,
         boundData: params.boundProps,
