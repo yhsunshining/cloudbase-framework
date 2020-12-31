@@ -27,6 +27,7 @@ import path from 'path'
 import { DEPLOY_MODE } from '../../index'
 import { handleMixMode } from '../mp/mixMode'
 import chalk from 'chalk'
+import { RUNTIME } from '../../index'
 
 export type BuildAppProps = {
   dependencies: IMaterialItem[]
@@ -55,6 +56,7 @@ export async function buildWebApp(
     dependencies,
     appKey = 'test',
     nodeModulesPath,
+    runtime = RUNTIME.NONE,
     buildTypeList = [BuildType.WEB],
     mode = WebpackModeType.PRODUCTION,
     deployMode = DEPLOY_MODE.PREVIEW,
@@ -67,7 +69,7 @@ export async function buildWebApp(
       isComposite: false,
       compProps: {},
     },
-  }: BuildAppProps & { deployMode: DEPLOY_MODE },
+  }: BuildAppProps & { deployMode: DEPLOY_MODE; runtime: RUNTIME },
   cb?: WebpackBuildCallBack
 ) {
   if (!mainAppSerializeData) {
@@ -80,8 +82,8 @@ export async function buildWebApp(
     console.log('主包项目路径', generateMpPath)
   }
 
-  let { appBuildDir } = getCompileDirs(appKey)
-  const { materialsDir } = getCompileDirs(appKey)
+  let { appBuildDir, materialsDir } =
+    runtime === RUNTIME.CI ? getCompileDirs('app') : getCompileDirs(appKey)
 
   const startTime = Date.now()
   if (buildTypeList.includes(BuildType.MP)) {

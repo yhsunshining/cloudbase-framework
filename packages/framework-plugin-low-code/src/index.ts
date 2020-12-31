@@ -50,7 +50,7 @@ export enum DEPLOY_MODE {
   UPLOAD = 'upload',
 }
 
-enum RUNTIME {
+export enum RUNTIME {
   CI = 'CI',
   NONE = '',
   CLI = 'CLI',
@@ -535,6 +535,7 @@ class LowCodePlugin extends Plugin {
               nodeModulesPath,
               publicPath,
               buildTypeList,
+              runtime: this._resolvedInputs.runtime,
               mode: webpackMode,
               deployMode: this._resolvedInputs.deployOptions?.mode,
               watch: false,
