@@ -12,26 +12,69 @@ export function getMetaInfoBySourceKey(sourceKey) {
 }
 
 export async function emitEvent(trigger, listeners = [], args) {
-  const targetListeners = listeners.filter(l => l.trigger === trigger)
+  const targetListeners = listeners.filter((l) => l.trigger === trigger)
   for (const listener of targetListeners) {
     // 当前非捕获Event，再判断冒泡行为
-    if(!args?.customEventData?.detail?.isCapturePhase && listener.noPropagation) {
+    if (
+      !args?.customEventData?.detail?.isCapturePhase &&
+      listener.noPropagation
+    ) {
       args?.customEventData?.detail?.stopPropagation()
     }
 
     // 判断捕获的执行，只有执行的捕获与配置的捕获一致时。才会执行。
-    if((listener?.isCapturePhase || false) === (args?.customEventData?.detail?.isCapturePhase || false)) {
-      await invokeListener(listener, args)
+    if (
+      (listener?.isCapturePhase || false) ===
+      (args?.customEventData?.detail?.isCapturePhase || false)
+    ) {
+      try {
+        let res = await invokeListener(listener, args)
+        let eventName = `${listener.key}.success`
+        let event = {
+          detail: {
+            value: res,
+            origin: args.event,
+            isCapturePhase: !!args.event?.isCapturePhase,
+          },
+          name: eventName,
+        }
+        emitEvent(eventName, listeners, {
+          ...args,
+          event,
+          customEventData: event,
+        })
+      } catch (e) {
+        let eventName = `${listener.key}.fail`
+        let event = {
+          detail: {
+            value: e,
+            origin: args.event,
+            isCapturePhase: !!args.event?.isCapturePhase,
+          },
+          name: eventName,
+        }
+        emitEvent(trigger, listeners, {
+          ...args,
+          event,
+          customEventData: event,
+        })
+      }
     }
   }
 }
 
-async function invokeListener({ instanceFunction, data = {}, dataBinds = {} }, args) {
+async function invokeListener(
+  { instanceFunction, data = {}, dataBinds = {} },
+  args
+) {
   // ToDo resolve databinds
   const action = instanceFunction
   const maxTimeout = DEFAULT_MAX_TIMEOUT
   const params = {
-    data: { ...data, ...resolveDataBinds(dataBinds, args.forItems) },
+    data: {
+      ...data,
+      ...resolveDataBinds(dataBinds, args.forItems, { event: args.event }),
+    },
     ...args,
   }
 

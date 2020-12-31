@@ -15,7 +15,7 @@ export function pathTransformSymbolToDot(str) {
 }
 
 /**
- * All data bindings are generated as functions: (forItems) => any
+ * All data bindings are generated as functions: (forItems, event?) => any
  * @param {*} dataBinds
  * @param {*} forItems
  */
@@ -24,10 +24,10 @@ export function resolveDataBinds(dataBinds, forItems, codeContext) {
   for (const prop in dataBinds) {
     let fn = dataBinds[prop]
     try {
-      if(codeContext && codeContext.$WEAPPS_COMP) {
+      if (codeContext && codeContext.$WEAPPS_COMP) {
         fn = fn.bind(codeContext.$WEAPPS_COMP)
       }
-      resolvedProps[prop] = fn(forItems)
+      resolvedProps[prop] = fn(forItems, codeContext && codeContext.event)
     } catch (e) {
       console.error('Error resolving data binding', prop, dataBinds[prop], e)
     }
@@ -37,7 +37,7 @@ export function resolveDataBinds(dataBinds, forItems, codeContext) {
 
 export function deepDealSchema(sourceSchema, deal) {
   const fieldSchema = new Schema(sourceSchema)
-  Object.keys(fieldSchema.properties).forEach(key => {
+  Object.keys(fieldSchema.properties).forEach((key) => {
     const schema = fieldSchema.properties[key]
     deepDealSchema(schema, deal)
     deal && deal(schema, key)

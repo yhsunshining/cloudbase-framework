@@ -571,7 +571,7 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
           .replace(/\n/g, ' ')
           .replace(/\$comp/g, 'this.$WEAPPS_COMP')})`
       } else {
-        funcCode = `(forItems) => (${bind.bindDataPath.replace(/\n/g, ' ')})`
+        funcCode = `(forItems, event) => (${bind.bindDataPath.replace(/\n/g, ' ')})`
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath
@@ -654,6 +654,10 @@ function generateListnerInstances(
       const { sourceKey } = listener
       const { variableName } = getMetaInfoBySourceKey(sourceKey)
       generatedListener.instanceFunction = `${REPLACE_SIGN}${variableName}${REPLACE_SIGN}`
+    } else if (listener.type === ActionType.Platform) {
+      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.${listener.handler.name}(data) }${REPLACE_SIGN}`
+    } else if (listener.type === ActionType.Datasource) {
+      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.dataSources.$call(data) }${REPLACE_SIGN}`
     } else if (listener.type === ActionType.PropEvent) {
       if (isComposite) {
         generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${listener.handler.name}', data.target) }.bind(this)${REPLACE_SIGN}`
