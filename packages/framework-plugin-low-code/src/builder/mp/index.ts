@@ -122,8 +122,7 @@ export async function generateWxMp(
       debug: !buildContext.isProduction,
     },
     'common/process.js': {},
-    'weapps-common/process.js': {},
-    'weapps-common/data-patch.js': {},
+    'common/data-patch.js': {},
   }
   console.log('Generating ' + em('project') + ' files')
   await generateFiles(appFileData, templateDir, projDir, buildContext)

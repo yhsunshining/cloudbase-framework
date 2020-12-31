@@ -32,7 +32,7 @@ export async function handleMixMode({
   // 复制框架公用内容
   async function handleMainApp() {
     // 可以独立删除的
-    const aloneDirs = ['weapps-common', 'weapps-app', 'lowcode', 'materials']
+    const aloneDirs = ['common', 'app', 'lowcode', 'materials']
     // 与主程序混合不能主动删除的
     const dirs = aloneDirs
     await Promise.all(
