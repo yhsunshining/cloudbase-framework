@@ -1481,7 +1481,8 @@
           },
           "required": [
             "appid",
-            "localPath"
+            "localPath",
+            "privateKeyPath"
           ],
           "$schema": "http://json-schema.org/draft-07/schema#"
         }
