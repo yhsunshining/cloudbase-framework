@@ -9,6 +9,13 @@ import datasourceProfiles from './datasources-profiles';
  */
 
 export const dataSources = {};
+
+dataSources.$call = callDataSource
+
+function callDataSource (params) {
+  return dataSources[params.dataSourceName][params.methodName](params.params)
+}
+
 // window.dataSource = dataSource;
 datasourceProfiles.forEach(ds => createDataSource(ds));
 export function createDataSource(ds) {
