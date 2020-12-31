@@ -103,7 +103,7 @@ class CompositeCompWrapper extends React.Component {
 
   createCompAPI(compThis) {
     compThis.$WEAPPS_COMP = {
-      widgetData.getConfig = () => compThis.compConfig
+      compConfig: compThis.compConfig,
       widgets: compThis.widgets,
       node: compThis.node,
       handler: compThis.handler,

@@ -22,7 +22,7 @@ import {
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth'
 import { deserializePlatformApp } from '@cloudbase/cals'
 
-import { getValidNodeModulesPath } from './utils'
+import { getValidNodeModulesPath } from './utils/common'
 import { default as weAppsBuild, buildAsWebByBuildType } from './builder/core'
 import {
   BuildType,
