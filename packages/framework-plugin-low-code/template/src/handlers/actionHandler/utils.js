@@ -58,7 +58,8 @@ export async function emitEvent(trigger, listeners = [], args) {
           event,
           customEventData: event,
         })
-        throw e
+        // 之前 invoke 内部catch 了错误，不会抛错
+        // throw e
       }
     }
   }
@@ -90,5 +91,6 @@ async function invokeListener(
     }
   } catch (e) {
     console.error('Action error: ', e)
+    throw e
   }
 }
