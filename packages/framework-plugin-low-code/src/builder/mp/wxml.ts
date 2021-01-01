@@ -347,7 +347,7 @@ const evtNameMap = {
 }
 
 function getMpEventName(originalName: string) {
-  return evtNameMap[originalName] || originalName
+  return evtNameMap[originalName] || originalName.replace(/\./g, '_')
 }
 
 export function getMpEventHanlderName(
