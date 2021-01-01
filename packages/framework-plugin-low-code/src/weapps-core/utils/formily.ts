@@ -235,6 +235,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     const listeners: IWeAppPage['listeners'] = listenerInstances.map((act) => {
       const fromParts = act.sourceKey.split(':')
       return {
+        key: act.key || '',
         trigger: act.trigger,
         type: act.type,
         handler: {

@@ -58,6 +58,7 @@ export async function emitEvent(trigger, listeners = [], args) {
           event,
           customEventData: event,
         })
+        throw e
       }
     }
   }

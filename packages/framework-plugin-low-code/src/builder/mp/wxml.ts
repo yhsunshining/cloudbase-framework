@@ -347,6 +347,7 @@ const evtNameMap = {
 }
 
 function getMpEventName(originalName: string) {
+  // 模板中也有部分依赖保持相同的连字符(_)，更改时注意同步修改
   return evtNameMap[originalName] || originalName.replace(/\./g, '_')
 }
 

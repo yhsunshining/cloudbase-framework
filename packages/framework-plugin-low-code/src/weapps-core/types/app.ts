@@ -84,6 +84,7 @@ export interface IWeAppComponentInstance {
 }
 
 export interface IEventListener extends IEventModifiers {
+  key?: string,
   trigger: string
   type: ActionType // listener defition location
   handler: {

@@ -30,15 +30,34 @@ export function createEventHandlers(evtListeners) {
     const listeners = evtListeners[name]
     evtHandlers[name] = function (event) {
       const self = this
+      const [prefix = ''] = name.split('$')
       // The page event handler
       const { lists, itemsById } = findForItemsOfWidget(mpCompToWidget(self, event.currentTarget)) || {}
-      listeners.forEach(l => {
+      listeners.forEach(async l => {
         let { data = {}, boundData = {} } = l
         data = { ...data }
         for (const k in boundData) {
           data[k] = boundData[k](lists, itemsById, event)
         }
-        l.handler.call(self, { event, lists, forItems: itemsById, data })
+        try {
+          let res = await l.handler.call(self, { event, lists, forItems: itemsById, data })
+          let eventName = prefix && l.key ? `${prefix}$${l.key}_success` : ''
+          self[eventName] && self[eventName]({
+            ...event,
+            detail: res
+          })
+        } catch (e) {
+          let eventName = l.key ? `${l.key}_fail` : ''
+          if(self[eventName]){
+            await self[eventName]({
+              ...event,
+              detail: e
+            })
+          }else {
+            throw e
+          }
+
+        }
       })
     }
   }
@@ -87,7 +106,7 @@ export function throttle(fn, limit) {
       lastExecTime = Date.now()
       fn()
     } else if (!timer) {
-     timer = setTimeout(throttled, limit - idledDuration)
+      timer = setTimeout(throttled, limit - idledDuration)
     }
   }
   return throttled
@@ -102,8 +121,8 @@ export function deepEqual(a, b) {
     if (a.length !== b.length) {
       return false
     }
-    for(let i = 0; i < a.length; i++) {
-      if (!deepEqual(a[i], b[i])){
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) {
         return false
       }
     }
@@ -115,7 +134,7 @@ export function deepEqual(a, b) {
     if (!deepEqual(aProps, bProps)) {
       return false
     }
-    for(let i = 0; i < aProps.length; i++) {
+    for (let i = 0; i < aProps.length; i++) {
       const prop = aProps[i]
       if (!deepEqual(a[prop], b[prop])) {
         return false

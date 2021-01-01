@@ -203,6 +203,7 @@ export function createEventHanlders(
         }
       }
       eventHanlders[handlerName].push({
+        key: l.key || '',
         handler: handler,
         handlerModule: l.handler.moduleName,
         data: params.staticProps,

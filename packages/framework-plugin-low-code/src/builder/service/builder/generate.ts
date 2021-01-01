@@ -571,7 +571,10 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
           .replace(/\n/g, ' ')
           .replace(/\$comp/g, 'this.$WEAPPS_COMP')})`
       } else {
-        funcCode = `(forItems, event) => (${bind.bindDataPath.replace(/\n/g, ' ')})`
+        funcCode = `(forItems, event) => (${bind.bindDataPath.replace(
+          /\n/g,
+          ' '
+        )})`
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath
