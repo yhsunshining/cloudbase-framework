@@ -22,5 +22,5 @@ export enum ActionType {
   HandlerFn = 'handler-fn', // 低代码 handler 事件
   Inline = 'inline', // The handler name is js code
   Platform = 'platform', // 系统方式
-  Datasource = 'dataSource'// 数据源方法
+  DataSource = 'dataSource'// 数据源方法
 }

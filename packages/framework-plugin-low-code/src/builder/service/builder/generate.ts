@@ -656,7 +656,7 @@ function generateListnerInstances(
       generatedListener.instanceFunction = `${REPLACE_SIGN}${variableName}${REPLACE_SIGN}`
     } else if (listener.type === ActionType.Platform) {
       generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.${listener.handler.name}(data) }${REPLACE_SIGN}`
-    } else if (listener.type === ActionType.Datasource) {
+    } else if (listener.type === ActionType.DataSource) {
       generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.dataSources.$call(data) }${REPLACE_SIGN}`
     } else if (listener.type === ActionType.PropEvent) {
       if (isComposite) {

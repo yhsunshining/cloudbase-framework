@@ -193,7 +193,7 @@ export function createEventHanlders(
           handler = `function({data}){ return app.${l.handler.name}(data)}`
           break
         }
-        case ActionType.Datasource: {
+        case ActionType.DataSource: {
           handler = `function({data}){ return app.dataSources.$call({data})}`
           break
         }
