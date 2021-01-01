@@ -74,7 +74,7 @@ async function invokeListener(
   const params = {
     data: {
       ...data,
-      ...resolveDataBinds(dataBinds, args.forItems, { event: args.event }),
+      ...resolveDataBinds(dataBinds, args.forItems, { event: args.event }, true),
     },
     ...args,
   }
