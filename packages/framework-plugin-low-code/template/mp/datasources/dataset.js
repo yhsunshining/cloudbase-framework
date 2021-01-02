@@ -99,8 +99,8 @@ export async function createStateDatasrouceVar(id, dynamicValueContext) {
   for (let name in steteConfigMap) {
     let config = steteConfigMap[name]
     if (config.varType === 'datasource') {
-      // 「新建记录」类型变量
-      if (!config.initMethod) {
+      // 无初始化方法
+      if (!config.initMethod || !config.initMethod.name) {
         context[name] = {}
         // 此时变量状态为 idle, 只有相应表单提交时才会有其他状态
         context.$status[name] = { status: 'idle' }

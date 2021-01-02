@@ -30,7 +30,13 @@ export function buildDefaultMethods(dsConfig) {
 
 const defaultHandlers = {
   create: async function (params, table, command) {
-    const result = await table.add(params); // @ts-ignore
+    const now = Date.now();
+    // 追加
+    const newParams = Object.assign({}, params, {
+      createdAt: now,
+      updatedAt: now,
+    });
+    const result = await table.add(newParams); // @ts-ignore
     return [
       result,
       {
@@ -58,7 +64,11 @@ const defaultHandlers = {
     return [result];
   },
   update: async function (params, table, command) {
-    const result = await table.doc(params._id).update(params);
+    const newParams = Object.assign({}, params, {
+      updatedAt: Date.now(),
+    });
+    delete newParams.createdAt;
+    const result = await table.doc(params._id).update(newParams);
     return [
       result,
       {
@@ -66,7 +76,7 @@ const defaultHandlers = {
       },
     ];
   },
-  remove: async function (params, table, command) {
+  async remove (params, table, command) {
     let ids = params.id;
     if (!Array.isArray(ids)) ids = [ids]; // 支持批量删除
 
