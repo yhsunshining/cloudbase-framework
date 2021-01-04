@@ -16,7 +16,7 @@ import { notice, log } from '../util/console'
 import { appTemplateDir } from '../config'
 import chalk from 'chalk'
 import { mergeDependencies } from '../../utils/dataSource'
-import { DEPLOY_MODE } from '../../index'
+import { DEPLOY_MODE, RUNTIME } from '../../index'
 
 let lastDeps: Object | null = null
 
@@ -41,6 +41,7 @@ export async function runGenerateCore(
   basename: string, // browser Router 里指定的basename
   buildTypeList: BuildType[],
   deployMode: DEPLOY_MODE,
+  runtime: RUNTIME = RUNTIME.NONE,
   extraData: {
     isComposite: boolean
     compProps: any
@@ -132,7 +133,7 @@ export async function runGenerateCore(
     )
   } else {
     await generatePackageJSON(deps, appBuildDir, appKey)
-    await installDependencies(appBuildDir)
+    await installDependencies(appBuildDir, { runtime })
     lastDeps = deps
   }
 

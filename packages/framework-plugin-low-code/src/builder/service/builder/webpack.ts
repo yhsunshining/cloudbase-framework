@@ -25,9 +25,8 @@ import { sync as commandExistsSync } from 'command-exists'
 import { BuildType, WebpackModeType, WebpackBuildCallBack } from '../../types/common'
 import { appTemplateDir } from '../../config'
 import { notice } from '../../util/console'
-import { HISTORY_TYPE } from '../../../index'
+import { HISTORY_TYPE, RUNTIME } from '../../../index'
 const yarnExists = commandExistsSync('yarn')
-const pnpmExists = commandExistsSync('pnpm')
 
 export interface IMpConfig {
   origin: string
@@ -616,6 +615,7 @@ export async function downloadDependencies(targetDir: string, srcZipUrl: string)
 export interface IInstallOpts {
   packageName?: string
   latest?: boolean
+  runtime?: RUNTIME
 }
 // TODO use yarn if installed
 export async function installDependencies(targetDir: string, options: IInstallOpts = {}) {
@@ -645,16 +645,10 @@ export async function installDependencies(targetDir: string, options: IInstallOp
   )
 
   let installProcess
-  if (yarnExists) {
+  // 云端构建, 选用 npm
+  if (yarnExists && options?.runtime !== RUNTIME.CI) {
     const addPackage = packageName ? ['add', packageName] : []
     installProcess = spawn('yarn', [...addPackage, registry], {
-      cwd: targetDir,
-      env: process.env,
-      stdio: ['inherit', 'pipe', 'pipe'],
-    })
-  } else if (pnpmExists) {
-    const addPackage = packageName ? ['add', packageName] : ['install']
-    installProcess = spawn('pnpm', [...addPackage], {
       cwd: targetDir,
       env: process.env,
       stdio: ['inherit', 'pipe', 'pipe'],

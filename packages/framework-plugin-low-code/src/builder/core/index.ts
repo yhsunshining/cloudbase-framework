@@ -165,6 +165,7 @@ export async function buildWebApp(
       basename,
       buildTypeList,
       deployMode,
+      runtime,
       extraData
     )
 
