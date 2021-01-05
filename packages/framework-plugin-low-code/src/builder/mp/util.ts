@@ -194,7 +194,7 @@ export function createEventHanlders(
           break
         }
         case ActionType.DataSource: {
-          handler = `function({data}){ return app.dataSources.$call({data})}`
+          handler = `function({data}){ return app.dataSources.$call(data)}`
           break
         }
         case ActionType.PropEvent: {
