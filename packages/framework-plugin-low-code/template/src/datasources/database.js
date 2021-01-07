@@ -76,8 +76,8 @@ const defaultHandlers = {
       },
     ];
   },
-  async remove (params, table, command) {
-    let ids = params.id;
+  async delete (params, table, command) {
+    let ids = params._id || params.id;
     if (!Array.isArray(ids)) ids = [ids]; // 支持批量删除
 
     const result = await table
