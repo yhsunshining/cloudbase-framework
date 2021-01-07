@@ -51,7 +51,7 @@ const defaultHandlers = {
     return [result, result.data];
   },
   getItem: async function (params, table, command) {
-    const result = await table.doc(params.id).get(); // @ts-ignore
+    const result = await table.doc(params._id).get(); // @ts-ignore
 
     if (!result.code) {
       if (result.data && result.data.length) {
