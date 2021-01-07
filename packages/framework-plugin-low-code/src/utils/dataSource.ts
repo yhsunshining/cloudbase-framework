@@ -128,7 +128,7 @@ function _generateDynamicDataset(dataset) {
           let processed = {}
           for (let paramKey in params) {
             let bind = params[paramKey]
-            if (!bind.type || bind.type === PropBindType.state) {
+            if (!bind.type || bind.type === PropBindType.static) {
               let value = bind.value
               processed[paramKey] = `%%%(app, $page) => (${
                 typeof value === 'string' ? `'${value}'` : value
