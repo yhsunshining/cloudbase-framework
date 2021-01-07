@@ -68,6 +68,7 @@ const defaultHandlers = {
       updatedAt: Date.now(),
     });
     delete newParams.createdAt;
+    delete newParams._id;
     const result = await table.doc(params._id).update(newParams);
     return [
       result,
