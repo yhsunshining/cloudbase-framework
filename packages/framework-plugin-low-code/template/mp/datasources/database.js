@@ -54,8 +54,10 @@ const defaultHandlers = {
     const result = await table.doc(params._id).get(); // @ts-ignore
 
     if (!result.code) {
-      if (result.data && result.data.length) {
-        return [result, result.data[0]];
+      // 小程序SDK的 table.doc 返回的 data 是单个对象, 非数组
+      // TODO: 小程序数据源的 table.doc 应当和h5的响应结构保持一致
+      if (result.data) {
+        return [result, result.data];
       }
 
       throw new Error(`record ${params.id} not exists`);

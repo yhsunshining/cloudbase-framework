@@ -200,12 +200,12 @@ function setUpWidateDataBinds(w, dataBinds, forItems, failedBinds) {
           console.error(`Error computing data bind ${w.id}.${prop}`, e)
         }
       })
-      if (firstRunError) {
-        dispose()
-        failedBinds.push(setUpDataBind)
-      } else {
-        w._disposers.push(dispose)
-      }
+      // if (firstRunError) {
+      //   dispose()
+      //   failedBinds.push(setUpDataBind)
+      // } else {
+      w._disposers.push(dispose)
+      // }
     }
     setUpDataBind()
   })
