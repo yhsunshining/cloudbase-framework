@@ -72,6 +72,8 @@ const options = {
         to: function(context) {
           //  /^\/([^\.]*)\.(css|js)$/
           console.log('>>>>>>>>>>>>>>>>> got in css|js!', context.parsedUrl.pathname)
+          const { assets = [] } = window
+          const isInAssets = assets.includes(context.parsedUrl.pathname)
           return context.parsedUrl.pathname.replace(publicPath, '/')
         },
       },
@@ -84,6 +86,7 @@ const options = {
       },
     ],
   },
+  contentBase: [path.join(__dirname, 'assets')],
   watchOptions: {
     poll: 600,
     ignored: /node_modules|preview|dist|html|webpack|gsd-kbone-react/,
@@ -92,7 +95,8 @@ const options = {
     app: ['Google Chrome', '--incognito', '--other-flag'],
   },
   openPage: basename,
-  disableHostCheck: true
+  disableHostCheck: true,
+  compress: true
 }
 
 function startDevServer(conf) {

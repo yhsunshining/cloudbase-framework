@@ -59,8 +59,8 @@ export default {
     }
     if (!this.pendingData) {
       this.pendingData = {}
-      wx.nextTick(this.flushPendingData)
     }
+    wx.nextTick(this.flushPendingData)
     touchObj(data)  // Touch all props to monitor data deeply, FIXME
     Object.assign(this.pendingData, data)
   },

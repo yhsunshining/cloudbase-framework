@@ -1,9 +1,25 @@
-import { observable } from 'mobx'
-import { createEventHandlers, createComputed ,deepEqual} from './util'
-import { createWidgets, mpCompToWidget ,disposeWidget} from './widget'
+import { observable, autorun } from 'mobx'
+import { createEventHandlers, createComputed } from './util'
+import { createWidgets, mpCompToWidget, disposeWidget } from './widget'
 import mergeRenderer from './merge-renderer'
+import sdk from './weapp-sdk'
 
-export function createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config, libCommonRes) {
+/**
+ * Lowcodes of all components
+ */
+export const compLowcodes = {}
+
+export function createComponent(key, behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, index, lifeCycle, stateFn, computedFuncs, config, libCommonRes) {
+
+  compLowcodes[key] = {
+    index,
+    stateFn,
+    computedFuncs,
+    handler,
+    // events,
+    lib: libCommonRes,
+    config,
+  }
 
   return Component({
     options: {
@@ -30,42 +46,20 @@ export function createComponent(behaviors, properties, events, handler, dataBind
 
     lifetimes: {
       created() {
-        const $comp = this.$WEAPPS_COMP = {
-          state: {},
-          computed: {},
-          widgets: {},
-          props: {
-            data: observable({}),
-            events: createPropEvents(events, this),
-            get style() { return $comp.node.style },
-            get classList() { return $comp.node.classList },
-          },
-          handler: Object.keys(handler).reduce((result, key) => {
-            result[key] = handler[key].bind(this)
-            return result
-          }, {}),
-          node: null,
-        }  // The weapps API for component
         this._pageActive = true
+        this._disposers = []
       },
       attached() {
-        const owner = this.selectOwnerComponent()
-        const weappInstance = this.getWeAppInst()
-        weappInstance.lib = libCommonRes
-        weappInstance.node = mpCompToWidget(owner, this)
+        const $comp = this.getWeAppInst()
+        if(!$comp) return
 
-        // Mount more APIs
-        this.mountBuiltinAPIs(weappInstance.node)
-
-        weappInstance.node.getConfig = () => config
-
-        weappInstance.state = observable(stateFn.call(this))  // May depend on this.props.data.xxx
-        weappInstance.computed = createComputed(computedFuncs, this)
-        const { widgets, rootWidget: virtualRootWidget } = createWidgets(widgetProps, dataBindsBindContext(dataBinds, this), weappInstance.widgets, this)
+        $comp.props.events = createPropEvents(events, this)
+        $comp.widgets = {}
+        const { widgets, rootWidget: virtualRootWidget } = createWidgets(widgetProps, dataBindsBindContext(dataBinds, $comp), $comp.widgets, this)
         this._virtualRootWidget = virtualRootWidget
 
         try {
-          lifeCycle.onAttached && lifeCycle.onAttached.call(this)
+          lifeCycle.onAttached && lifeCycle.onAttached.call($comp)
         } catch (e) {
           console.error('Component lifecycle(attached) error', this.is, e)
         }
@@ -73,24 +67,35 @@ export function createComponent(behaviors, properties, events, handler, dataBind
         this._disposers = this.initMergeRenderer(widgets)
       },
       ready() {
-        lifeCycle.onReady && lifeCycle.onReady.call(this)
+        this._runWatch()
+        lifeCycle.onReady && lifeCycle.onReady.call(this.getWeAppInst())
       },
       detached() {
-        this._disposers.forEach(dispose => dispose())
+        const $comp = this.getWeAppInst()
+        if(!$comp) return
+
+        $comp.widgets = null
         disposeWidget(this._virtualRootWidget)
-        lifeCycle.onDetached && lifeCycle.onDetached.call(this)
+        this._disposers.forEach(dispose => dispose())
+        lifeCycle.onDetached && lifeCycle.onDetached.call($comp)
       }
     },
 
     pageLifetimes: {
       show() {
-        lifeCycle.onPageShow && lifeCycle.onPageShow.call(this)
+        const $comp = this.getWeAppInst()
+        if(!$comp) return
+        lifeCycle.onPageShow && lifeCycle.onPageShow.call($comp)
       },
       hide() {
-        lifeCycle.onPageHide && lifeCycle.onPageHide.call(this)
+        const $comp = this.getWeAppInst()
+        if(!$comp) return
+        lifeCycle.onPageHide && lifeCycle.onPageHide.call($comp)
       },
       resize(size) {
-        lifeCycle.onPageResize && lifeCycle.onPageResize.call(this, size)
+        const $comp = this.getWeAppInst()
+        if(!$comp) return
+        lifeCycle.onPageResize && lifeCycle.onPageResize.call($comp, size)
       }
     },
 
@@ -98,19 +103,78 @@ export function createComponent(behaviors, properties, events, handler, dataBind
       ...createEventHandlers(evtListeners),
       ...mergeRenderer,
       getWeAppInst() {
-        return this.$WEAPPS_COMP
-      },
-      mountBuiltinAPIs(widget) {
-        // Mount more APIs
-        widget.getDom = (fields) => {
-          return this._virtualRootWidget.children[0].getDom(fields)
+        const $comp = this.$WEAPPS_COMP
+        if ($comp) { return $comp }
+
+        if (!this.selectOwnerComponent) {
+          console.error('Fatal error: not support selectOwnerComponent API, need 2.8.2')
+          return null
         }
 
-        widget.getConfig = () => config
+        const owner = this.selectOwnerComponent()
+        const widget = mpCompToWidget(owner, this)
+        if (!widget || !widget.$comp) {
+          console.error('Fatal error: weapps component instance not created', this.is, this.id)
+        }
+        widget.getDom = (fields) => this._virtualRootWidget.children[0].getDom(fields)
+
+        this.$WEAPPS_COMP = widget.$comp
+        return widget.$comp
+      },
+      _runWatch() {
+        const { watchEffects = {}} = index
+        Object.keys(watchEffects).map(name => {
+          const fn = watchEffects[name]
+          if (fn instanceof Function) {
+            const $comp = this.getWeAppInst()
+            if(!$comp) return
+            this._disposers.push(autorun(fn.bind($comp)))
+          } else {
+            console.error(`WatchEffect(${name}) of ${key} is not a function.`)
+          }
+        })
       }
     },
-    observers: createObservers(Object.keys(properties))
+    // observers: createObservers(Object.keys(properties))
   })
+}
+
+// The component instance for lowcode
+export function create$comp(w) {
+  const lowcode = compLowcodes[w.widgetType]
+  if (!lowcode) {
+    return
+  }
+  const libCode = w.widgetType.split(':')[0]
+  const { stateFn, computedFuncs, handler, lib } = lowcode
+
+  const $comp = {
+    node: w,
+    widgets: null,
+    props: {
+      data: w,
+      // events: createPropEvents(events, $comp),
+      get style() { return w.style },
+      get classList() { return w.classList },
+    },
+    lib,
+    i18n: {
+      ...sdk.i18n,
+      t(key, data) {
+        const ns = libCode;
+        return sdk.i18n.t(`${ns}:${key}`, data)
+      },
+    }
+  }
+  $comp.$WEAPPS_COMP = $comp  // TODO $comp will replaced to this.$WEAPPS_COMP
+  $comp.state = observable(stateFn.call($comp))  // May depend on this.props.data.xxx
+  $comp.computed = createComputed(computedFuncs, $comp)
+  $comp.handler = Object.keys(handler).reduce((result, key) => {
+    result[key] = handler[key].bind($comp)
+    return result
+  }, {})
+
+  return $comp
 }
 
 function createObservers(props) {
@@ -137,7 +201,7 @@ function dataBindsBindContext(dataBinds, self) {
   }, {})
 }
 
-function createPropEvents(events, self) {
+function createPropEvents(events, mpInst) {
   const protectEventKeys = [
     'touchstart', //	手指触摸动作开始
     'touchmove', //		手指触摸后移动
@@ -160,9 +224,9 @@ function createPropEvents(events, self) {
     } else {
       result[evt.name] = function (evtDetail) {
         if (evt.getValueFromEvent) {
-          self.setData({ value: evt.getValueFromEvent({ detail: evtDetail }) })
+          mpInst.setData({ value: evt.getValueFromEvent({ detail: evtDetail }) })
         }
-        self.triggerEvent(evt.name, evtDetail)
+        mpInst.triggerEvent(evt.name, evtDetail)
       }
     }
   })

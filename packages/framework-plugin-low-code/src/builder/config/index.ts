@@ -2,6 +2,7 @@ import * as path from 'path'
 import * as os from 'os'
 export * from './common'
 
+export const rootDir = path.resolve(__dirname, '../../')
 export const appTemplateDir = path.resolve(__dirname, '../../../template')
 export const npmRegistry = 'https://mirrors.tencent.com/npm/'
 export const materialsDirName = 'materials' // materials diretory of current project

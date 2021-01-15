@@ -14,6 +14,7 @@ import {
   builtinWigetProps,
   builtinMpEvents,
   builtinMpTags,
+  nativeCompWhiteList,
 } from '../config/mp'
 import { IBuildContext } from './BuildContext'
 import { getWxmlTag } from './materials'
@@ -245,7 +246,9 @@ export function generateWxml(
       Object.entries(syncConfigs).map(([prop, config]) => {
         const configs = Array.isArray(config) ? config : [config]
         configs.forEach(({ changeEvent: evtName }) => {
-          node.attributes[`bind:${evtName}`] = getMpEventHanlderName(
+          // 兼容微信 7.0.13 安卓版本 textarea 组件的 bindinput 事件，bind:input 写法，事件会失效
+          const sep = getEventBindSep(tagName)
+          node.attributes[`bind${sep}${evtName}`] = getMpEventHanlderName(
             id,
             evtName
           )
@@ -255,7 +258,7 @@ export function generateWxml(
         const evtName = getMpEventName(l.trigger)
         const modifiers = l
         node.attributes[
-          getMpEventAttr(evtName, modifiers)
+          getMpEventAttr(evtName, modifiers, tagName)
         ] = getMpEventHanlderName(id, evtName, modifiers)
       })
 
@@ -366,14 +369,24 @@ export function getMpEventHanlderName(
 }
 
 /* onid3click,  */
-function getMpEventAttr(evtName: string, modifier: IEventModifiers) {
+function getMpEventAttr(
+  evtName: string,
+  modifier: IEventModifiers,
+  tagName: string
+) {
   // Only builtin events have will bubble
   if (builtinMpEvents.indexOf(evtName) === -1) {
     modifier = {}
   }
   let prefix = modifier.isCapturePhase ? 'capture-' : ''
   prefix += modifier.noPropagation ? 'catch' : 'bind'
-  return prefix + ':' + evtName
+  const sep = getEventBindSep(tagName)
+  return prefix + sep + evtName
+}
+
+function getEventBindSep(tagName: string) {
+  // bind:input => bindinput 兼容微信 7.0.13 安卓版本 textarea 组件，bind:input 写法会导致事件失效
+  return nativeCompWhiteList.includes(tagName.toLowerCase()) ? '' : ':'
 }
 
 export function getUsedComponents(

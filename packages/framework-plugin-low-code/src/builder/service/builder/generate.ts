@@ -923,11 +923,11 @@ export async function writeLowCodeFilesForCompositeComp(
     let codeContent = ''
 
     if (mod.type === 'style') {
-      codeContent = `.${getCompositedComponentClass(comp)} { ${mod.code} }` // pageId 作为组件样式的 scope
+      codeContent = `.${getCompositedComponentClass(comp)} { \n${
+        themeCode ? themeCode : ''
+      }\n${mod.code}\n }` // pageId 作为组件样式的 scope
       try {
-        codeContent = await processLess(
-          `${themeCode ? themeCode : ''}\n${codeContent}`
-        )
+        codeContent = await processLess(`${codeContent}`)
       } catch (e) {
         console.error(`样式转换失败 [${pageId}] :`, e, codeContent)
       }

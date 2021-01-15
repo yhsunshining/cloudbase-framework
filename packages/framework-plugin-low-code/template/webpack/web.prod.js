@@ -4,6 +4,7 @@ const TerserPlugin = require('terser-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const themeVars = require('./themeVars')
 
 module.exports = function (options) {
@@ -44,6 +45,15 @@ module.exports = function (options) {
       )
     ),
     new webpack.optimize.ModuleConcatenationPlugin(),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, '../assets'),
+          to: '.',
+          noErrorOnMissing: true,
+        },
+      ],
+    }),
   ]
   if (isDevelopment) {
     plugins.concat([new HardSourceWebpackPlugin()])

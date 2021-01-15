@@ -1,5 +1,4 @@
 import path from 'path'
-import fs from 'fs-extra'
 import chalk from 'chalk'
 import {
   getCodeModuleFilePath,
@@ -10,6 +9,7 @@ import {
 } from '../../weapps-core'
 import { processLessToRpx } from '../util/style'
 import { IBuildContext } from './BuildContext'
+import { writeFile } from '../util/generateFiles'
 
 export async function writeCode2file(
   mod: IWeAppCode,
@@ -47,16 +47,16 @@ export async function writeCode2file(
       )}`
     }
   } else {
+    code = `${themeCode ? themeCode : ''}\n${code}`
     if (comp) {
       // Add wrapper class for composited component
       code = `.${getCompositedComponentClass(comp)} {\n${code}\n}`
     }
     try {
-      code = await processLessToRpx(`${themeCode ? themeCode : ''}\n${code}`)
+      code = await processLessToRpx(`${code}`)
     } catch (e) {
       console.error('processLess Error', e)
     }
-    console.log(chalk.green(file))
   }
 
   // 混合模式下，引用公共路径要多增加一层，并加多一层命名
@@ -65,6 +65,5 @@ export async function writeCode2file(
     code = code.replace(/..\/..\/..\/app\//g, '../../../../app/')
   }
 
-  await fs.ensureFile(file)
-  await fs.writeFile(file, code)
+  await writeFile(file, code)
 }

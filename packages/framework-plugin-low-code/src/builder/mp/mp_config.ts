@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { merge } from 'lodash'
+import { merge, get } from 'lodash'
 import { defaultProjConfig } from '../config/mp'
 import { IWeAppData, IWeAppPage, loopDealWithFn } from '../../weapps-core'
 import { IBuildContext } from './BuildContext'
@@ -43,14 +43,12 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
 
     // # project.config.json, https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html
     merge(projConfig, projectConfigJson)
-    merge(projConfig, {
-      packOptions: {
-        ignore: ctx.materialLibs
-          .filter((lib) => !lib.isComposite)
-          .map((lib) => `materials/${lib.name}/meta.json`)
-          .map((value) => ({ type: 'file', value })),
-      },
-    })
+    const matertialMetaIgnores = ctx.materialLibs
+      .filter((lib) => !lib.isComposite)
+      .map((lib) => `materials/${lib.name}/meta.json`)
+      .map((value) => ({ type: 'file', value }))
+
+    projConfig.packOptions.ignore.push(...matertialMetaIgnores)
 
     // # app.json, https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html
     if (appJson.tabBar) {
@@ -63,16 +61,16 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   }
 
   // keep main app config only, ignore subapp config
-  merge(appConfig, weapps[0].appConfig || {}, extractPages(weapps))
+  merge(appConfig, weapps[0].appConfig || {}, extractPages(weapps, pageConfigs))
   // merge(pageConfigs, extractAllPagesConfig())
   return { appConfig, projConfig, pageConfigs }
 }
 
-function extractPages(weapps: IWeAppData[]) {
+function extractPages(weapps: IWeAppData[], pageConfigs: any[]) {
   const pages: string[] = []
   const subPackages: any[] = []
   let homePage = ''
-  weapps.forEach((weapp) => {
+  weapps.forEach((weapp, index) => {
     const { rootPath } = weapp
     const subPackage: {
       root
@@ -82,12 +80,14 @@ function extractPages(weapps: IWeAppData[]) {
       subPackages.push(subPackage)
     }
     loopDealWithFn(weapp.pageInstanceList, (page) => {
+      const pageConfig = pageConfigs[index]
+      const pageFileName = get(pageConfig, `${page.id}.pageFileName`, 'index')
       if (rootPath) {
-        subPackage.pages.push(`pages/${page.id}/index`)
+        subPackage.pages.push(`pages/${page.id}/${pageFileName}`)
       } else if (!page.isHome) {
-        pages.push(`pages/${page.id}/index`)
+        pages.push(`pages/${page.id}/${pageFileName}`)
       } else {
-        homePage = `pages/${page.id}/index`
+        homePage = `pages/${page.id}/${pageFileName}`
       }
     })
   })

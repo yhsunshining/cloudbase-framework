@@ -1,4 +1,8 @@
-import { WebpackBuildCallBack, buildAsWebByBuildType, BuildType } from '../types/common'
+import {
+  WebpackBuildCallBack,
+  buildAsWebByBuildType,
+  BuildType,
+} from '../types/common'
 import { IPlugin, IWebRuntimeAppData } from '../../weapps-core'
 import {
   generateMpJsonConfigFile,
@@ -16,6 +20,7 @@ interface IWebpackCoreProps extends BuildAppProps {
   mpConfig: any
   mainAppData: IWebRuntimeAppData
   subAppDataList: IWebRuntimeAppData[]
+  assets: string[]
 }
 
 export async function runWebpackCore({
@@ -35,6 +40,7 @@ export async function runWebpackCore({
   generateMpType,
   generateMpPath,
   plugins,
+  assets = [],
 }: IWebpackCoreProps) {
   console.time('runWebpackCore')
   console.time('webpackGenerate')
@@ -51,17 +57,24 @@ export async function runWebpackCore({
     // @ts-ignore
     watch,
     buildTypeList,
+    assets,
   })
   console.timeEnd('webpackGenerate')
 
   // compile
   const taskList = [] as Promise<any>[]
   console.time('generateMpJsonConfigFile')
-  await generateMpJsonConfigFile(allAppDataList, mpConfig, appBuildDir, plugins as IPlugin[], {
-    appKey,
-    // @ts-ignore
-    generateMpType,
-  })
+  await generateMpJsonConfigFile(
+    allAppDataList,
+    mpConfig,
+    appBuildDir,
+    plugins as IPlugin[],
+    {
+      appKey,
+      // @ts-ignore
+      generateMpType,
+    }
+  )
   console.timeEnd('generateMpJsonConfigFile')
   if (buildAsWebByBuildType(buildTypeList)) {
     await generateWebpackWebDevServerFile({

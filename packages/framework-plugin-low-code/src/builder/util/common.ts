@@ -1,16 +1,16 @@
 import * as R from 'ramda'
 import { camelCase } from 'lodash'
+import url from 'url'
 import path from 'path'
 import fs from 'fs-extra'
 import { ISchema, Schema } from '@formily/react-schema-renderer'
 import { IPackageJson } from '../types/common'
-import { IWeAppComponentInstance, toCssStyle } from '../../weapps-core'
 import {
   ICompositedComponent,
   IMaterialItem,
 } from '../../weapps-core/types/material'
-import { pullComponentToListByInstance } from '../service/builder/generate'
 import { processLess } from './style'
+import { writeFile } from './generateFiles'
 
 import os from 'os'
 const homeDir = os.homedir()
@@ -246,8 +246,17 @@ export async function writeLibCommonRes2file(
       code: compLibCommonResource ? compLibCommonResource.tools.code : '',
     }
   )
-  libCommonResFiles.map(async (item) => {
-    await fs.ensureFile(item.path)
-    await fs.writeFile(item.path, item.code)
-  })
+  await Promise.all(
+    libCommonResFiles.map((item) => writeFile(item.path, item.code))
+  )
+}
+
+/**
+ *
+ * @param fileUrl 带文件名的url请求地址
+ */
+export function getFileNameByUrl(fileUrl: string) {
+  const parsedUrl = url.parse(fileUrl)
+  const filename = path.basename((parsedUrl as any).pathname)
+  return filename
 }
