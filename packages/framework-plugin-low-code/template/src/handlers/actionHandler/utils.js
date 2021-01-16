@@ -53,7 +53,7 @@ export async function emitEvent(trigger, listeners = [], args) {
           },
           name: eventName,
         }
-        emitEvent(trigger, listeners, {
+        emitEvent(eventName, listeners, {
           ...args,
           event,
           customEventData: event,
