@@ -1,10 +1,8 @@
 import { observable } from 'mobx'
 import { createComputed, createEventHandlers } from './util'
-import { createWidgets, resolveWidgetData } from './widget'
+import { createWidgets, createInitData, disposeWidget } from './widget'
 import mergeRenderer from './merge-renderer'
 import { createDataVar, buildDataVarFetchFn, createDataset, updateDatasetParams, createStateDatasrouceVar } from '../datasources/index'
-
-
 
 export function createPage(
   lifecycle,
@@ -22,9 +20,6 @@ export function createPage(
   $page.dataset = dataset
   $page.state.dataset = dataset
   $page.computed = createComputed(pageComputed)
-  $page.widgets = {}
-  const { widgets } = $page
-  createWidgets(widgetProps, dataBinds, widgets)
   let fetchDataVar = buildDataVarFetchFn($page.id) || function() {}
 
   const evtHandlers = createEventHandlers(evtListeners)
@@ -45,14 +40,19 @@ export function createPage(
 
   return Component({
     _componentType: 'page',
-    data: Object.keys(widgets).reduce((initData, id) => {
-      initData[id] = resolveWidgetData(widgets[id])
-      return initData
-    }, {}),
+    data: createInitData(widgetProps, dataBinds),
     lifetimes: {
       attached() {
+        // createWidgets 从上面移到这里是为了 i18n 切换语言的时候页面能生效
+        $page.widgets = {};
+        const { rootWidget, widgets } = createWidgets(widgetProps, dataBinds, $page.widgets)
+        this._rootWidget = rootWidget
+        this._widgets = widgets
         this._pageActive = true
         this._disposers = this.initMergeRenderer(widgets)
+      },
+      detached() {
+        disposeWidget(this._rootWidget)
       }
     },
     pageLifetimes: {
@@ -60,7 +60,6 @@ export function createPage(
       show: function() { },
       hide: function() { },
     },
-
     methods: {
       _pageActive: true,
       /** page lifecycles **/
@@ -88,6 +87,7 @@ export function createPage(
       },
       onShow() {
         app.activePage = $page
+        $page.widgets = this._widgets
         this._pageActive = true
 
         const hook = lifecycle.onShow || lifecycle.onPageShow
@@ -98,6 +98,7 @@ export function createPage(
         hook && hook.call(this)
         this._pageActive = false
       },
+
       getWeAppInst: () => $page,
     },
   })

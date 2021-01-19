@@ -1,14 +1,16 @@
 import { createComponent } from '../../../common/weapp-component'
 import { mpCompToWidget } from '../../../common/widget'
 import { concatClassList, px2rpx } from '../../../common/style'
+import index from './lowcode/index'
 import lifeCycle from './lowcode/lifecycle'
 import stateFn from './lowcode/state'
 import computedFuncs from './lowcode/computed'
+<% handlers.forEach(h => {%>
+import _handler<%= h %> from './lowcode/handler/<%= h %>' <%}) %>
 import * as constObj from '../libCommonRes/const'
 import * as toolsObj from '../libCommonRes/tools'
 
-<% handlers.forEach(h => {%>
-import _handler<%= h %> from './lowcode/handler/<%= h %>' <%}) %>
+const libCode = '<%= materialName %>'
 
 const widgetProps = <%= stringifyObj(widgetProps, {depth: null}) %>
 
@@ -49,4 +51,5 @@ const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
 
 const config = <%= JSON.stringify(config || {})%>
 
-createComponent(behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps, lifeCycle, stateFn, computedFuncs, config, { const: constObj, tools: toolsObj })
+createComponent('<%= key %>', behaviors, properties, events, handler, dataBinds, evtListeners, widgetProps,
+ index, lifeCycle, stateFn, computedFuncs, config, { const: constObj, tools: toolsObj }, libCode)

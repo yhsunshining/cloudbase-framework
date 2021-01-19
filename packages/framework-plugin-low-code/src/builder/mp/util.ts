@@ -276,13 +276,13 @@ function setDataBind(target, prop: string, val: IDynamicValue) {
       target[prop] = jsExpr
     }
 
-    const propsKeepPropBindInJs = ['_waFor', '_waIf']
-    if (
-      val.type === PropBindType.prop &&
-      propsKeepPropBindInJs.indexOf(prop) === -1
-    ) {
-      // Do not generate propBind since it's bound directly in wxml except for _waFor
-      delete target[prop]
-    }
+    // Do not generate propBind since it's bound directly in wxml except for _waFor
+    // const propsKeepPropBindInJs = ['_waFor', '_waIf']
+    // if (
+    //   val.type === PropBindType.prop &&
+    //   propsKeepPropBindInJs.indexOf(prop) === -1
+    // ) {
+    //   delete target[prop]
+    // }
   }
 }

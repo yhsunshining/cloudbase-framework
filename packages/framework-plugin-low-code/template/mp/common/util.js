@@ -96,6 +96,13 @@ export function touchObj(obj) {
 export function throttle(fn, limit) {
   let lastExecTime = 0
   let timer = null
+
+  function invoke() {
+    lastExecTime = Date.now()
+    timer = null
+    fn()
+  }
+
   const throttled = function () {
     const idledDuration = Date.now() - lastExecTime
     if (idledDuration >= limit) {
@@ -103,10 +110,9 @@ export function throttle(fn, limit) {
         clearTimeout(timer)
         timer = null
       }
-      lastExecTime = Date.now()
-      fn()
+      invoke()
     } else if (!timer) {
-      timer = setTimeout(throttled, limit - idledDuration)
+      timer = setTimeout(invoke, limit - idledDuration)
     }
   }
   return throttled

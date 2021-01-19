@@ -83,6 +83,7 @@ export async function genCompositeComponentLibraries(
       await Promise.all(
         components.map(async (component) => {
           let compItem = component as ICompositedComponent
+          compItem.materialName = name
           const wrapperClass = getCompositedComponentClass(
             compItem as ICompositedComponent
           )
@@ -149,6 +150,7 @@ export async function genCompositeComponentLibraries(
             componentSchema,
             // @ts-ignore
             pageListenerInstances: getListenersString(compItem.listeners, true),
+            materialName: name,
           }
 
           const dest = path.resolve(

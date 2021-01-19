@@ -86,6 +86,17 @@ export const builtinMpEvents = [
   'touchforcechange', // 在支持 3D Touch 的 iPhone 设备，重按时会触发
 ]
 
+export const nativeCompWhiteList = [
+  'textarea',
+  'input',
+  'camera',
+  'canvas',
+  'map',
+  'video',
+  'live-player',
+  'live-pusher',
+]
+
 export const builtinMpTags = 'cover-image,cover-view,match-media-movable-area,movable-view,scroll-view,swiper,swiper-item,view,\
 icon,progress,rich-text,text,\
 button,checkbox,checkbox-group,editor,form,input,label,picker,picker-view,picker-view-column,radio,radio-group,slider,switch,textarea,\

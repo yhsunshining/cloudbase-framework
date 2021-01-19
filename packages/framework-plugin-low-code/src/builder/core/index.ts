@@ -91,7 +91,7 @@ export async function buildWebApp(
     appBuildDir = path.join(appBuildDir, 'mp')
     const apps = [mainAppSerializeData, ...subAppSerializeDataList]
     try {
-      const outDir = await generateWxMp(
+      const result = await generateWxMp(
         apps,
         appBuildDir,
         appKey,
@@ -116,10 +116,11 @@ export async function buildWebApp(
 
       cb &&
         cb(null, {
-          outDir: isMixMode && generateMpPath ? generateMpPath : outDir,
+          ...result,
+          outDir: isMixMode && generateMpPath ? generateMpPath : appBuildDir,
           timeElapsed: Date.now() - startTime,
         })
-      return outDir
+      return appBuildDir
     } catch (e) {
       cb && cb(e)
       return
@@ -134,7 +135,8 @@ export async function buildWebApp(
     )
 
     // 前置操作
-    const { publicPath, basename } = mainAppData.appConfig?.window || {}
+    const { publicPath, basename, assets = '' } =
+      mainAppData.appConfig?.window || {}
     const projectConfig = await runPrepare(
       buildTypeList,
       appBuildDir,
@@ -147,6 +149,9 @@ export async function buildWebApp(
       subAppDataList,
       appBuildDir
     )
+
+    // 获取 插入的cdn 资源
+    const jsAssets = assets.split(',').map((item) => (item || '')?.trim())
 
     // 复制
     await runCopy(appBuildDir, mainAppData)
@@ -187,6 +192,7 @@ export async function buildWebApp(
       generateMpType,
       generateMpPath,
       plugins,
+      assets: jsAssets,
     })
 
     return appBuildDir

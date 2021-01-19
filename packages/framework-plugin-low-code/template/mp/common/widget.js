@@ -1,6 +1,7 @@
 import { observable, autorun, untracked } from 'mobx'
 import { styleToCss } from './style'
 import { getDeep } from './util'
+import { compLowcodes, create$comp } from './weapp-component'
 
 /**
  * convert widget prop to data for wxml
@@ -8,20 +9,18 @@ import { getDeep } from './util'
  */
 function resolveWidgetProp(props) {
   let { classList = [] } = props
-  const data = {
-    ...props,
-    style: styleToCss(props.style),
-    className: classList.join ? classList.join(' ') : classList
-  }
-  const extraProps = ['classList', '_forItems']
+  const data = {}
+  Object.keys(props).forEach(key => {
+    if (props[key] instanceof Function || props[key] === undefined) {
+      return
+    }
+    data[key] = props[key]
+  })
+  data.style = styleToCss(props.style)
+  data.className = classList.join ? classList.join(' ') : classList
+  const extraProps = ['classList', '_forItems', '_disposers', 'children', 'parent', '_parentId', 'id', '_order', 'widgetType', '$comp']
   extraProps.map(prop => {
     delete data[prop]
-  })
-
-  Object.keys(data).map(prop => {
-    if (data[prop] instanceof Function || data[prop] === undefined) {
-      delete data[prop]
-    }
   })
   return data
 }
@@ -182,6 +181,8 @@ function createAWidget(props, id, parent, ownerMpInst) {
     parent.children.push(w)
   }
   delete w._parentId
+
+  Object.defineProperty(w, '$comp', { value: create$comp(w) })
   mountBuiltinWigetsAPI(w, ownerMpInst)
   return w
 }
@@ -288,9 +289,11 @@ export function disposeWidget(widget, noRecursive) {
   !noRecursive && widget.children.forEach(w => disposeWidget(w))
 }
 
-/* export function createInitData(widgets, dataBinds, keyPrefix = '') {
+export function createInitData(widgets, dataBinds, keyPrefix = '') {
   return Object.keys(widgets).reduce((result, id) => {
-    result[keyPrefix + id] = isWidgetInFor(id, widgets, dataBinds) ? [] : resolveWidgetData(widgets[id])
+    if (!isWidgetInFor(id, widgets, dataBinds)) {
+      result[keyPrefix + id] = resolveWidgetData(widgets[id])
+    }
     return result
   }, {})
 }
@@ -305,17 +308,21 @@ function isWidgetInFor(id, widgets, dataBinds) {
     nodeId = curNode._parentId
     curNode = widgets[nodeId]
   }
-} */
+}
 
 function mountBuiltinWigetsAPI(widget, owner) {
+  // #1 builtin APIs
   widget.findWidgets = function (filter, includeInvisibleDescendants) {
     let { children = [] } = this
     if (!includeInvisibleDescendants) { // include visible widgets only by default
       children = children.filter(e => e._waIf !== false)
     }
-    let matched = children.filter(filter)
+    const matched = []
     children.forEach(w => {
-      matched = matched.concat(w.findWidgets(filter, includeInvisibleDescendants))
+      if (filter(w)) {
+        matched.push(w)
+      }
+      matched.push(...w.findWidgets(filter, includeInvisibleDescendants))
     })
     return matched
   }
@@ -339,6 +346,27 @@ function mountBuiltinWigetsAPI(widget, owner) {
         resolve(res)
       }).exec()
     })
-
   }
+
+  widget.getConfig = () => ({})
+
+  const lowcode = compLowcodes[widget.widgetType]
+  if (lowcode) {
+    const { index = {}, config } = lowcode
+
+    widget.getConfig = () => config
+
+    // #2 User defined APIs
+    const { publicMethods = {} } = index
+    Object.keys(publicMethods).map(name => {
+      const method = publicMethods[name]
+      if (method instanceof Function) {
+        Object.defineProperty(widget, name, { value: method.bind(widget.$comp) })
+        Object.defineProperty(widget.$comp, name, { value: method })
+      } else {
+        console.error(`Component(${widget.widgetType}) method(${name}) is not a function.`)
+      }
+    })
+  }
+
 }

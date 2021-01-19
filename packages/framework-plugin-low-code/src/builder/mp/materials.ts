@@ -63,6 +63,16 @@ export async function installMaterials(
           await downloadMaterial(mpPkgUrl, materialsSrcDir)
         }
 
+        function libUpdated(libMetaFile: string, version: string) {
+          if (!fs.existsSync(libMetaFile)) {
+            return true
+          }
+          const meta = fs.readJSONSync(libMetaFile)
+          if (meta.version !== lib.version) {
+            return true
+          }
+        }
+
         // 混合模式下，各个子包获取自己使用过的组件和复合组件（会出现冗余）
         return Promise.all(
           weappsList.map(async (app) => {
@@ -72,12 +82,15 @@ export async function installMaterials(
               materialsDirName,
               name
             )
-            console.log(
-              `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
-            )
-            // #2 link material to current project
-            await fs.copy(materialsSrcDir, targetDir)
-            const libMeta = fs.readJSONSync(path.join(targetDir, 'meta.json'))
+            const libMetaFile = path.join(targetDir, 'meta.json')
+            if (libUpdated(libMetaFile, version)) {
+              console.log(
+                `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
+              )
+              // #2 link material to current project
+              await fs.copy(materialsSrcDir, targetDir)
+            }
+            const libMeta = fs.readJSONSync(libMetaFile)
             if (!lib.components) {
               lib.components = Object.keys(libMeta.components).map((name) => ({
                 name,
@@ -264,6 +277,7 @@ async function generateCompositeComponent(
 
   const pageFileData = {
     'index.js': {
+      materialName: materialName,
       propDefs: compositedComp.dataForm,
       handlers: compositedComp.lowCodes
         .filter((m) => m.type === 'handler-fn' && m.name !== '____index____')
@@ -273,16 +287,16 @@ async function generateCompositeComponent(
         compositedComponentApi,
         ctx
       ),
-      protectEventKeys: builtinMpEvents,
+      // protectEventKeys: builtinMpEvents,
       emitEvents: compositedComp.emitEvents.map((evt) => evt.eventName),
       widgetProps: createWidgetProps(compositedComp.componentInstances, ctx),
       compApi: compositedComponentApi,
       jsonSchemaType2jsClass,
-      pageName: compositedComp.id,
+      key: compositedComp.materialName + ':' + compositedComp.name,
       dataBinds: createDataBinds(compositedComp.componentInstances, ctx),
       debug: !ctx.isProduction,
       stringifyObj: inspect,
-      dataPropNames: wxmlDataPrefix,
+      // dataPropNames: wxmlDataPrefix,
       formEvents: Object.keys(formEvents).length > 0 ? formEvents : null,
       config: compositedComp.compConfig,
     },
@@ -298,7 +312,17 @@ async function generateCompositeComponent(
   await generateFiles(pageFileData, templateDir + '/component', outDir, ctx)
 
   // #3 writing lowcode files
-  compositedComp.lowCodes
+  const codes = [...compositedComp.lowCodes]
+  if (!codes.find((m) => m.name === 'index')) {
+    // @ts-ignore
+    codes.push({
+      code: 'export default {}',
+      name: 'index',
+      path: 'index',
+    })
+  }
+
+  codes
     .filter((mod) => mod.name !== '____index____')
     .map((mod) => {
       let themeCode

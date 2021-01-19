@@ -51,7 +51,7 @@ const defaultHandlers = {
     return [result, result.data];
   },
   getItem: async function (params, table, command) {
-    const result = await table.doc(params.id).get(); // @ts-ignore
+    const result = await table.doc(params._id).get(); // @ts-ignore
 
     if (!result.code) {
       if (result.data && result.data.length) {
@@ -68,6 +68,7 @@ const defaultHandlers = {
       updatedAt: Date.now(),
     });
     delete newParams.createdAt;
+    delete newParams._id;
     const result = await table.doc(params._id).update(newParams);
     return [
       result,
@@ -76,8 +77,8 @@ const defaultHandlers = {
       },
     ];
   },
-  async remove (params, table, command) {
-    let ids = params.id;
+  async delete (params, table, command) {
+    let ids = params._id || params.id;
     if (!Array.isArray(ids)) ids = [ids]; // 支持批量删除
 
     const result = await table
