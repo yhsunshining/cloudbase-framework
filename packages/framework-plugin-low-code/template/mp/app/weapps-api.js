@@ -16,6 +16,7 @@ export { process }
 
 function createGlboalApi() {
   const globalAPI = {
+    platform: 'MINIPROGRAME',
     activePage: null,
     dataSources,
     pages: {},

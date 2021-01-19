@@ -18,6 +18,7 @@ export function setCurrentPage(pageCtx) {
 
 function createGlboalApi() {
   const globalAPI = {
+    platform: 'WEB',
     formActions: {},
     dataSources: {},
     pages: {},
