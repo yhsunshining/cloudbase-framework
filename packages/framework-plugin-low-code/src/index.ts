@@ -1016,10 +1016,11 @@ class LowCodePlugin extends Plugin {
         ? new COS({
             getAuthorization: function (options, callback) {
               callback({
-                TmpSecretId: credential?.secretId,
-                TmpSecretKey: credential?.secretKey,
-                XCosSecurityToken: credential?.token,
+                TmpSecretId: credential?.secretId || '',
+                TmpSecretKey: credential?.secretKey || '',
+                XCosSecurityToken: credential?.token || '',
                 ExpiredTime: Math.floor(Date.now() / 1000) + 600,
+                StartTime: Math.floor(Date.now() / 1000)
               })
             },
           })
@@ -1031,8 +1032,8 @@ class LowCodePlugin extends Plugin {
       await new Promise((resolve, reject) => {
         cos.putObject(
           {
-            Bucket: storage?.bucket,
-            Region: storage?.region,
+            Bucket: storage?.bucket || '',
+            Region: storage?.region || '',
             Key: `${this._productBasePath}/dist.zip`,
             Body: fs.createReadStream(zipPath),
           },
@@ -1051,8 +1052,8 @@ class LowCodePlugin extends Plugin {
         await new Promise((resolve, reject) => {
           cos.putObject(
             {
-              Bucket: storage?.bucket,
-              Region: storage?.region,
+              Bucket: storage?.bucket || '',
+              Region: storage?.region || '',
               Key: `${this._productBasePath}/qrcode.jpg`,
               Body: fs.createReadStream(
                 path.resolve(this.api.projectPath, QRCODE_PATH)
@@ -1073,8 +1074,8 @@ class LowCodePlugin extends Plugin {
         await new Promise((resolve, reject) => {
           cos.putObject(
             {
-              Bucket: storage?.bucket,
-              Region: storage?.region,
+              Bucket: storage?.bucket || '',
+              Region: storage?.region || '',
               Key: `${this._productBasePath}/${LOG_FILE}`,
               Body: fs.createReadStream(this._logFilePath as PathLike),
             },
@@ -1101,8 +1102,8 @@ class LowCodePlugin extends Plugin {
         await new Promise((resolve, reject) => {
           cos.putObject(
             {
-              Bucket: storage?.bucket,
-              Region: storage?.region,
+              Bucket: storage?.bucket || '',
+              Region: storage?.region || '',
               Key: `${this._productBasePath}/debug.zip`,
               Body: fs.createReadStream(zipPath),
             },

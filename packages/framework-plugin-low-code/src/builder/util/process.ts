@@ -7,15 +7,19 @@ interface IProcessOptions {
 
 export function promisifyProcess(p: ChildProcess, opts: IProcessOptions = {}) {
   return new Promise((resolve, reject) => {
-    p.stdout && p.stdout.on('data', opts.onStdout || (data => console.log(data + '')))
-    p.stderr && p.stderr.on('data', opts.onStderr || (data => console.error(data + '')))
+    let stdout = ''
+    let stderr = ''
+    p.stdout && p.stdout.on('data', opts.onStdout || (data => {
+      console.log(data + '')
+      stdout += data
+    }))
+    p.stderr && p.stderr.on('data', opts.onStderr || (data => {
+      console.error(data + '')
+      stderr += data
+    }))
     p.on('error', reject)
     p.on('exit', exitCode => {
-      if (exitCode === 0) {
-        resolve()
-      } else {
-        reject(exitCode)
-      }
+      exitCode === 0 ? resolve(stdout) : reject(new Error(stderr || String(exitCode)))
     })
   })
 }
