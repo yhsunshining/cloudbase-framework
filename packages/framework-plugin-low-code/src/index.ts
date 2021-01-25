@@ -737,8 +737,14 @@ class LowCodePlugin extends Plugin {
           this.api.projectPath,
           `./private.${mpAppId}.key`
         )
-        if (fs.existsSync(privateKeyPath)) {
-          fs.copy(privateKeyPath, path.join(this.api.projectPath, DIST_PATH))
+        if (
+          fs.existsSync(privateKeyPath) &&
+          fs.existsSync(path.join(this.api.projectPath, DIST_PATH))
+        ) {
+          fs.copySync(
+            privateKeyPath,
+            path.join(this.api.projectPath, DIST_PATH)
+          )
         }
       } catch (e) {}
       if (this._resolvedInputs.runtime === RUNTIME.CI) {
@@ -1003,9 +1009,8 @@ class LowCodePlugin extends Plugin {
   }
 
   async _handleCIProduct() {
-    fs.ensureDir(path.resolve(this.api.projectPath, DIST_PATH))
-
     try {
+      fs.ensureDirSync(path.resolve(this.api.projectPath, DIST_PATH))
       const zipPath = path.resolve(
         this.api.projectPath,
         `${this._resolvedInputs.appId}.zip`
@@ -1020,7 +1025,7 @@ class LowCodePlugin extends Plugin {
                 TmpSecretKey: credential?.secretKey || '',
                 XCosSecurityToken: credential?.token || '',
                 ExpiredTime: Math.floor(Date.now() / 1000) + 600,
-                StartTime: Math.floor(Date.now() / 1000)
+                StartTime: Math.floor(Date.now() / 1000),
               })
             },
           })
