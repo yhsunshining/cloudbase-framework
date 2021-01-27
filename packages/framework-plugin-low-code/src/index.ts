@@ -677,7 +677,28 @@ class LowCodePlugin extends Plugin {
 
                 resolve(distPath)
               } else {
-                reject(err)
+                if (err.length) {
+                  let messageList = (err[0] || '').split('\n')
+                  let lineIndex = 0
+                  let reg = /node_modules\/\@babel/
+
+                  messageList.find((str, index) => {
+                    if (reg.test(str)) {
+                      lineIndex = index
+                      return true
+                    } else {
+                      return false
+                    }
+                  })
+                  if (lineIndex) {
+                    messageList = messageList.slice(0, lineIndex)
+                  }
+
+                  let error = new Error(messageList.join('\n'))
+                  reject(error)
+                } else {
+                  reject(err)
+                }
               }
             }
           )
@@ -1023,7 +1044,7 @@ class LowCodePlugin extends Plugin {
               callback({
                 TmpSecretId: credential?.secretId || '',
                 TmpSecretKey: credential?.secretKey || '',
-                XCosSecurityToken: credential?.token || '',
+                SecurityToken: credential?.token || '',
                 ExpiredTime: Math.floor(Date.now() / 1000) + 600,
                 StartTime: Math.floor(Date.now() / 1000),
               })
