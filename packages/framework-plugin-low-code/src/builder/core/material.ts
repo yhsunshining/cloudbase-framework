@@ -6,7 +6,7 @@ import { downloadAndInstallDependencies } from '../service/builder/webpack'
 import { copyMaterialLibraries, genCompositeComponentLibraries } from '../service/builder/copy'
 import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate'
 import { getInputProps } from '../util'
-import { RUNTIME } from 'src'
+import { RUNTIME } from '../../index'
 
 export async function runHandleMaterial(
   appBuildDir: string,
