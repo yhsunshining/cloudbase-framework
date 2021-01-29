@@ -57,6 +57,7 @@ export async function buildWebApp(
     appKey = 'test',
     nodeModulesPath,
     runtime = RUNTIME.NONE,
+    ignoreInstall = false,
     buildTypeList = [BuildType.WEB],
     mode = WebpackModeType.PRODUCTION,
     deployMode = DEPLOY_MODE.PREVIEW,
@@ -69,7 +70,7 @@ export async function buildWebApp(
       isComposite: false,
       compProps: {},
     },
-  }: BuildAppProps & { deployMode: DEPLOY_MODE; runtime: RUNTIME },
+  }: BuildAppProps & { deployMode: DEPLOY_MODE; runtime: RUNTIME; ignoreInstall: boolean },
   cb?: WebpackBuildCallBack
 ) {
   if (!mainAppSerializeData) {
@@ -158,7 +159,7 @@ export async function buildWebApp(
     // 素材库
     const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial'
     console.time(runHandleMaterialTag)
-    await runHandleMaterial(appBuildDir, dependencies, materialsDir)
+    await runHandleMaterial(appBuildDir, dependencies, materialsDir, runtime, ignoreInstall)
     console.timeEnd(runHandleMaterialTag)
     // 安装依赖
     await runGenerateCore(
@@ -171,6 +172,7 @@ export async function buildWebApp(
       buildTypeList,
       deployMode,
       runtime,
+      ignoreInstall,
       extraData
     )
 

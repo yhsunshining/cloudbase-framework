@@ -108,6 +108,7 @@ const DEFAULT_INPUTS = {
     mode: process.env.deployMode || DEPLOY_MODE.PREVIEW,
   },
   calsVersion: 'latest',
+  ignoreInstall: false
 }
 
 export interface IFrameworkPluginLowCodeInputs {
@@ -221,6 +222,10 @@ export interface IFrameworkPluginLowCodeInputs {
    * 低码应用描述的协议版本号
    */
   calsVersion?: string
+  /**
+   * 是否忽略安装过程
+   */
+  ignoreInstall?: boolean
 }
 
 type ResolvedInputs = IFrameworkPluginLowCodeInputs & typeof DEFAULT_INPUTS
@@ -536,6 +541,7 @@ class LowCodePlugin extends Plugin {
               publicPath,
               buildTypeList,
               runtime: this._resolvedInputs.runtime,
+              ignoreInstall: this._resolvedInputs.ignoreInstall,
               mode: webpackMode,
               deployMode: this._resolvedInputs.deployOptions?.mode,
               watch: false,

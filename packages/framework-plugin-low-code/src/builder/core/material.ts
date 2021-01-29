@@ -6,25 +6,28 @@ import { downloadAndInstallDependencies } from '../service/builder/webpack'
 import { copyMaterialLibraries, genCompositeComponentLibraries } from '../service/builder/copy'
 import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate'
 import { getInputProps } from '../util'
+import { RUNTIME } from 'src'
 
 export async function runHandleMaterial(
   appBuildDir: string,
   dependencies: IMaterialItem[] = [],
-  materialsDir: string
+  materialsDir: string,
+  runtime: RUNTIME = RUNTIME.NONE,
+  ignoreInstall: boolean = false
 ) {
   const allMaterials = [
-    await handleNormalMaterial({ dependencies, materialsDir, appBuildDir }),
+    await handleNormalMaterial({ dependencies, materialsDir, appBuildDir, runtime, ignoreInstall }),
     await handleCompositeComponent({ dependencies, appBuildDir }),
   ]
   return _.flatten(allMaterials)
 }
 
-async function handleNormalMaterial({ dependencies, materialsDir, appBuildDir }) {
+async function handleNormalMaterial({ dependencies, materialsDir, appBuildDir, runtime, ignoreInstall }) {
   const timeTag = '-------------------- handleNormalMaterial'
   console.time(timeTag)
   const normalDependencies = dependencies.filter(item => !item.isComposite)
   // await createNodeModulesSoftLink(appBuildDir, nodeModulesPath)
-  await downloadAndInstallDependencies(normalDependencies, materialsDir)
+  await downloadAndInstallDependencies(normalDependencies, materialsDir, { runtime, ignoreInstall })
   await copyMaterialLibraries(normalDependencies, materialsDir, appBuildDir)
   console.timeEnd(timeTag)
   return normalDependencies.map(metaInfo => {

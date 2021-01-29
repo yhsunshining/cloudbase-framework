@@ -42,6 +42,7 @@ export async function runGenerateCore(
   buildTypeList: BuildType[],
   deployMode: DEPLOY_MODE,
   runtime: RUNTIME = RUNTIME.NONE,
+  ignoreInstall: boolean = false,
   extraData: {
     isComposite: boolean
     compProps: any
@@ -133,7 +134,7 @@ export async function runGenerateCore(
     )
   } else {
     await generatePackageJSON(deps, appBuildDir, appKey)
-    await installDependencies(appBuildDir, { runtime })
+    await installDependencies(appBuildDir, { runtime, ignoreInstall })
     lastDeps = deps
   }
 

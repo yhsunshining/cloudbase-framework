@@ -634,7 +634,8 @@ const dependenciesMap = new Map()
 
 export async function downloadAndInstallDependencies(
   dependencies: IMaterialItem[] = [],
-  materialsDir: string
+  materialsDir: string,
+  installOptions: IInstallOpts = {}
 ) {
   const localPkg = getCurrentPackageJson()
   await Promise.all(
@@ -653,7 +654,7 @@ export async function downloadAndInstallDependencies(
         return
       }
       await downloadDependencies(targetDir, srcZipUrl)
-      await installDependencies(targetDir)
+      await installDependencies(targetDir, installOptions)
       dependenciesMap.set(targetDir, true)
     })
   )
@@ -692,12 +693,17 @@ export interface IInstallOpts {
   packageName?: string
   latest?: boolean
   runtime?: RUNTIME
+  ignoreInstall?: boolean
 }
 // TODO use yarn if installed
 export async function installDependencies(
   targetDir: string,
   options: IInstallOpts = {}
 ) {
+  if (options?.ignoreInstall) {
+    console.log('ignore install dependencies in ' + targetDir)
+    return
+  }
   // const isExist = fs.existsSync(path.join(targetDir, 'package-lock.json'))
 
   // 是否安装最新的
