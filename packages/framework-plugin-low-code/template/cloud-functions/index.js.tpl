@@ -1,8 +1,10 @@
 const tcb = require('@cloudbase/node-sdk')
-const { TCBError } = require('./_utils.js')
-<% methodFileNameTup.forEach(tup => { %>
-const <%=tup[0]%> = require('./<%= tup[1] %>')
-<% })%>
+const { TCBError } = require('./utils.js')
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+  return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+const getMethod = __importDefault(require("./get-method"))
 
 /** 数据源对应云数据库集合名称, 数据源类型为数据库时该值才有意义 */
 const COLLECTION_NAME = '<%= collectionName %>'
@@ -11,13 +13,6 @@ const app = tcb.init({
 })
 const auth = app.auth()
 const db = app.database()
-
-/** 自定义操作函数列表 */
-const handlers = {
-  <% methodFileNameTup.forEach( tup => { %>
-  <%= tup[0] %>,
-  <% }) %>
-}
 
 exports.main = async function (params, context) {
   // 自定义操作的context
@@ -30,7 +25,8 @@ exports.main = async function (params, context) {
   }
 
   try {
-    const result = await handlers[params.methodName](params.params, cfContext)
+    const method = getMethod.default(params.methodName)
+    const result = await method(params.params, cfContext)
     return {
       code: 0,
       data: result

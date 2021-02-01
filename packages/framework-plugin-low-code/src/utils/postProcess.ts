@@ -75,15 +75,31 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
     methodFileNameTup.push([methodName, fileName])
 
     return fs.writeFile(
-      path.join(functionPath, `${methodName}.js`),
-      tpl(fs.readFileSync(path.join(templateDir, 'method.js.tpl'), 'utf8'),
+      path.join(functionPath, `cloud-methods/${methodName}.js`),
+      tpl(fs.readFileSync(path.join(templateDir, './cloud-methods/method.js.tpl'), 'utf8'),
       )({
         method,
       }),
       { flag: 'w' }
     )
   })
-  tasks.push(fs.copy(path.join(templateDir, '_utils.js'), path.join(functionPath, '_utils.js')))
+  tasks.push(
+    fs.writeFile(
+      path.join(functionPath, './cloud-methods/index.js'),
+      tpl(
+        fs
+          .readFileSync(
+            path.join(templateDir, './cloud-methods/index.js.tpl'), 'utf8'
+          )
+      )({
+        collectionName: getDatasourceDatabaseName(datasource, mode),
+        methodFileNameTup: methodFileNameTup,
+        datasource,
+      }),
+      { flag: 'w' }
+    )
+  )
+  tasks.push(fs.copy(path.join(templateDir, 'utils.js'), path.join(functionPath, 'utils.js')))
   tasks.push(
     fs.writeFile(
       path.join(functionPath, 'index.js'),
@@ -96,6 +112,20 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
         collectionName: getDatasourceDatabaseName(datasource, mode),
         methodFileNameTup: methodFileNameTup,
         datasource,
+      }),
+      { flag: 'w' }
+    )
+  )
+  tasks.push(
+    fs.writeFile(
+      path.join(functionPath, 'datasource-profile.js'),
+      tpl(
+        fs
+          .readFileSync(
+            path.join(templateDir, 'datasource-profile.js.tpl'), 'utf8'
+          )
+      )({
+        datasourceProfile: normalizeDatasource(datasource),
       }),
       { flag: 'w' }
     )
@@ -124,6 +154,69 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
     )
   )
   return [cloudFunctionName, tasks]
+}
+
+function normalizeHttpConfigValues(field) {
+  if (!field)
+      return;
+  if (typeof field.value !== 'undefined') {
+      return field.value;
+  }
+  const result = field.type === 'array' ? [] : {};
+  if (field.items) {
+      field.items.forEach(item => {
+          const currentVal = normalizeHttpConfigValues(item);
+          if (typeof result[item.key] === 'undefined') {
+              result[item.key] = currentVal;
+          }
+          else {
+              // 同一个key出现多次, 即字段值为数组情况
+              if (!Array.isArray(result[item.key])) {
+                  result[item.key] = [result[item.key]];
+              }
+              result[item.key].push(currentVal);
+          }
+      });
+  }
+  return result;
+}
+function formatHttpMethodConfig(methodConfig) {
+  const calleeBody = methodConfig.calleeBody;
+  const formatValue = (part) => {
+      if (!part)
+          return;
+      return Object.assign({}, part, {
+          values: normalizeHttpConfigValues(part.values)
+      });
+  };
+  const newCalleeBody = Object.assign({}, calleeBody, {
+      header: formatValue(calleeBody.header),
+      query: formatValue(calleeBody.query),
+      body: formatValue(calleeBody.body)
+  });
+  return Object.assign({}, methodConfig, {
+      calleeBody: Object.assign({}, calleeBody, newCalleeBody)
+  });
+}
+// convert http config to easier format
+function normalizeDatasource(ds) {
+  const nDs = Object.assign({}, ds);
+  if (nDs.type === 'cloud-integration') {
+      const config = nDs.config;
+      if (config.header) {
+          Object.assign(nDs, {
+              config: Object.assign({}, config, { header: normalizeHttpConfigValues(config.header.values) })
+          });
+      }
+  }
+  if (nDs.methods && nDs.methods.length) {
+      nDs.methods = nDs.methods.map(method => {
+          if (method.type !== 'http')
+              return method;
+          return formatHttpMethodConfig(method);
+      });
+  }
+  return nDs;
 }
 
 export function processCloudFunctionInputs(
