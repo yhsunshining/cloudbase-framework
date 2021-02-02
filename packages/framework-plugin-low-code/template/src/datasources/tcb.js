@@ -6,6 +6,7 @@ import { getConfig } from './utils'
 let app
 export let auth = undefined
 export let database = undefined
+let signInPromise = undefined
 
 if (process.env.isMiniprogram) {
   function CloudBase() {}
@@ -137,14 +138,21 @@ export async function init() {
         env: env.envID,
       })
     } else {
-      app = tcb.init({
+      let cloudbase = tcb.init({
         env: env.envID,
       })
-      auth = app.auth({
+      auth = cloudbase.auth({
         persistence: 'local',
       })
-      await signIn()
+      if (!signInPromise) {
+        signInPromise = signIn()
+      }
+      await signInPromise
+      app = cloudbase
     }
+  }
+
+  if (!database) {
     database = app.database()
   }
 
@@ -156,7 +164,7 @@ export async function init() {
 }
 
 export async function signIn() {
-  if (auth.hasLoginState()) return true
+  if (auth && auth.hasLoginState()) return true
   await auth.anonymousAuthProvider().signIn()
   return true
 }
