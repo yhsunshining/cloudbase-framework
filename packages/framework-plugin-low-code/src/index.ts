@@ -1044,10 +1044,10 @@ class LowCodePlugin extends Plugin {
               callback({
                 TmpSecretId: credential?.secretId || '',
                 TmpSecretKey: credential?.secretKey || '',
-                SecurityToken: credential?.token || '',
+                XCosSecurityToken: credential?.token || '',
                 ExpiredTime: Math.floor(Date.now() / 1000) + 600,
                 StartTime: Math.floor(Date.now() / 1000),
-              })
+              } as any)
             },
           })
         : new COS({
