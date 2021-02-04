@@ -1,4 +1,4 @@
-import * as R from 'ramda'
+// import * as R from 'ramda'
 import { camelCase } from 'lodash'
 import url from 'url'
 import path from 'path'
@@ -47,10 +47,10 @@ export function isPlainObject(src: any) {
   return Object.prototype.toString.call(src) === '[object Object]'
 }
 
-export function isEmpty(i: any): boolean {
-  if (typeof i === 'string') return !i.trim()
-  return R.isEmpty(i) || R.isNil(i) || Number.isNaN(i)
-}
+// export function isEmpty(i: any): boolean {
+//   if (typeof i === 'string') return !i.trim()
+//   return R.isEmpty(i) || R.isNil(i) || Number.isNaN(i)
+// }
 
 export function deepDeal(
   src: any,
