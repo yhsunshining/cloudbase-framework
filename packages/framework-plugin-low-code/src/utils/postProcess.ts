@@ -65,6 +65,7 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
   let functionPath = path.join(targetDir, cloudFunctionName)
   fs.removeSync(functionPath)
   fs.ensureDirSync(functionPath)
+  fs.ensureDirSync(path.join(functionPath, 'cloud-methods'))
 
   const methodFileNameTup: [string, string][] = []
   const tasks: Promise<any>[] = methods.map(method => {
@@ -75,7 +76,7 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
     methodFileNameTup.push([methodName, fileName])
 
     return fs.writeFile(
-      path.join(functionPath, `cloud-methods/${methodName}.js`),
+      path.join(functionPath, `cloud-methods/${fileName}.js`),
       tpl(fs.readFileSync(path.join(templateDir, './cloud-methods/method.js.tpl'), 'utf8'),
       )({
         method,
@@ -100,6 +101,8 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
     )
   )
   tasks.push(fs.copy(path.join(templateDir, 'utils.js'), path.join(functionPath, 'utils.js')))
+  tasks.push(fs.copy(path.join(templateDir, 'get-method.js'), path.join(functionPath, 'get-method.js')))
+  tasks.push(fs.copy(path.join(templateDir, 'send-request.js'), path.join(functionPath, 'send-request.js')))
   tasks.push(
     fs.writeFile(
       path.join(functionPath, 'index.js'),
@@ -125,7 +128,7 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
             path.join(templateDir, 'datasource-profile.js.tpl'), 'utf8'
           )
       )({
-        datasourceProfile: normalizeDatasource(datasource),
+        datasourceProfile: JSON.stringify(normalizeDatasource(datasource), null, 2),
       }),
       { flag: 'w' }
     )

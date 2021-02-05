@@ -15,7 +15,7 @@ function getMethod(methodName) {
     }
     if (methodConfig.type === 'http') {
         return function (params, context) {
-            return send_request_1.default(dsConfig, methodConfig, params);
+            return send_request_1.default(dsConfig, methodConfig, context, params);
         };
     }
     if (methodConfig.type === 'cloud-function') {
