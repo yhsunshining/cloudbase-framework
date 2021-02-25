@@ -45,7 +45,7 @@ if (process.env.isMiniprogram) {
           return new Query(this.collectionName, {
             ...this._query.getProperties(),
             // where: Object.assign({ ...this._query.where }, condition)
-            where: commands.and(this._query.where, condition),
+            where: database.command.and(this._query.where, condition),
           })
         } else {
           return new Query(this.collectionName, {
@@ -95,7 +95,7 @@ if (process.env.isMiniprogram) {
             return new Query(this.collectionName, {
               ...this._query.getProperties(),
               // where: Object.assign({ ...this._query.where }, condition)
-              where: commands.and(this._query.where, condition),
+              where: database.command.and(this._query.where, condition),
             })
           } else {
             return new Query(this.collectionName, {

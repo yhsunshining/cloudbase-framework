@@ -4,6 +4,7 @@
 import { getBuilderByMethodType } from './operators';
 import { buildDefaultMethods } from './database';
 import datasourceProfiles from './datasources-profiles';
+import { app } from '../app/weapps-api'
 /**
  * 暴露全局对象 dataSource 用于在应用中访问
  */
@@ -12,8 +13,41 @@ export const dataSources = {};
 
 dataSources.$call = callDataSource
 
-function callDataSource (params) {
-  return dataSources[params.dataSourceName][params.methodName](params.params)
+async function callDataSource (params) {
+  let { options = {} } = params
+  try {
+    if(options && options.showToast){
+      try {
+        app.showLoading()
+      } catch (e) {}
+    }
+    let res = await dataSources[params.dataSourceName][params.methodName](params.params)
+    if (options && options.showToast) {
+      try {
+        app.showToast({
+          title: '成功',
+          icon: 'success',
+        })
+      } catch (e) {}
+    }
+    return res
+  } catch(e) {
+    if (options && options.showToast) {
+      try {
+        app.showToast({
+          title: '失败',
+          icon: 'error',
+        })
+      } catch (e) {}
+    }
+    throw e
+  } finally {
+    if (options && options.showToast) {
+      try {
+        app.hideLoading()
+      } catch (e) {}
+    }
+  }
 }
 
 // window.dataSource = dataSource;

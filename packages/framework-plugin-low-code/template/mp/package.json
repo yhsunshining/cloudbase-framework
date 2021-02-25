@@ -1,5 +1,5 @@
 {
-	"name": "weapps-<%= appId%>",
+	"name": "lcap-<%= appId%>",
 	"version": "1.0.0",
 	"scripts": {	},
 	"dependencies": {
