@@ -108,7 +108,7 @@ const DEFAULT_INPUTS = {
     mode: process.env.deployMode || DEPLOY_MODE.PREVIEW,
   },
   calsVersion: 'latest',
-  ignoreInstall: false
+  ignoreInstall: false,
 }
 
 export interface IFrameworkPluginLowCodeInputs {

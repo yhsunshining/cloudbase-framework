@@ -11,6 +11,7 @@ import {
 } from '../../weapps-core/types/material'
 import { processLess } from './style'
 import { writeFile } from './generateFiles'
+import { deserializeComponentLibraryMeta } from '@cloudbase/cals'
 
 import os from 'os'
 const homeDir = os.homedir()
@@ -166,13 +167,25 @@ export async function getInputProps(
               `libraries/${materialName}@${version}/components`
             )
             .replace(/packages\/\w+\//, '') // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
+
+          const componentLibPath = path
+            .resolve(appBuildDir, `libraries/${materialName}@${version}`)
+            .replace(/packages\/\w+\//, '') // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
+
+          const meta = readComponentLibMata(componentLibPath)
           const components = await fs.readdir(materialComponentsPath)
 
           await Promise.all(
             components.map(async (name) => {
-              const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
               const sourceKey = `${materialName}:${name}`
-              const metaJson = await fs.readJson(componentMetaPath)
+              let metaJson
+              if (meta) {
+                metaJson = meta?.components[name]
+              } else {
+                const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
+                metaJson = await fs.readJson(componentMetaPath)
+              }
+
               const inputProps = metaJson.inputProps || metaJson.syncProps
               if (inputProps) {
                 outputObj[sourceKey] = inputProps
@@ -259,4 +272,25 @@ export function getFileNameByUrl(fileUrl: string) {
   const parsedUrl = url.parse(fileUrl)
   const filename = path.basename((parsedUrl as any).pathname)
   return filename
+}
+
+export function readComponentLibMata(libDir) {
+  let metaPath = path.join(libDir, 'meta.json')
+  let mergeMetaPath = path.join(libDir, 'mergeMeta.json')
+  let isExistsMeta = fs.existsSync(metaPath)
+
+  if (!isExistsMeta && !fs.existsSync(mergeMetaPath)) {
+    return null
+  }
+
+  let meta = isExistsMeta
+    ? fs.readJSONSync(metaPath)
+    : fs.readJsonSync(mergeMetaPath)
+
+  let [major] = meta?.schemaVersion?.split('.') || []
+  if (Number(major) >= 2) {
+    meta = deserializeComponentLibraryMeta(meta)
+  }
+
+  return meta
 }

@@ -26,7 +26,7 @@ import { downloadZip } from '../util/net'
 import NameMangler from '../util/name-mangler'
 import { IWeAppData } from '../../weapps-core'
 import { IUsedComps } from '../types/common'
-import { writeLibCommonRes2file } from '../util'
+import { writeLibCommonRes2file, readComponentLibMata } from '../util'
 
 const templateDir = appTemplateDir + '/mp/'
 
@@ -63,11 +63,13 @@ export async function installMaterials(
           await downloadMaterial(mpPkgUrl, materialsSrcDir)
         }
 
-        function libUpdated(libMetaFile: string, version: string) {
-          if (!fs.existsSync(libMetaFile)) {
+        function libUpdated(libDir: string, version: string) {
+          const meta = readComponentLibMata(libDir)
+
+          if (!meta) {
             return true
           }
-          const meta = fs.readJSONSync(libMetaFile)
+
           if (meta.version !== lib.version) {
             return true
           }
@@ -82,15 +84,16 @@ export async function installMaterials(
               materialsDirName,
               name
             )
-            const libMetaFile = path.join(targetDir, 'meta.json')
-            if (libUpdated(libMetaFile, version)) {
+            if (libUpdated(targetDir, version)) {
               console.log(
                 `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
               )
               // #2 link material to current project
               await fs.copy(materialsSrcDir, targetDir)
             }
-            const libMeta = fs.readJSONSync(libMetaFile)
+
+            const libMeta = readComponentLibMata(targetDir)
+            console.log('============', libMeta)
             if (!lib.components) {
               lib.components = Object.keys(libMeta.components).map((name) => ({
                 name,
@@ -214,7 +217,11 @@ export function extractUsedCompsRecursively(
 }
 
 async function downloadMaterial(zipUrl: string, dstFolder: string) {
-  if (fs.existsSync(path.join(dstFolder, 'meta.json'))) return
+  if (
+    fs.existsSync(path.join(dstFolder, 'meta.json')) ||
+    fs.existsSync(path.join(dstFolder, 'mergeMeta.json'))
+  )
+    return
   await downloadZip(zipUrl, dstFolder)
 }
 

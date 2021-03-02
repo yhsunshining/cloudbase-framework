@@ -472,8 +472,11 @@ async function cleanPkg(pkg: IWeAppData, projDir: string) {
 function cleanMaterils(materialsDir: string, usedComps: IUsedComps) {
   fs.readdirSync(materialsDir).map((libName) => {
     const libDir = path.join(materialsDir, libName)
-    const libMetaFile = path.join(libDir, 'meta.json')
-    if (fs.existsSync(libMetaFile)) {
+
+    if (
+      fs.existsSync(path.join(libDir, 'meta.json')) ||
+      fs.existsSync(path.join(libDir, 'mergeMeta.json'))
+    ) {
       // Skip none-composited materials
       return
     }

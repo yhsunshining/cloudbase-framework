@@ -1,6 +1,6 @@
 {
   "name": "@cloudbase/framework-plugin-low-code",
-  "version": "0.2.9",
+  "version": "0.2.10-alpha.1",
   "description": "云开发 Tencent CloudBase Framework Low Code Plugin，将低码配置生成完整项目并一键部署云开发资源。",
   "author": "yhsunshining@gmail.com",
   "homepage": "https://github.com/TencentCloudBase/cloudbase-framework#readme",
@@ -31,7 +31,7 @@
     "url": "https://github.com/TencentCloudBase/cloudbase-framework/issues"
   },
   "dependencies": {
-    "@cloudbase/cals": "0.0.5",
+    "@cloudbase/cals": "0.1.2-2",
     "@cloudbase/framework-core": "^1.6.13",
     "@cloudbase/framework-plugin-auth": "^1.6.13",
     "@cloudbase/framework-plugin-database": "^1.6.13",
