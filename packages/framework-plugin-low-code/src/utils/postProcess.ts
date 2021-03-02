@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs-extra'
-import { merge, method } from 'lodash'
+import { merge } from 'lodash'
 import { appTemplateDir } from '../builder/config'
 import tpl from 'lodash.template'
 import {
@@ -15,6 +15,7 @@ import { IWeAppData } from '../weapps-core'
 import { IFrameworkPluginFunctionInputs } from '@cloudbase/framework-plugin-function'
 import { IFrameworkPluginDatabaseInputs } from '@cloudbase/framework-plugin-database'
 import { DIST_PATH, DEPLOY_MODE } from '../index'
+import { convertField2Template } from './field-2-template'
 
 export function postprocessProjectConfig(projectJsonPath, data) {
   let projectJson = fs.readJsonSync(projectJsonPath)
@@ -57,7 +58,7 @@ export async function postProcessCloudFunction(
 
 function generateCloudFunction (targetDir: string, templateDir: string, datasource: any, appId: string, mode: string) {
   let methods = datasource.methods.filter(
-    (method) => method.type === CLOUD_FUNCTION_TYPE
+    (method) => method.type === CLOUD_FUNCTION_TYPE || method.type === 'http'
   )
   if (!methods.length) return []
   let cloudFunctionName = getAppDatasourceResourceName(appId, datasource, mode)
@@ -68,7 +69,7 @@ function generateCloudFunction (targetDir: string, templateDir: string, datasour
   fs.ensureDirSync(path.join(functionPath, 'cloud-methods'))
 
   const methodFileNameTup: [string, string][] = []
-  const tasks: Promise<any>[] = methods.map(method => {
+  const tasks: Promise<any>[] = methods.filter(m => m.type === CLOUD_FUNCTION_TYPE).map(method => {
     const methodName = method.name
     let fileName = methodName
     // 方法名若为 index, 则改名为 _index
@@ -198,10 +199,11 @@ function formatHttpMethodConfig(methodConfig) {
       body: formatValue(calleeBody.body)
   });
   return Object.assign({}, methodConfig, {
-      calleeBody: Object.assign({}, calleeBody, newCalleeBody)
+      calleeBody: Object.assign({}, calleeBody, newCalleeBody),
+      outParams: convertField2Template(methodConfig.outParams)
   });
 }
-// convert http config to easier format
+// convert http config to simple format
 function normalizeDatasource(ds) {
   const nDs = Object.assign({}, ds);
   if (nDs.type === 'cloud-integration') {
