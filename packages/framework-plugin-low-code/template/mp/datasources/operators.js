@@ -11,7 +11,8 @@ import { localFns } from '../local-functions/index'
 
 const builders = {
   cloudFunctionBuilder,
-  localFunctionBuilder
+  localFunctionBuilder,
+  httpBuilder: cloudFunctionBuilder
 };
 /**
  * 根据数据源方法实现方式返回对应方法的构造器
