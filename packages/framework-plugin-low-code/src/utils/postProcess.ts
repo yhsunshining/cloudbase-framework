@@ -236,7 +236,7 @@ export function processCloudFunctionInputs(
 
   let functions = datasources?.reduce((arr, datasource) => {
     let subFunctions = datasource.methods.filter(
-      (mthd) => mthd.type === CLOUD_FUNCTION_TYPE
+      (mthd) => mthd.type === CLOUD_FUNCTION_TYPE || mthd.type === 'http'
     )
     if (subFunctions.length) {
       let cloudFucntionName = getAppDatasourceResourceName(
