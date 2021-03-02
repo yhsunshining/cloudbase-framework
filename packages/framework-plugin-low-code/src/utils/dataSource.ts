@@ -7,6 +7,7 @@ import { PropBindType } from '@cloudbase/cals/lib/parser/expression'
 import { generateDataBind } from '../builder/mp/util'
 
 export const CLOUD_FUNCTION_TYPE = 'cloud-function'
+export const EXTERNAL_FUNCTION_TYPE = 'http'
 export const DATABASE_TYPE = 'database'
 
 /**
