@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const send_request_1 = __importDefault(require("./send-request"));
 const cloud_methods_1 = __importDefault(require("./cloud-methods"));
 const datasource_profile_1 = __importDefault(require("./datasource-profile"));
+const json_transform_1 = require('./json-transform');
 function getMethod(methodName) {
     // @ts-ignore
     const dsConfig = datasource_profile_1.default;
@@ -15,7 +16,8 @@ function getMethod(methodName) {
     }
     if (methodConfig.type === 'http') {
         return function (params, context) {
-            return send_request_1.default(dsConfig, methodConfig, context, params);
+            return send_request_1.sendRequest(dsConfig, methodConfig, context, params)
+              .then((res) => json_transform_1.transformJSONWithTemplate(res,methodConfig.outParams));
         };
     }
     if (methodConfig.type === 'cloud-function') {

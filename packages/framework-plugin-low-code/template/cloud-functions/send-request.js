@@ -5,80 +5,15 @@ var __importDefault =
     return mod && mod.__esModule ? mod : { default: mod }
   }
 Object.defineProperty(exports, '__esModule', { value: true })
+exports.sendRequest = exports.isSuccessStatusCode = void 0
 const request_1 = __importDefault(require('request'))
-/**
- * get value from obj with key path(lodash.get alternative)
- * @param obj object to extract value from
- * @param keyPath value key path, e.g: a.b.c, a[0][3].s.d.e
- * @param defaultValue if get undefined, use defaultValue instead
- */
-function getProp(obj, keyPath, defaultValue) {
-  let paths = Array.isArray(keyPath)
-    ? keyPath
-    : String(keyPath)
-        .replace(/\[(\d+)\]/g, '.$1')
-        .split('.')
-  let idx = 0
-  let len = paths.length
-  while (obj != null && idx < len) {
-    obj = obj[paths[idx]]
-    ++idx
-  }
-  return typeof obj === 'undefined' ? defaultValue : obj
-}
+const json_transform_1 = require('./json-transform')
 function mergeFields(fields, fields1) {
   // one of them is empty
   if (!fields !== !fields1) return fields || fields1
   // both are empty, return empty
   if (!fields) return fields
   return Object.assign({}, fields, fields1)
-}
-/**
- * replace placeholder with actual value in params tpl
- * @param paramsTpl params object with placeholders
- *    e.g. var fields = {
- *             name: '{{userName}}',
- *             desc: 'my xxxxxx',
- *             age: 232,
- *             location: {
- *                 title: '{{myTitle}}',
- *                 geo: {
- *                     lat: 232.2323,
- *                     long: '{{long}}'
- *                 }
- *             }
- *         }
- * @param params object stores values of placeholders
- *    e.g. var params = {
- *         "userName": "xiu",
- *         "myTitle": "girlFriend",
- *         "long": {
- *           "a": "xx",
- *           "b": "xxx"
- *         }
- *       }
- */
-function parseFields(paramsTpl, params) {
-  if (!paramsTpl) return
-  return JSON.parse(
-    JSON.stringify(
-      paramsTpl,
-      (key, val) => {
-        if (typeof val !== 'string' || !/\{\{([^}]+)\}\}/.test(val)) return val
-        // full match, replace whole
-        if (/^\{\{([^}]+)\}\}$/.test(val.trim())) {
-          const name = RegExp.$1.trim()
-          return getProp(params, name)
-        }
-        // placeholders just partial of the string
-        return val.replace(/\{\{([^}]+)\}\}/g, ($0, $1) => {
-          const name = $1.trim()
-          return getProp(params, name)
-        })
-      },
-      2
-    )
-  )
 }
 /**
  * 解析URL地址
@@ -99,14 +34,27 @@ function resolveUrl(baseUrl, url) {
     return baseUrl + '/' + url
   }
 }
+function isSuccessStatusCode(code) {
+  return (code >= 200 && code < 300) || code === 304
+}
+exports.isSuccessStatusCode = isSuccessStatusCode
+function hasHeader(headers, headerName) {
+  const h = headerName.toLowerCase()
+  return Object.keys(headers).some((k) => k.toLowerCase() === h)
+}
 function sendRequest(ds, methodConfig, context, params, requestCb) {
   const dsConfig = ds.config || {}
   if (methodConfig.type !== 'http')
     throw new Error(
       `method ${methodConfig.name} not a valid http datasource method`
     )
+  const fieldParams = { params, env: context.envInfo }
   const httpConfig = methodConfig.calleeBody
-  const requestUrl = resolveUrl(dsConfig.baseUrl, httpConfig.url)
+  // transform param placeholders in url
+  const requestUrl = json_transform_1.transformJSONWithTemplate(
+    fieldParams,
+    resolveUrl(dsConfig.baseUrl, httpConfig.url)
+  )
   if (!/^https?:\/\//i.test(requestUrl)) throw new Error('invalid request url')
   const requestMethod = httpConfig.method.toUpperCase()
   const requestConfig = {
@@ -114,23 +62,41 @@ function sendRequest(ds, methodConfig, context, params, requestCb) {
     method: requestMethod,
     headers: {},
   }
-  const fieldParams = { params, env: context.envInfo }
-  if (dsConfig.header || httpConfig.header) {
+  if (dsConfig.header || (httpConfig.header && httpConfig.header.values)) {
     const headerFields = mergeFields(dsConfig.header, httpConfig.header.values)
-    requestConfig.headers = parseFields(headerFields, fieldParams) || {}
+    requestConfig.headers =
+      json_transform_1.transformJSONWithTemplate(fieldParams, headerFields) ||
+      {}
   }
   // set referer to avoid referer check
-  requestConfig.headers['Referer'] = requestUrl
-  requestConfig.headers['User-Agent'] = 'CloudBaseLowCode/2.0'
-  if (['POST', 'PUT', 'PATCH'].includes(requestMethod) && httpConfig.body) {
-    const body = parseFields(httpConfig.body.values, fieldParams)
+  if (!hasHeader(requestConfig.headers, 'Referer')) {
+    requestConfig.headers['Referer'] = requestUrl
+  }
+  if (!hasHeader(requestConfig.headers, 'User-Agent')) {
+    requestConfig.headers['User-Agent'] = 'CloudBaseLowCode/2.0'
+  }
+  // suggest server respond with a json string
+  if (!hasHeader(requestConfig.headers, 'Accept')) {
+    requestConfig.headers['Accept'] =
+      'application/json, text/javascript, */*; q=0.01'
+  }
+  if (
+    ['POST', 'PUT', 'PATCH'].includes(requestMethod) &&
+    httpConfig.body &&
+    httpConfig.body.values
+  ) {
+    const body = json_transform_1.transformJSONWithTemplate(
+      fieldParams,
+      httpConfig.body.values
+    )
     switch (httpConfig.body.contentType) {
       case 'form':
         requestConfig.form = body
         break
       case 'json':
         requestConfig.body = body
-        requestConfig.json = true
+        requestConfig.headers['Content-Type'] =
+          'application/json; charset=UTF-8'
         break
       case 'xml':
         requestConfig.body = String(body)
@@ -141,8 +107,11 @@ function sendRequest(ds, methodConfig, context, params, requestCb) {
         requestConfig.body = String(body)
     }
   }
-  if (httpConfig.query) {
-    const query = parseFields(httpConfig.query.values, fieldParams)
+  if (httpConfig.query && httpConfig.query.values) {
+    const query = json_transform_1.transformJSONWithTemplate(
+      fieldParams,
+      httpConfig.query.values
+    )
     requestConfig.qs = query
   }
   return new Promise((resolve, reject) => {
@@ -154,6 +123,13 @@ function sendRequest(ds, methodConfig, context, params, requestCb) {
       if (error) {
         return reject(error)
       }
+      if (!isSuccessStatusCode(response.statusCode)) {
+        return reject(
+          new Error(
+            `http statusCode ${response.statusCode}, response body ${response.body}`
+          )
+        )
+      }
       const bodyType = typeof body
       if (bodyType === 'object') {
         return resolve(body)
@@ -162,11 +138,13 @@ function sendRequest(ds, methodConfig, context, params, requestCb) {
         try {
           return resolve(JSON.parse(body))
         } catch (error) {
-          return reject(new Error(`invalid json string: ${body}`))
+          return reject(
+            new Error(`invalid response body, expect a json string: ${body}`)
+          )
         }
       }
       reject(new Error(`unsupported response body type ${bodyType}`))
     })
   })
 }
-exports.default = sendRequest
+exports.sendRequest = sendRequest

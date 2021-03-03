@@ -129,6 +129,12 @@ function generateCloudFunction(
   )
   tasks.push(
     fs.copy(
+      path.join(templateDir, 'json-transform.js'),
+      path.join(functionPath, 'json-transform.js')
+    )
+  )
+  tasks.push(
+    fs.copy(
       path.join(templateDir, 'send-request.js'),
       path.join(functionPath, 'send-request.js')
     )
