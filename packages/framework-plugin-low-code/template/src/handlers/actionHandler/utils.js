@@ -1,4 +1,3 @@
-import { timeout } from 'promise-timeout'
 import { resolveDataBinds } from '../utils/common'
 
 const DEFAULT_MAX_TIMEOUT = 10 * 1000
@@ -75,7 +74,12 @@ async function invokeListener(
   const params = {
     data: {
       ...data,
-      ...resolveDataBinds(dataBinds, args.forItems, { event: args.event }, true),
+      ...resolveDataBinds(
+        dataBinds,
+        args.forItems,
+        { event: args.event },
+        true
+      ),
     },
     ...args,
   }
@@ -86,7 +90,18 @@ async function invokeListener(
     } else {
       const p = action(params)
       if (p instanceof Promise) {
-        await timeout(p, maxTimeout)
+        let timeout = null
+        await Promise.race([
+          new Promise((resolve, reject) => {
+            timeout = setTimeout(() => {
+              reject(new Error(`timeout in ${maxTimeout}ms`))
+            }, maxTimeout)
+          }),
+          p,
+        ])
+        if (timeout) {
+          clearTimeout(timeout)
+        }
       }
     }
   } catch (e) {

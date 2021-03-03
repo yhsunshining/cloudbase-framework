@@ -1,5 +1,3 @@
-import webpack from 'webpack'
-
 export const enum BuildType {
   WEB = 'web',
   MP = 'mp',
@@ -10,12 +8,12 @@ export const enum BuildType {
 
 export const enum GenerateMpType {
   APP = 'app',
-  SUBPACKAGE = 'subpackage'
+  SUBPACKAGE = 'subpackage',
 }
 
 export const enum WebpackModeType {
   NONE = '',
-  PRODUCTION = 'production'
+  PRODUCTION = 'production',
 }
 export type WebpackBuildCallBack = (
   err: any,

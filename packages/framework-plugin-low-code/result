@@ -1,0 +1,1009 @@
+Statistical profiling result from isolate-0x1045f3000-5517-v8.log, (3444 ticks, 4 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+     60    1.7%          /usr/lib/system/libsystem_platform.dylib
+     33    1.0%          /usr/lib/system/libsystem_pthread.dylib
+      5    0.1%          /usr/lib/system/libsystem_kernel.dylib
+      4    0.1%          /usr/lib/system/libsystem_malloc.dylib
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+     22    0.6%    0.7%  LazyCompile: *normalizeString path.js:52:25
+     15    0.4%    0.4%  LazyCompile: *resolve path.js:973:10
+      6    0.2%    0.2%  LazyCompile: *Module._nodeModulePaths internal/modules/cjs/loader.js:748:37
+      5    0.1%    0.1%  LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      4    0.1%    0.1%  LazyCompile: *realpathSync fs.js:1570:22
+      4    0.1%    0.1%  LazyCompile: *readSync fs.js:540:18
+      3    0.1%    0.1%  LazyCompile: *hidden internal/errors.js:282:25
+      2    0.1%    0.1%  LazyCompile: *stat internal/modules/cjs/loader.js:145:14
+      2    0.1%    0.1%  LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1    0.0%    0.0%  RegExp: data2([^0-9])
+      1    0.0%    0.0%  RegExp: ^\[?((?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){6}(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:\:\:(?:(?:[0-9A-Fa-f]{1,4})\:){5}(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:[0-9A-Fa-f]{1,4}))?\:\:(?:(?:[0-9A-Fa-f]{1,4})\:){4}(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,1}(?:[0-9A-Fa-f]{1,4}))?\:\:(?:(?:[0-9A-Fa-f]{1,4})\:){3}(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,2}(?:[0-9A-Fa-f]{1,4}))?\:\:(?:(?:[0-9A-Fa-f]{1,4})\:){2}(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,3}(?:[0-9A-Fa-f]{1,4}))?\:\:(?:[0-9A-Fa-f]{1,4})\:(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,4}(?:[0-9A-Fa-f]{1,4}))?\:\:(?:(?:(?:[0-9A-Fa-f]{1,4})\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9])\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9][0-9])|(?:0?[1-9][0-9])|0?0?[0-9]))))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,5}(?:[0-9A-Fa-f]{1,4}))?\:\:(?:[0-9A-Fa-f]{1,4}))|(?:(?:(?:(?:[0-9A-Fa-f]{1,4})\:){0,6}(?:[0-9A-Fa-f]{1,4}))?\:\:)))(?:(?:\%25|\%(?![0-9A-Fa-f]{2}))((?:(?:[A-Za-z0-9\-\.\_\~]|(?:(?:%[EFef][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f])|(?:%[89A-Fa-f][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f])|(?:%[0-9A-Fa-f][0-9A-Fa-f])))+)))?\]?$
+      1    0.0%    0.0%  RegExp: (?:(?:%[EFef][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f])|(?:%[89A-Fa-f][0-9A-Fa-f]%[0-9A-Fa-f][0-9A-Fa-f])|(?:%[0-9A-Fa-f][0-9A-Fa-f]))
+      1    0.0%    0.0%  LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      1    0.0%    0.0%  LazyCompile: *readPackageScope internal/modules/cjs/loader.js:285:26
+      1    0.0%    0.0%  LazyCompile: *readPackage internal/modules/cjs/loader.js:251:21
+      1    0.0%    0.0%  LazyCompile: *readFileSync fs.js:361:22
+      1    0.0%    0.0%  LazyCompile: *dirname path.js:1127:10
+
+ [C++]:
+   ticks  total  nonlib   name
+    804   23.3%   24.1%  t node::fs::Read(v8::FunctionCallbackInfo<v8::Value> const&)
+    800   23.2%   23.9%  T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    479   13.9%   14.3%  T __kernelrpc_mach_vm_purgable_control_trap
+    315    9.1%    9.4%  T node::contextify::ContextifyContext::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+    157    4.6%    4.7%  T _fcntl
+    120    3.5%    3.6%  t node::fs::InternalModuleReadJSON(v8::FunctionCallbackInfo<v8::Value> const&)
+     84    2.4%    2.5%  t node::fs::Open(v8::FunctionCallbackInfo<v8::Value> const&)
+     60    1.7%    1.8%  T _open$NOCANCEL
+     51    1.5%    1.5%  T node::native_module::NativeModuleEnv::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+     44    1.3%    1.3%  T _vm_copy
+     32    0.9%    1.0%  T _kdebug_typefilter
+     27    0.8%    0.8%  t __ZN2v88internal12StringHasher20HashSequentialStringIhEEjPKT_iy
+     23    0.7%    0.7%  t void node::Buffer::(anonymous namespace)::StringSlice<(node::encoding)1>(v8::FunctionCallbackInfo<v8::Value> const&)
+     23    0.7%    0.7%  t node::url::(anonymous namespace)::Parse(v8::FunctionCallbackInfo<v8::Value> const&)
+     18    0.5%    0.5%  T node::fs::Close(v8::FunctionCallbackInfo<v8::Value> const&)
+     17    0.5%    0.5%  t node::fs::InternalModuleStat(v8::FunctionCallbackInfo<v8::Value> const&)
+     16    0.5%    0.5%  T _mach_msg_server
+     11    0.3%    0.3%  t _small_malloc_should_clear
+      9    0.3%    0.3%  T __platform_strncmp
+      8    0.2%    0.2%  t node::util::SetHiddenValue(v8::FunctionCallbackInfo<v8::Value> const&)
+      7    0.2%    0.2%  T __ZN4node6crypto19GetRootCertificatesERKN2v820FunctionCallbackInfoINS1_5ValueEEE
+      6    0.2%    0.2%  t std::__1::basic_ostream<char, std::__1::char_traits<char> >& std::__1::__put_character_sequence<char, std::__1::char_traits<char> >(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, char const*, unsigned long)
+      6    0.2%    0.2%  t _tiny_malloc_should_clear
+      6    0.2%    0.2%  T __kernelrpc_thread_policy_set
+      5    0.1%    0.1%  t _szone_realloc
+      5    0.1%    0.1%  t __ZN2v84base19TemplateHashMapImplIPvS2_NS0_26HashEqualityThenKeyMatcherIS2_PFbS2_S2_EEENS0_23DefaultAllocationPolicyEE14LookupOrInsertIZNS8_14LookupOrInsertERKS2_jS7_EUlvE_EEPNS0_20TemplateHashMapEntryIS2_S2_EESB_jRKT_S7_
+      5    0.1%    0.1%  T _task_policy_set
+      4    0.1%    0.1%  t std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >& std::__1::__input_arithmetic<long long, wchar_t, std::__1::char_traits<wchar_t> >(std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >&, long long&)
+      4    0.1%    0.1%  t node::fs::GetReqWrap(v8::FunctionCallbackInfo<v8::Value> const&, int, bool)
+      4    0.1%    0.1%  t node::fs::FStat(v8::FunctionCallbackInfo<v8::Value> const&)
+      4    0.1%    0.1%  t _nanov2_find_block_and_allocate
+      4    0.1%    0.1%  t __ZN2v84base19TemplateHashMapImplIPvS2_NS0_26HashEqualityThenKeyMatcherIS2_PFbS2_S2_EEENS0_23DefaultAllocationPolicyEE6ResizeES7_
+      4    0.1%    0.1%  T node::binding::GetInternalBinding(v8::FunctionCallbackInfo<v8::Value> const&)
+      4    0.1%    0.1%  T node::SyncProcessRunner::Spawn(v8::FunctionCallbackInfo<v8::Value> const&)
+      4    0.1%    0.1%  T __ZN2v88internal15AstValueFactory24GetOneByteStringInternalENS0_6VectorIKhEE
+      3    0.1%    0.1%  t std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> > std::__1::__pad_and_output<char, std::__1::char_traits<char> >(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> >, char const*, char const*, char const*, std::__1::ios_base&, char)
+      3    0.1%    0.1%  t node::fs::LStat(v8::FunctionCallbackInfo<v8::Value> const&)
+      3    0.1%    0.1%  t node::EnvGetter(v8::Local<v8::Name>, v8::PropertyCallbackInfo<v8::Value> const&)
+      3    0.1%    0.1%  t _tiny_free_no_lock
+      3    0.1%    0.1%  t _free_tiny
+      3    0.1%    0.1%  t _free_small
+      3    0.1%    0.1%  t __platform_memmove$VARIANT$Haswell
+      3    0.1%    0.1%  T node::TTYWrap::New(v8::FunctionCallbackInfo<v8::Value> const&)
+      3    0.1%    0.1%  T ___sfp
+      2    0.1%    0.1%  t void std::__1::__tree_balance_after_insert<std::__1::__tree_node_base<void*>*>(std::__1::__tree_node_base<void*>*, std::__1::__tree_node_base<void*>*)
+      2    0.1%    0.1%  t _tiny_malloc_from_free_list
+      2    0.1%    0.1%  t _small_malloc_from_free_list
+      2    0.1%    0.1%  t __ZN2v88internal11StringShape33DispatchToSpecificTypeWithoutCastIZNS1_22DispatchToSpecificTypeIZNS0_6String3GetEiE19StringGetDispatchertJRiEEET0_S4_DpOT1_E17CastingDispatchertJRS4_S6_EEES7_SA_
+      2    0.1%    0.1%  T node::NodeArrayBufferAllocator::Allocate(unsigned long)
+      2    0.1%    0.1%  T _task_self_trap
+      2    0.1%    0.1%  T _fgetws
+      2    0.1%    0.1%  T __ZN2v88internal13ObjectLiteral18CalculateEmitStoreEPNS0_4ZoneE
+      1    0.0%    0.0%  t unsigned long std::__1::__hash_table<node::CleanupHookCallback, node::CleanupHookCallback::Hash, node::CleanupHookCallback::Equal, std::__1::allocator<node::CleanupHookCallback> >::__erase_unique<node::CleanupHookCallback>(node::CleanupHookCallback const&)
+      1    0.0%    0.0%  t std::__1::istreambuf_iterator<wchar_t, std::__1::char_traits<wchar_t> > std::__1::num_get<wchar_t, std::__1::istreambuf_iterator<wchar_t, std::__1::char_traits<wchar_t> > >::__do_get_floating_point<float>(std::__1::istreambuf_iterator<wchar_t, std::__1::char_traits<wchar_t> >, std::__1::istreambuf_iterator<wchar_t, std::__1::char_traits<wchar_t> >, std::__1::ios_base&, unsigned int&, float&) const
+      1    0.0%    0.0%  t std::__1::deque<std::__1::unique_ptr<node::DelayedTask, std::__1::default_delete<node::DelayedTask> >, std::__1::allocator<std::__1::unique_ptr<node::DelayedTask, std::__1::default_delete<node::DelayedTask> > > >::pop_front()
+      1    0.0%    0.0%  t std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >& std::__1::__input_arithmetic<unsigned long long, wchar_t, std::__1::char_traits<wchar_t> >(std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >&, unsigned long long&)
+      1    0.0%    0.0%  t std::__1::__tree<unsigned long, std::__1::less<unsigned long>, std::__1::allocator<unsigned long> >::destroy(std::__1::__tree_node<unsigned long, void*>*)
+      1    0.0%    0.0%  t std::__1::__hash_table<unsigned long, std::__1::hash<unsigned long>, std::__1::equal_to<unsigned long>, std::__1::allocator<unsigned long> >::__rehash(unsigned long)
+      1    0.0%    0.0%  t std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, void*>*> std::__1::__hash_table<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, std::__1::__unordered_map_hasher<node::FastStringKey, std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, node::FastStringKey::Hash, true>, std::__1::__unordered_map_equal<node::FastStringKey, std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, std::__1::equal_to<node::FastStringKey>, true>, std::__1::allocator<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> > > >::find<node::FastStringKey>(node::FastStringKey const&)
+      1    0.0%    0.0%  t non-virtual thunk to v8::internal::PointersUpdatingVisitor::~PointersUpdatingVisitor()
+      1    0.0%    0.0%  t node::os::GetCPUInfo(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  t node::fs::Stat(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  t node::fs::MKDir(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  t _tiny_try_realloc_in_place
+      1    0.0%    0.0%  t _tiny_free_list_remove_ptr
+      1    0.0%    0.0%  t _rack_region_insert
+      1    0.0%    0.0%  t _nanov2_pointer_size
+      1    0.0%    0.0%  t _nanov2_calloc
+      1    0.0%    0.0%  t _moreglue
+      1    0.0%    0.0%  t _default_zone_malloc
+      1    0.0%    0.0%  t __cxxabiv1::__function_type_info::~__function_type_info()
+      1    0.0%    0.0%  t __cxxabiv1::__enum_type_info::~__enum_type_info()
+      1    0.0%    0.0%  t __cxxabiv1::__array_type_info::~__array_type_info()
+      1    0.0%    0.0%  t ___vfprintf
+      1    0.0%    0.0%  t __ZNSt3__16vectorIPN2v88internal8compiler4NodeENS2_13ZoneAllocatorIS5_EEE8__appendEm
+      1    0.0%    0.0%  t __ZNK2v88internal10ScopedListIPNS0_9StatementEPvE6CopyToEPNS0_8ZoneListIS3_EEPNS0_4ZoneE
+      1    0.0%    0.0%  t __ZN2v8L15InternalFieldOKENS_8internal6HandleINS0_10JSReceiverEEEiPKc
+      1    0.0%    0.0%  t __ZN2v88internal6String7FlattenEPNS0_7IsolateENS0_6HandleIS1_EENS0_14AllocationTypeE
+      1    0.0%    0.0%  T std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >::get(std::__1::basic_streambuf<wchar_t, std::__1::char_traits<wchar_t> >&)
+      1    0.0%    0.0%  T std::__1::__next_prime(unsigned long)
+      1    0.0%    0.0%  T node::tracing::TraceEventHelper::GetTracingController()
+      1    0.0%    0.0%  T node::loader::ModuleWrap::SetSyntheticExport(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  T node::NodePlatform::MonotonicallyIncreasingTime()
+      1    0.0%    0.0%  T node::Environment::RunBootstrapping()
+      1    0.0%    0.0%  T _vdprintf_l
+      1    0.0%    0.0%  T _semaphore_create
+      1    0.0%    0.0%  T _realloc
+      1    0.0%    0.0%  T _read$NOCANCEL
+      1    0.0%    0.0%  T _malloc_zone_malloc
+      1    0.0%    0.0%  T _inet_net_pton
+      1    0.0%    0.0%  T _free
+      1    0.0%    0.0%  T _fopen
+      1    0.0%    0.0%  T _fileno
+      1    0.0%    0.0%  T __kernelrpc_mach_port_set_attributes
+      1    0.0%    0.0%  T ___sflags
+      1    0.0%    0.0%  T __ZNK2v88internal15LiteralProperty20NeedsSetFunctionNameEv
+      1    0.0%    0.0%  T __ZNK2v85Value8ToStringENS_5LocalINS_7ContextEEE
+      1    0.0%    0.0%  T __ZNK2v85Value8IsNumberEv
+      1    0.0%    0.0%  T __ZN2v88internal15AstValueFactory9GetStringEjbNS0_6VectorIKhEE
+      1    0.0%    0.0%  T __ZN2v88internal15AstValueFactory11InternalizeINS0_7FactoryEEEvPT_
+      1    0.0%    0.0%  T __ZN2v88internal10AssignmentC1ENS0_7AstNode8NodeTypeENS0_5Token5ValueEPNS0_10ExpressionES7_i
+      1    0.0%    0.0%  T __ZN2v86String11NewFromUtf8EPNS_7IsolateEPKcNS_13NewStringTypeEi
+      1    0.0%    0.0%  T __ZN2v86Module24SetSyntheticModuleExportEPNS_7IsolateENS_5LocalINS_6StringEEENS3_INS_5ValueEEE
+      1    0.0%    0.0%  T __ZN2v815ArrayBufferView6BufferEv
+      1    0.0%    0.0%  T __ZN2v814ScriptCompiler24CompileFunctionInContextENS_5LocalINS_7ContextEEEPNS0_6SourceEmPNS1_INS_6StringEEEmPNS1_INS_6ObjectEEENS0_14CompileOptionsENS0_13NoCacheReasonEPNS1_INS_14ScriptOrModuleEEE
+      1    0.0%    0.0%  T __ZN2v811ArrayBuffer15GetBackingStoreEv
+
+ [Summary]:
+   ticks  total  nonlib   name
+     71    2.1%    2.1%  JavaScript
+   3267   94.9%   97.8%  C++
+     42    1.2%    1.3%  GC
+    102    3.0%          Shared libraries
+      4    0.1%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+   2465   75.7%   71.6%  T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    478   14.7%   13.9%  T __kernelrpc_mach_vm_purgable_control_trap
+    156    4.8%    4.5%  T _fcntl
+     60    1.8%    1.7%  T _open$NOCANCEL
+     31    1.0%    0.9%  T _kdebug_typefilter
+     16    0.5%    0.5%  T _mach_msg_server
+      6    0.2%    0.2%  T _vm_copy
+      4    0.1%    0.1%  t node::fs::Read(v8::FunctionCallbackInfo<v8::Value> const&)
+      4    0.1%    0.1%  t node::fs::GetReqWrap(v8::FunctionCallbackInfo<v8::Value> const&, int, bool)
+      3    0.1%    0.1%  t __ZN2v88internal12StringHasher20HashSequentialStringIhEEjPKT_iy
+      3    0.1%    0.1%  t __ZN2v84base19TemplateHashMapImplIPvS2_NS0_26HashEqualityThenKeyMatcherIS2_PFbS2_S2_EEENS0_23DefaultAllocationPolicyEE14LookupOrInsertIZNS8_14LookupOrInsertERKS2_jS7_EUlvE_EEPNS0_20TemplateHashMapEntryIS2_S2_EESB_jRKT_S7_
+      3    0.1%    0.1%  T __ZN2v88internal15AstValueFactory24GetOneByteStringInternalENS0_6VectorIKhEE
+      2    0.1%    0.1%  t std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >& std::__1::__input_arithmetic<long long, wchar_t, std::__1::char_traits<wchar_t> >(std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >&, long long&)
+      2    0.1%    0.1%  t node::fs::InternalModuleReadJSON(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  t std::__1::basic_ostream<char, std::__1::char_traits<char> >& std::__1::__put_character_sequence<char, std::__1::char_traits<char> >(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, char const*, unsigned long)
+      1    0.0%    0.0%  t std::__1::__hash_iterator<std::__1::__hash_node<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, void*>*> std::__1::__hash_table<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, std::__1::__unordered_map_hasher<node::FastStringKey, std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, node::FastStringKey::Hash, true>, std::__1::__unordered_map_equal<node::FastStringKey, std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> >, std::__1::equal_to<node::FastStringKey>, true>, std::__1::allocator<std::__1::__hash_value_type<node::FastStringKey, node::BaseObjectPtrImpl<node::BaseObject, false> > > >::find<node::FastStringKey>(node::FastStringKey const&)
+      1    0.0%    0.0%  t node::url::(anonymous namespace)::Parse(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    0.0%    0.0%  t _tiny_try_realloc_in_place
+      1    0.0%    0.0%  t _tiny_malloc_from_free_list
+      1    0.0%    0.0%  t _tiny_free_no_lock
+      1    0.0%    0.0%  t _szone_realloc
+      1    0.0%    0.0%  t _moreglue
+      1    0.0%    0.0%  t _free_small
+      1    0.0%    0.0%  t __ZN2v88internal11StringShape33DispatchToSpecificTypeWithoutCastIZNS1_22DispatchToSpecificTypeIZNS0_6String3GetEiE19StringGetDispatchertJRiEEET0_S4_DpOT1_E17CastingDispatchertJRS4_S6_EEES7_SA_
+      1    0.0%    0.0%  t __ZN2v84base19TemplateHashMapImplIPvS2_NS0_26HashEqualityThenKeyMatcherIS2_PFbS2_S2_EEENS0_23DefaultAllocationPolicyEE6ResizeES7_
+      1    0.0%    0.0%  T std::__1::basic_istream<wchar_t, std::__1::char_traits<wchar_t> >::get(std::__1::basic_streambuf<wchar_t, std::__1::char_traits<wchar_t> >&)
+      1    0.0%    0.0%  T std::__1::__next_prime(unsigned long)
+      1    0.0%    0.0%  T node::tracing::TraceEventHelper::GetTracingController()
+      1    0.0%    0.0%  T _realloc
+      1    0.0%    0.0%  T _inet_net_pton
+      1    0.0%    0.0%  T ___sfp
+      1    0.0%    0.0%  T __ZNK2v85Value8ToStringENS_5LocalINS_7ContextEEE
+      1    0.0%    0.0%  T __ZNK2v85Value8IsNumberEv
+      1    0.0%    0.0%  T __ZN2v86String11NewFromUtf8EPNS_7IsolateEPKcNS_13NewStringTypeEi
+      1    0.0%    0.0%  T __ZN2v86Module24SetSyntheticModuleExportEPNS_7IsolateENS_5LocalINS_6StringEEENS3_INS_5ValueEEE
+      1    0.0%    0.0%  T __ZN2v815ArrayBufferView6BufferEv
+      1    0.0%    0.0%  T __ZN2v814ScriptCompiler24CompileFunctionInContextENS_5LocalINS_7ContextEEEPNS0_6SourceEmPNS1_INS_6StringEEEmPNS1_INS_6ObjectEEENS0_14CompileOptionsENS0_13NoCacheReasonEPNS1_INS_14ScriptOrModuleEEE
+      1    0.0%    0.0%  T __ZN2v811ArrayBuffer15GetBackingStoreEv
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+    804   23.3%  t node::fs::Read(v8::FunctionCallbackInfo<v8::Value> const&)
+    800   99.5%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    800  100.0%      LazyCompile: ~readSync fs.js:540:18
+    774   96.8%        LazyCompile: ~tryReadSync fs.js:349:21
+    774  100.0%          LazyCompile: ~readFileSync fs.js:361:22
+    768   99.2%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     26    3.3%        LazyCompile: *readFileSync fs.js:361:22
+     26  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     26  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+
+    800   23.2%  T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    336   42.0%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+     66   19.6%      T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      8   12.1%        LazyCompile: ~serialize /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:1001:19
+      8  100.0%          LazyCompile: ~_getFullPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:214:22
+      8  100.0%            LazyCompile: ~getFullPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:207:21
+      8   12.1%        LazyCompile: ~_normalizeIPv6 /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:811:24
+      6   75.0%          LazyCompile: ~parse /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:868:15
+      6  100.0%            LazyCompile: ~getFullPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:207:21
+      2   25.0%          LazyCompile: ~_recomposeAuthority /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:951:29
+      2  100.0%            LazyCompile: ~serialize /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:1001:19
+      6    9.1%        LazyCompile: ~readPackage internal/modules/cjs/loader.js:251:21
+      5   83.3%          LazyCompile: ~readPackageScope internal/modules/cjs/loader.js:285:26
+      4   80.0%            LazyCompile: ~trySelf internal/modules/cjs/loader.js:402:17
+      1   20.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1   16.7%          LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      1  100.0%            LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      4    6.1%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.typed-array.to-locale-string.js:13:58
+      4  100.0%          LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/fails.js:1:27
+      4  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.typed-array.to-locale-string.js:1:1
+      3    4.5%        LazyCompile: ~stat internal/modules/cjs/loader.js:145:14
+      2   66.7%          LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      2  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1   33.3%          LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1  100.0%            LazyCompile: ~tryExtensions internal/modules/cjs/loader.js:375:23
+      3    4.5%        LazyCompile: ~pathToFileURL internal/url.js:1372:23
+      3  100.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      3  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      3    4.5%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      3  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      2   66.7%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   33.3%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2    3.0%        LazyCompile: ~replaceCaret /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cross-spawn/node_modules/semver/semver.js:1029:23
+      2  100.0%          LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cross-spawn/node_modules/semver/semver.js:1024:48
+      2  100.0%            T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      2    3.0%        LazyCompile: ~get internal/modules/esm/module_map.js:13:6
+      2  100.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      2  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      2    3.0%        LazyCompile: ~_normalizeComponentEncoding /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:782:37
+      1   50.0%          LazyCompile: ~serialize /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:1001:19
+      1  100.0%            LazyCompile: ~_getFullPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:214:22
+      1   50.0%          LazyCompile: ~parse /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:868:15
+      1  100.0%            LazyCompile: ~resolve /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:1122:17
+      2    3.0%        LazyCompile: ~FastBuffer internal/buffer.js:945:1
+      2  100.0%          LazyCompile: ~createUnsafeBuffer buffer.js:147:28
+      1   50.0%            LazyCompile: ~createPool buffer.js:156:20
+      1   50.0%            LazyCompile: ~allocate buffer.js:408:18
+      1    1.5%        LazyCompile: ~varReplace /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:133:20
+      1  100.0%          LazyCompile: ~generate_properties /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/properties.js:2:46
+      1  100.0%            LazyCompile: ~generate_validate /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/validate.js:2:44
+      1    1.5%        LazyCompile: ~translatePeerCertificate _tls_common.js:303:69
+      1  100.0%          LazyCompile: ~translatePeerCertificate _tls_common.js:303:69
+      1  100.0%            LazyCompile: ~TLSSocket.getPeerCertificate _tls_wrap.js:961:50
+      1    1.5%        LazyCompile: ~toCamelCase /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/enhanced-resolve/lib/Resolver.js:27:21
+      1  100.0%          LazyCompile: ~ensureHook /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/enhanced-resolve/lib/Resolver.js:87:12
+      1  100.0%            LazyCompile: ~exports.createResolver /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/enhanced-resolve/lib/ResolverFactory.js:37:34
+      1    1.5%        LazyCompile: ~splitRoot fs.js:1533:33
+      1  100.0%          LazyCompile: *realpathSync fs.js:1570:22
+      1  100.0%            LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      1    1.5%        LazyCompile: ~request /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/utils/request.js:1:844
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            t node::task_queue::RunMicrotasks(v8::FunctionCallbackInfo<v8::Value> const&)
+      1    1.5%        LazyCompile: ~populateMaps /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/mime-types/index.js:154:23
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/mime-types/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    1.5%        LazyCompile: ~parseVersion /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/supports-hyperlinks/index.js:5:22
+      1  100.0%          LazyCompile: ~supportsHyperlink /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/supports-hyperlinks/index.js:24:27
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/supports-hyperlinks/index.js:1:1
+      1    1.5%        LazyCompile: ~parseField /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/npm-conf/lib/util.js:31:20
+      1  100.0%          LazyCompile: ~add /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/npm-conf/lib/conf.js:15:5
+      1  100.0%            LazyCompile: ~ConfigChain.addString /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/config-chain/index.js:242:44
+      1    1.5%        LazyCompile: ~normalizeId /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:220:21
+      1  100.0%          LazyCompile: ~addSchema /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/ajv.js:127:19
+      1  100.0%            LazyCompile: ~addMetaSchema /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/ajv.js:151:23
+      1    1.5%        LazyCompile: ~joinPaths /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:216:20
+      1  100.0%          LazyCompile: ~getPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:171:17
+      1  100.0%            LazyCompile: ~generate_properties /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/properties.js:2:46
+      1    1.5%        LazyCompile: ~isBad tls.js:165:17
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            LazyCompile: ~check tls.js:147:15
+      1    1.5%        LazyCompile: ~generate_properties /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/properties.js:2:46
+      1  100.0%          LazyCompile: ~generate_validate /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/validate.js:2:44
+      1  100.0%            LazyCompile: ~localCompile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:81:24
+      1    1.5%        LazyCompile: ~escapeStringRegexp /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/third-party.js:549:35
+      1  100.0%          LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/third-party.js:2176:43
+      1  100.0%            LazyCompile: ~createCommonjsModule /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/third-party.js:17:30
+      1    1.5%        LazyCompile: ~escapeQuotes /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:117:22
+      1  100.0%          LazyCompile: ~toQuotedString /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:158:24
+      1  100.0%            LazyCompile: ~generate_properties /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/properties.js:2:46
+      1    1.5%        LazyCompile: ~_setExports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/assert-plus/assert.js:98:21
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/assert-plus/assert.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    1.5%        LazyCompile: ~Range /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cross-spawn/node_modules/semver/semver.js:835:16
+      1  100.0%          LazyCompile: ~satisfies /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cross-spawn/node_modules/semver/semver.js:1251:20
+      1  100.0%            LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cross-spawn/lib/parse.js:15:37
+      1    1.5%        LazyCompile: ~<anonymous> internal/util/inspect.js:134:44
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            Eval: ~<anonymous> internal/util/inspect.js:1:1
+      1    1.5%        LazyCompile: ~<anonymous> internal/per_context/primordials.js:23:10
+      1  100.0%          LazyCompile: ~resolveExports internal/modules/cjs/loader.js:504:24
+      1  100.0%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1    1.5%        LazyCompile: ~<anonymous> _tls_common.js:206:37
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            LazyCompile: ~createSecureContext _tls_common.js:94:59
+      1    1.5%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:2731:49
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            LazyCompile: ~_outdentArray /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:2709:25
+      1    1.5%        LazyCompile: *realpathSync fs.js:1570:22
+      1  100.0%          LazyCompile: ~toRealPath internal/modules/cjs/loader.js:368:20
+      1  100.0%            LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1    1.5%        Eval: ~<anonymous> internal/streams/legacy.js:1:1
+      1  100.0%          LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1  100.0%            LazyCompile: ~nativeModuleRequire internal/bootstrap/loaders.js:296:29
+      1    1.5%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/lodash.merge/index.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     11    3.3%      LazyCompile: *readPackageScope internal/modules/cjs/loader.js:285:26
+      7   63.6%        LazyCompile: ~trySelf internal/modules/cjs/loader.js:402:17
+      7  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      4   57.1%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      3   42.9%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      4   36.4%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      3   75.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2   66.7%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   33.3%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1   25.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     10    3.0%      LazyCompile: ~readPackage internal/modules/cjs/loader.js:251:21
+      8   80.0%        LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      8  100.0%          LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      8  100.0%            LazyCompile: ~resolveExports internal/modules/cjs/loader.js:504:24
+      2   20.0%        LazyCompile: ~readPackageScope internal/modules/cjs/loader.js:285:26
+      1   50.0%          LazyCompile: ~shouldUseESMLoader internal/modules/run_main.js:23:28
+      1  100.0%            LazyCompile: ~executeUserEntryPoint internal/modules/run_main.js:64:31
+      1   50.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     10    3.0%      LazyCompile: *realpathSync fs.js:1570:22
+      6   60.0%        LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      6  100.0%          LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      6  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      3   30.0%        LazyCompile: ~toRealPath internal/modules/cjs/loader.js:368:20
+      2   66.7%          LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1   50.0%            LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1   50.0%            LazyCompile: ~tryExtensions internal/modules/cjs/loader.js:375:23
+      1   33.3%          LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1   10.0%        LazyCompile: *tryExtensions internal/modules/cjs/loader.js:375:23
+      1  100.0%          LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1  100.0%            LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      9    2.7%      LazyCompile: ~Module._extensions..json internal/modules/cjs/loader.js:1225:39
+      6   66.7%        LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      6  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      5   83.3%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1   16.7%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      3   33.3%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2   66.7%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   33.3%          LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/WebpackOptionsValidationError.js:1:1
+      9    2.7%      LazyCompile: *readPackage internal/modules/cjs/loader.js:251:21
+      9  100.0%        LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      9  100.0%          LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      9  100.0%            LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      7    2.1%      LazyCompile: ~localCompile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:81:24
+      4   57.1%        LazyCompile: ~compile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:32:17
+      4  100.0%          LazyCompile: ~_compile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/ajv.js:329:18
+      3   75.0%            LazyCompile: ~getSchema /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/ajv.js:201:19
+      1   25.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@cloudbase/framework-core/lib/config/validate.js:1:1
+      3   42.9%        LazyCompile: ~resolve /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:26:17
+      3  100.0%          LazyCompile: ~resolveRef /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:170:22
+      3  100.0%            LazyCompile: ~generate_ref /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/ref.js:2:39
+      6    1.8%      LazyCompile: ~createCommonjsModule /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:2169:30
+      6  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:1:1
+      6  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      6  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      6    1.8%      LazyCompile: ~closeSync /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/graceful-fs/graceful-fs.js:72:24
+      6  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+      6  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      5   83.3%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1   16.7%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      5    1.5%      LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      4   80.0%        LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      4  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   25.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/validate-npm-package-license/index.js:1:1
+      1   25.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/urix/index.js:1:1
+      1   25.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-resize/node_modules/core-js/internals/array-last-index-of.js:1:1
+      1   25.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-resize/dist/modules/resize.js:1:1
+      1   20.0%        LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/index.js:1:1
+      4    1.2%      LazyCompile: ~toRealPath internal/modules/cjs/loader.js:368:20
+      2   50.0%        LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      2  100.0%          LazyCompile: ~tryExtensions internal/modules/cjs/loader.js:375:23
+      2  100.0%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      2   50.0%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      2  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1   50.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   50.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      4    1.2%      LazyCompile: ~readSync fs.js:540:18
+      4  100.0%        LazyCompile: ~tryReadSync fs.js:349:21
+      4  100.0%          LazyCompile: ~readFileSync fs.js:361:22
+      4  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      4    1.2%      LazyCompile: ~maybeCacheSourceMap internal/source_map/source_map_cache.js:43:29
+      4  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      4  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      2   50.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      2   50.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      4    1.2%      LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      4  100.0%        LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      3   75.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      3  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   25.0%          LazyCompile: ~executeUserEntryPoint internal/modules/run_main.js:64:31
+      1  100.0%            Eval: ~<anonymous> internal/main/run_main_module.js:1:1
+      4    1.2%      LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      4  100.0%        LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      3   75.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      3  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   25.0%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      4    1.2%      LazyCompile: *Module._nodeModulePaths internal/modules/cjs/loader.js:748:37
+      2   50.0%        LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      2  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      2  100.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2   50.0%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1   50.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   50.0%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      4    1.2%      LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2   50.0%        LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   50.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/types/dist/index.js:1:1
+      1   50.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugins/node_modules/core-js/internals/internal-state.js:1:1
+      2   50.0%        LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   50.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/merge-package-json/node_modules/lodash/internal/isIterateeCall.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   50.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@formily/core/lib/internals.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+     63    7.9%    LazyCompile: *wrapSafe internal/modules/cjs/loader.js:1101:18
+     63  100.0%      LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+     63  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     63  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+     63  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+     19    2.4%    LazyCompile: ~readFileSync fs.js:361:22
+     19  100.0%      LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     16   84.2%        LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     16  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     14   87.5%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2   12.5%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      3   15.8%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2   66.7%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   33.3%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+     18    2.3%    LazyCompile: *realpathSync fs.js:1570:22
+     11   61.1%      LazyCompile: ~toRealPath internal/modules/cjs/loader.js:368:20
+      9   81.8%        LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      6   66.7%          LazyCompile: ~tryExtensions internal/modules/cjs/loader.js:375:23
+      5   83.3%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1   16.7%            LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      3   33.3%          LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      2   66.7%            LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1   33.3%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      2   18.2%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      2  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      2  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      7   38.9%      LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      6   85.7%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      5   83.3%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      3   60.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2   40.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   16.7%          LazyCompile: *Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1   14.3%        LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1  100.0%          LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1  100.0%            LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+     13    1.6%    LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     11   84.6%      LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+     10   90.9%        LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/winston/lib/winston/transports/file.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/rxjs/internal/operators/min.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/utils/jsonParse.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/lodash/_arrayLikeKeys.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/fast-glob/out/utils/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugins/node_modules/core-js/internals/well-known-symbol.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/redefine.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@cloudbase/framework-core/node_modules/fs-extra/lib/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   10.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@cloudbase/framework-core/lib/builder/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    9.1%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/async/dist/async.js:757:25
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/async/dist/async.js:5:19
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/async/dist/async.js:1:11
+      2   15.4%      LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%        LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   50.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/utils/npm/filterdeps.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   50.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-threshold/node_modules/core-js/internals/fix-regexp-well-known-symbol-logic.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+     12    1.5%    LazyCompile: ~tryReadSync fs.js:349:21
+     12  100.0%      LazyCompile: ~readFileSync fs.js:361:22
+     12  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     10   83.3%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     10  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      2   16.7%          LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+      2  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     12    1.5%    LazyCompile: ~readSync fs.js:540:18
+     12  100.0%      LazyCompile: ~tryReadSync fs.js:349:21
+     12  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+     12  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     11   91.7%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1    8.3%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+     12    1.5%    LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      7   58.3%      LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      7  100.0%        LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      7  100.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      7  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      5   41.7%      LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      3   60.0%        LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   33.3%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/WebpackOptionsApply.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   33.3%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/MultiEntryPlugin.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   33.3%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/lib/builder/core/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1   20.0%        LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/dist/index.js:1:1
+      1   20.0%        LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/compressing/lib/zip/uncompress_stream.js:1:1
+     11    1.4%    LazyCompile: *readSync fs.js:540:18
+      7   63.6%      LazyCompile: *readFileSync fs.js:361:22
+      7  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      7  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      7  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      4   36.4%      LazyCompile: ~tryReadSync fs.js:349:21
+      4  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+      4  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      3   75.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1   25.0%            LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+     10    1.3%    LazyCompile: *readPackageScope internal/modules/cjs/loader.js:285:26
+      7   70.0%      LazyCompile: ~trySelf internal/modules/cjs/loader.js:402:17
+      7  100.0%        LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      5   71.4%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      3   60.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2   40.0%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2   28.6%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1   50.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   50.0%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      3   30.0%      LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      2   66.7%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2  100.0%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   33.3%        LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      9    1.1%    LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      9  100.0%      LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      9  100.0%        LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      9  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/lodash/_baseIsEqualDeep.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/lodash/_MapCache.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/fast-glob/out/index.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/decompress-tar/node_modules/readable-stream/lib/_stream_readable.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/core-js/library/modules/_for-of.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-print/node_modules/core-js/internals/object-get-own-property-names.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-crop/node_modules/core-js/internals/object-get-own-property-descriptor.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-crop/node_modules/core-js/internals/indexed-object.js:1:1
+      1   11.1%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.object.assign.js:1:1
+      9    1.1%    LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      8   88.9%      LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      6   75.0%        LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      6  100.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      6  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      2   25.0%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1   50.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1   50.0%          LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/less/lib/less/tree/index.js:1:1
+      1   11.1%      LazyCompile: *Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%          LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/qrcode/lib/core/qrcode.js:1:1
+      8    1.0%    LazyCompile: ~<anonymous> internal/validators.js:85:3
+      7   87.5%      LazyCompile: *hidden internal/errors.js:282:25
+      4   57.1%        LazyCompile: ~closeSync fs.js:419:19
+      3   75.0%          LazyCompile: *closeSync /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/graceful-fs/graceful-fs.js:72:24
+      3  100.0%            LazyCompile: *readFileSync fs.js:361:22
+      1   25.0%          LazyCompile: ~closeSync /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/graceful-fs/graceful-fs.js:72:24
+      1  100.0%            LazyCompile: ~readFileSync fs.js:361:22
+      3   42.9%        LazyCompile: ~readSync fs.js:540:18
+      3  100.0%          LazyCompile: ~tryReadSync fs.js:349:21
+      3  100.0%            LazyCompile: ~readFileSync fs.js:361:22
+      1   12.5%      LazyCompile: ~hidden internal/errors.js:282:25
+      1  100.0%        LazyCompile: ~readSync fs.js:540:18
+      1  100.0%          LazyCompile: ~tryReadSync fs.js:349:21
+      1  100.0%            LazyCompile: ~readFileSync fs.js:361:22
+
+    479   13.9%  T __kernelrpc_mach_vm_purgable_control_trap
+    478   99.8%    LazyCompile: *readSync fs.js:540:18
+    302   63.2%      LazyCompile: ~tryReadSync fs.js:349:21
+    302  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+    300   99.3%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+    189   63.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     67   22.3%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+     44   14.7%            LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+    176   36.8%      LazyCompile: *readFileSync fs.js:361:22
+    176  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+    176  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+    176  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+
+    315    9.1%  T node::contextify::ContextifyContext::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+    315  100.0%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    315  100.0%      LazyCompile: ~wrapSafe internal/modules/cjs/loader.js:1101:18
+    315  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+    315  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+    259   82.2%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     43   13.7%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+     13    4.1%            LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+
+    157    4.6%  T _fcntl
+    156   99.4%    LazyCompile: *readPackage internal/modules/cjs/loader.js:251:21
+    156  100.0%      LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+    156  100.0%        LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+    156  100.0%          LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+    154   98.7%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      2    1.3%            LazyCompile: *Module._resolveFilename internal/modules/cjs/loader.js:964:35
+
+    120    3.5%  t node::fs::InternalModuleReadJSON(v8::FunctionCallbackInfo<v8::Value> const&)
+    118   98.3%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+    118  100.0%      LazyCompile: ~readPackage internal/modules/cjs/loader.js:251:21
+    116   98.3%        LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+    116  100.0%          LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+     93   80.2%            LazyCompile: ~resolveExports internal/modules/cjs/loader.js:504:24
+     23   19.8%            LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      2    1.7%    LazyCompile: *readPackage internal/modules/cjs/loader.js:251:21
+      2  100.0%      LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      2  100.0%        LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      2  100.0%          LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      2  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+
+     84    2.4%  t node::fs::Open(v8::FunctionCallbackInfo<v8::Value> const&)
+     84  100.0%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+     84  100.0%      LazyCompile: ~openSync fs.js:452:18
+     84  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+     84  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+     70   83.3%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     12   14.3%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2    2.4%            LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+
+     60    1.7%  T _open$NOCANCEL
+     32   53.3%    LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+     31   96.9%      LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+     21   67.7%        LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     16   76.2%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+     16  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      5   23.8%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      5  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+     10   32.3%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      5   50.0%          LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   20.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/webpack.js:1:1
+      1   20.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/dependencies/HarmonyModulesPlugin.js:1:1
+      1   20.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/WebpackOptionsApply.js:1:1
+      1   20.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/webpack/lib/EntryOptionPlugin.js:1:1
+      1   20.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@formily/core/lib/models/form.js:1:1
+      3   30.0%          LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      3  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      2   20.0%          LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2  100.0%            LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1    3.1%      LazyCompile: *Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%        LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%          LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/qrcode/lib/core/qrcode.js:1:1
+     27   45.0%    LazyCompile: *stat internal/modules/cjs/loader.js:145:14
+     24   88.9%      LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+     22   91.7%        LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+     17   77.3%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+     15   88.2%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      2   11.8%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      5   22.7%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      4   80.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      1   20.0%            LazyCompile: *Module.require internal/modules/cjs/loader.js:1081:36
+      2    8.3%        LazyCompile: *Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      2  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      2    7.4%      LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1   50.0%        LazyCompile: ~tryExtensions internal/modules/cjs/loader.js:375:23
+      1  100.0%          LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1  100.0%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1   50.0%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1    3.7%      LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%        LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1    1.7%    LazyCompile: *tryExtensions internal/modules/cjs/loader.js:375:23
+      1  100.0%      LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1  100.0%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+
+     60    1.7%  /usr/lib/system/libsystem_platform.dylib
+     29   48.3%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      9   31.0%      T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      4   44.4%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.typed-array.to-locale-string.js:13:58
+      4  100.0%          LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/fails.js:1:27
+      4  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.typed-array.to-locale-string.js:1:1
+      1   11.1%        LazyCompile: ~varOccurences /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:126:23
+      1  100.0%          LazyCompile: ~generate_properties /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/properties.js:2:46
+      1  100.0%            LazyCompile: ~generate_validate /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/validate.js:2:44
+      1   11.1%        LazyCompile: ~readPackage internal/modules/cjs/loader.js:251:21
+      1  100.0%          LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      1  100.0%            LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      1   11.1%        LazyCompile: ~pathToFileURL internal/url.js:1372:23
+      1  100.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   11.1%        LazyCompile: ~get internal/modules/esm/module_map.js:13:6
+      1  100.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   11.1%        LazyCompile: ~_normalizeIPv6 /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:811:24
+      1  100.0%          LazyCompile: ~parse /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/uri-js/dist/es5/uri.all.js:868:15
+      1  100.0%            LazyCompile: ~getFullPath /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:207:21
+      2    6.9%      LazyCompile: ~createCommonjsModule /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:2169:30
+      2  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:1:1
+      2  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      2  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      2    6.9%      LazyCompile: *stat internal/modules/cjs/loader.js:145:14
+      2  100.0%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      2  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      2  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1    3.4%      LazyCompile: ~versionIncluded$1 /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:20885:27
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.4%      LazyCompile: ~route$1 /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:9711:24
+      1  100.0%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:9790:18
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:1:1
+      1    3.4%      LazyCompile: ~readPackage internal/modules/cjs/loader.js:251:21
+      1  100.0%        LazyCompile: ~readPackageExports internal/modules/cjs/loader.js:308:28
+      1  100.0%          LazyCompile: ~applyExports internal/modules/cjs/loader.js:447:22
+      1  100.0%            LazyCompile: ~resolveExports internal/modules/cjs/loader.js:504:24
+      1    3.4%      LazyCompile: ~processHeader _http_outgoing.js:462:23
+      1  100.0%        LazyCompile: ~_storeHeader _http_outgoing.js:352:22
+      1  100.0%          LazyCompile: ~_implicitHeader _http_client.js:333:67
+      1  100.0%            LazyCompile: ~end _http_outgoing.js:744:45
+      1    3.4%      LazyCompile: ~prepareMainThreadExecution internal/bootstrap/pre_execution.js:14:36
+      1  100.0%        Eval: ~<anonymous> internal/main/run_main_module.js:1:1
+      1    3.4%      LazyCompile: ~exports.setTyped /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/pako/lib/utils/common.js:91:29
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/pako/lib/utils/common.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.4%      LazyCompile: ~each /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cos-nodejs-sdk-v5/sdk/util.js:249:14
+      1  100.0%        LazyCompile: ~module.exports.init /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cos-nodejs-sdk-v5/sdk/base.js:3766:32
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/cos-nodejs-sdk-v5/sdk/cos.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    3.4%      LazyCompile: ~createWritableStdioStream internal/bootstrap/switches/is_main_thread.js:37:35
+      1  100.0%        LazyCompile: ~getStdout internal/bootstrap/switches/is_main_thread.js:116:19
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/supports-hyperlinks/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    3.4%      LazyCompile: ~add /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/npm-conf/lib/conf.js:15:5
+      1  100.0%        LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/npm-conf/index.js:7:18
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/get-proxy/index.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    3.4%      LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%        LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1  100.0%          LazyCompile: ~require internal/modules/cjs/helpers.js:72:31
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/custom/node_modules/core-js/internals/descriptors.js:1:1
+      1    3.4%      LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%        LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1    3.4%      LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/static-extend/index.js:52:18
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/snapdragon/index.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.4%      LazyCompile: *realpathSync fs.js:1570:22
+      1  100.0%        LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      1  100.0%          LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1    3.4%      LazyCompile: *normalizeString path.js:52:25
+      1  100.0%        LazyCompile: *readPackageScope internal/modules/cjs/loader.js:285:26
+      1  100.0%          LazyCompile: ~trySelf internal/modules/cjs/loader.js:402:17
+      1  100.0%            LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1    3.4%      LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%        LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+      1    3.4%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/validate/signaturejson.js:1:1
+      1  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+     23   38.3%    LazyCompile: *readSync fs.js:540:18
+     17   73.9%      LazyCompile: ~tryReadSync fs.js:349:21
+     17  100.0%        LazyCompile: ~readFileSync fs.js:361:22
+     17  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      9   52.9%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      4   23.5%            LazyCompile: *Module.load internal/modules/cjs/loader.js:1037:33
+      4   23.5%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      6   26.1%      LazyCompile: *readFileSync fs.js:361:22
+      6  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      6  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      6  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      2    3.3%    LazyCompile: *wrapSafe internal/modules/cjs/loader.js:1101:18
+      2  100.0%      LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      2  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      2  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      2  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+      2    3.3%    LazyCompile: *realpathSync fs.js:1570:22
+      1   50.0%      LazyCompile: ~toRealPath internal/modules/cjs/loader.js:368:20
+      1  100.0%        LazyCompile: ~tryFile internal/modules/cjs/loader.js:359:17
+      1  100.0%          LazyCompile: ~tryPackage internal/modules/cjs/loader.js:313:20
+      1  100.0%            LazyCompile: ~Module._findPath internal/modules/cjs/loader.js:613:28
+      1   50.0%      LazyCompile: *toRealPath internal/modules/cjs/loader.js:368:20
+      1  100.0%        LazyCompile: *Module._findPath internal/modules/cjs/loader.js:613:28
+      1  100.0%          LazyCompile: ~Module._resolveFilename internal/modules/cjs/loader.js:964:35
+      1  100.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+
+     51    1.5%  T node::native_module::NativeModuleEnv::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+     51  100.0%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+     51  100.0%      LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+     46   90.2%        LazyCompile: ~nativeModuleRequire internal/bootstrap/loaders.js:296:29
+      4    8.7%          Eval: ~<anonymous> internal/bootstrap/node.js:1:1
+      3    6.5%          Eval: ~<anonymous> internal/url.js:1:1
+      3  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      3    6.5%          Eval: ~<anonymous> crypto.js:1:1
+      3  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          LazyCompile: ~setupPrepareStackTrace internal/bootstrap/node.js:250:32
+      2  100.0%            Eval: ~<anonymous> internal/bootstrap/node.js:1:1
+      2    4.3%          LazyCompile: ~setupBuffer internal/bootstrap/node.js:298:21
+      2  100.0%            Eval: ~<anonymous> internal/bootstrap/node.js:1:1
+      2    4.3%          Eval: ~<anonymous> tty.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> tls.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> stream.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> internal/modules/esm/loader.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> internal/modules/cjs/loader.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> http.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> events.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      2    4.3%          Eval: ~<anonymous> _http_client.js:1:1
+      2  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          LazyCompile: ~setupInspectorHooks internal/bootstrap/pre_execution.js:210:29
+      1  100.0%            LazyCompile: ~prepareMainThreadExecution internal/bootstrap/pre_execution.js:14:36
+      1    2.2%          LazyCompile: ~initializeCJSLoader internal/bootstrap/pre_execution.js:399:29
+      1  100.0%            LazyCompile: ~prepareMainThreadExecution internal/bootstrap/pre_execution.js:14:36
+      1    2.2%          LazyCompile: ~get fs.js:2073:8
+      1  100.0%            T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1    2.2%          LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1  100.0%            LazyCompile: ~compileForPublicLoader internal/bootstrap/loaders.js:212:25
+      1    2.2%          Eval: ~<anonymous> timers.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> net.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> internal/source_map/source_map_cache.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> internal/process/task_queues.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> internal/process/esm_loader.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> internal/modules/cjs/helpers.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> internal/main/run_main_module.js:1:1
+      1    2.2%          Eval: ~<anonymous> internal/console/global.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> fs.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> child_process.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> buffer.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      1    2.2%          Eval: ~<anonymous> _tls_wrap.js:1:1
+      1  100.0%            LazyCompile: ~compileForInternalLoader internal/bootstrap/loaders.js:263:27
+      5    9.8%        LazyCompile: ~compileForPublicLoader internal/bootstrap/loaders.js:212:25
+      4   80.0%          LazyCompile: ~loadNativeModule internal/modules/cjs/helpers.js:21:26
+      4  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1   20.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: ~Module.require internal/modules/cjs/loader.js:1081:36
+
+     44    1.3%  T _vm_copy
+     27   61.4%    T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      2    7.4%      T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1   50.0%        LazyCompile: ~varOccurences /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/util.js:126:23
+      1  100.0%          LazyCompile: ~generate_items /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/items.js:2:41
+      1  100.0%            LazyCompile: ~generate_validate /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/validate.js:2:44
+      1   50.0%        LazyCompile: ~isIPv6 internal/net.js:34:16
+      1  100.0%          LazyCompile: ~isIP internal/net.js:38:14
+      1  100.0%            LazyCompile: ~lookupAndConnect net.js:980:26
+      1    3.7%      LazyCompile: ~urlParse url.js:150:18
+      1  100.0%        LazyCompile: ~Request.init /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/request/request.js:141:35
+      1  100.0%          LazyCompile: ~Request /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/request/request.js:93:18
+      1  100.0%            LazyCompile: ~request /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/request/index.js:42:18
+      1    3.7%      LazyCompile: ~parseComparator /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/make-dir/node_modules/semver/semver.js:1034:26
+      1  100.0%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/make-dir/node_modules/semver/semver.js:965:43
+      1  100.0%          T __ZN2v88internal11CallPrinter25VisitImportCallExpressionEPNS0_20ImportCallExpressionE
+      1  100.0%            LazyCompile: ~Range.parseRange /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/make-dir/node_modules/semver/semver.js:941:39
+      1    3.7%      LazyCompile: ~onConnectSecure _tls_wrap.js:1472:25
+      1  100.0%        LazyCompile: ~emit events.js:263:44
+      1  100.0%          LazyCompile: ~TLSSocket._finishInit _tls_wrap.js:895:43
+      1  100.0%            LazyCompile: ~ssl.onhandshakedone _tls_wrap.js:693:27
+      1    3.7%      LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/npm-conf/index.js:7:18
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/get-proxy/index.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/core-js/library/modules/_set-to-string-tag.js:5:27
+      1  100.0%        LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/core-js/library/modules/_iter-create.js:10:27
+      1  100.0%          LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/core-js/library/modules/_iter-define.js:18:27
+      1  100.0%            Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/core-js/library/modules/es6.array.iterator.js:1:1
+      1    3.7%      LazyCompile: ~module.exports /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/fails.js:1:27
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/regexp-sticky-helpers.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      LazyCompile: ~localCompile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:81:24
+      1  100.0%        LazyCompile: ~resolve /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:26:17
+      1  100.0%          LazyCompile: ~resolveRef /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:170:22
+      1  100.0%            LazyCompile: ~generate_ref /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/ref.js:2:39
+      1    3.7%      LazyCompile: ~getSupportLevel /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/colors/lib/system/supports-colors.js:142:25
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/colors/lib/system/supports-colors.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      LazyCompile: ~generate_validate /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/dotjs/validate.js:2:44
+      1  100.0%        LazyCompile: ~localCompile /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:81:24
+      1  100.0%          LazyCompile: ~resolve /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/resolve.js:26:17
+      1  100.0%            LazyCompile: ~resolveRef /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/ajv/lib/compile/index.js:170:22
+      1    3.7%      LazyCompile: ~createCommonjsModule /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:2169:30
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/prettier/index.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      LazyCompile: ~__webpack_require__ /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/esprima/dist/esprima.js:18:39
+      1  100.0%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/esprima/dist/esprima.js:412:15
+      1  100.0%          LazyCompile: ~__webpack_require__ /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/esprima/dist/esprima.js:18:39
+      1  100.0%            LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/esprima/dist/esprima.js:58:15
+      1    3.7%      LazyCompile: ~__extends /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/rxjs/internal/operators/retry.js:9:21
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/rxjs/internal/operators/retry.js:32:33
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/rxjs/internal/operators/retry.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    3.7%      LazyCompile: ~Readable.read _stream_readable.js:383:35
+      1  100.0%        LazyCompile: ~resume_ _stream_readable.js:958:17
+      1  100.0%          LazyCompile: ~processTicksAndRejections internal/process/task_queues.js:69:35
+      1    3.7%      LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%        LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%          LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1  100.0%            LazyCompile: ~executeUserEntryPoint internal/modules/run_main.js:64:31
+      1    3.7%      LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%          LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1  100.0%            LazyCompile: ~Module._load internal/modules/cjs/loader.js:877:24
+      1    3.7%      LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/vendor/cloud-api/index.js:274:1697
+      1  100.0%        LazyCompile: ~n /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/vendor/cloud-api/index.js:1:47
+      1  100.0%          LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/vendor/cloud-api/index.js:274:1269
+      1  100.0%            LazyCompile: ~n /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/miniprogram-ci/dist/vendor/cloud-api/index.js:1:47
+      1    3.7%      LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.symbol.js:213:54
+      1  100.0%        LazyCompile: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/internals/array-iteration.js:18:19
+      1  100.0%          Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/core-js/modules/es.symbol.js:1:1
+      1  100.0%            LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1    3.7%      Eval: ~<anonymous> internal/main/run_main_module.js:1:1
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/yaml/dist/resolveSeq-4a68b39b.js:1:1
+      1  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/tweetnacl/nacl-fast.js:1:10
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/tweetnacl/nacl-fast.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/param-case/node_modules/tslib/tslib.js:40:11
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/param-case/node_modules/tslib/tslib.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/dot-case/node_modules/tslib/tslib.js:40:11
+      1  100.0%        Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/dot-case/node_modules/tslib/tslib.js:1:1
+      1  100.0%          LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%            LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/crc/lib/es6/crc16.js:1:1
+      1  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/plugin-resize/node_modules/core-js/modules/es.typed-array.copy-within.js:1:1
+      1  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: ~Module.load internal/modules/cjs/loader.js:1037:33
+      1    3.7%      Eval: ~<anonymous> /Users/yang/git/cloudbase-framework/packages/framework-plugin-low-code/node_modules/@jimp/core/node_modules/file-type/index.js:1:1
+      1  100.0%        LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      1  100.0%          LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      1  100.0%            LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      6   13.6%    LazyCompile: *wrapSafe internal/modules/cjs/loader.js:1101:18
+      6  100.0%      LazyCompile: ~Module._compile internal/modules/cjs/loader.js:1154:37
+      6  100.0%        LazyCompile: ~Module._extensions..js internal/modules/cjs/loader.js:1209:37
+      6  100.0%          LazyCompile: *Module._load internal/modules/cjs/loader.js:877:24
+      6  100.0%            LazyCompile: *pathToFileURL internal/url.js:1372:23
+
