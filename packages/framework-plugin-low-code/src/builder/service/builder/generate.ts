@@ -516,6 +516,7 @@ export function getComponentSchemaString(
             xProps.listenerInstances.unshift({
               trigger: changeEvent,
               instanceFunction: `${REPLACE_SIGN}function({ event, forItems }) {
+    const $for = forItems;
     const wid = ${isComposite ? 'this.widgets' : '$page.widgets'}.${schema.key};
     const widgetData = (forItems.forIndexes && forItems.forIndexes.length > 0) ? get(wid, forItems.forIndexes) : wid;
     widgetData.${key} = ${valueFromEvent};
@@ -567,14 +568,14 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
       funcCode = `(forItems) => forItems.${bind.bindDataPath}`
     } else if (bind.type === PropBindType.expression) {
       if (isComposite) {
-        funcCode = `(forItems) => (${bind.bindDataPath
+        funcCode = `(forItems) => { const $for = forItems; return (${bind.bindDataPath
           .replace(/\n/g, ' ')
-          .replace(/\$comp/g, 'this.$WEAPPS_COMP')})`
+          .replace(/\$comp/g, 'this.$WEAPPS_COMP')})}`
       } else {
-        funcCode = `(forItems, event) => (${bind.bindDataPath.replace(
+        funcCode = `(forItems, event) => { const $for = forItems;return (${bind.bindDataPath.replace(
           /\n/g,
           ' '
-        )})`
+        )})}`
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath

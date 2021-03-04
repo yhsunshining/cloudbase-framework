@@ -44,9 +44,19 @@ initGlobalVar()
 ;(function() {
   function flex() {
     try {
-      var htmlDom = document.documentElement
-      var width = window.innerWidth || htmlDom.clientWidth
-      htmlDom.style.fontSize = width / (375 / 14) + 'px'
+      let htmlDom = document.documentElement
+      let width = window.innerWidth || htmlDom.clientWidth
+      let fontSize = width / (375 / 14)
+      if (
+        !navigator.userAgent.match(
+          /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|IEMobile)/i
+        ) &&
+        fontSize > 14
+      ) {
+        htmlDom.style.fontSize = `14px`
+      } else {
+        htmlDom.style.fontSize = fontSize + `px`
+      }
     } catch (e) {
       console.error(e)
     }
