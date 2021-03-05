@@ -93,7 +93,6 @@ export async function installMaterials(
             }
 
             const libMeta = readComponentLibMata(targetDir)
-            console.log('============', libMeta)
             if (!lib.components) {
               lib.components = Object.keys(libMeta.components).map((name) => ({
                 name,
