@@ -65,9 +65,10 @@ function generateCloudFunction(
   appId: string,
   mode: string
 ) {
-  let methods = datasource.methods.filter(
-    (method) => method.type === CLOUD_FUNCTION_TYPE || method.type === 'http'
+  datasource.methods = datasource.methods.filter(
+    (method) => (method.type === CLOUD_FUNCTION_TYPE || method.type === 'http') && !method.disabled
   )
+  const methods = datasource.methods
   if (!methods.length) return []
   let cloudFunctionName = getAppDatasourceResourceName(appId, datasource, mode)
 
@@ -260,8 +261,8 @@ export function processCloudFunctionInputs(
     datasources?.reduce((arr, datasource) => {
       let subFunctions = datasource.methods.filter(
         (mthd) =>
-          mthd.type === CLOUD_FUNCTION_TYPE ||
-          mthd.type === EXTERNAL_FUNCTION_TYPE
+          (mthd.type === CLOUD_FUNCTION_TYPE ||
+          mthd.type === EXTERNAL_FUNCTION_TYPE) && !mthd.disabled
       )
       if (subFunctions.length) {
         let cloudFucntionName = getAppDatasourceResourceName(
