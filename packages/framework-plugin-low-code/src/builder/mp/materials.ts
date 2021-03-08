@@ -85,11 +85,27 @@ export async function installMaterials(
               name
             )
             if (libUpdated(targetDir, version)) {
-              console.log(
-                `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
-              )
-              // #2 link material to current project
-              await fs.copy(materialsSrcDir, targetDir)
+              if (fs.existsSync(path.join(materialsSrcDir, 'src'))) {
+                console.log(
+                  `Copying material ${materialId} from ${materialsSrcDir}/src to ${targetDir}`
+                )
+
+                // #2 从根目录 copy meta 文件
+                const metaJosnPath = path.join(materialsSrcDir, 'meta.json')
+                if (fs.existsSync(metaJosnPath)) {
+                  await fs.copy(metaJosnPath, path.join(targetDir, 'meta.json'))
+                }
+
+                // #3 copy 组件库代码文件到项目目录
+                await fs.copy(path.join(materialsSrcDir, 'src'), targetDir)
+              } else {
+                console.log(
+                  `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
+                )
+
+                // #2 link material to current project
+                await fs.copy(materialsSrcDir, targetDir)
+              }
             }
 
             const libMeta = readComponentLibMata(targetDir)

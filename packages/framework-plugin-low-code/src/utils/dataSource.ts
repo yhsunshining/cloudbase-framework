@@ -42,6 +42,13 @@ export function mergeDependencies(...pkgs) {
   let result = { dependencies: {} }
   result = pkgs.reduce((acc, pkg) => {
     const formated = getDependencies(pkg)
+    // mergePackageJson 不支持多个 * 的版本merge，临时复写方式，应当替换新包
+    for (let key in formated.dependencies) {
+      formated.dependencies[key] =
+        formated.dependencies[key] === '*' && acc?.dependencies?.[key] === '*'
+          ? 'latest'
+          : formated.dependencies[key]
+    }
     const merged = mergePackageJson(formated, acc)
     return JSON.parse(merged)
   }, result)

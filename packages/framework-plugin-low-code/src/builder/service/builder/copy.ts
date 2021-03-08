@@ -47,7 +47,8 @@ export async function copyMaterialLibraries(
   await Promise.all(
     dependencies.map(async ({ name, version }) => {
       const materialNameVersion = `${name}@${version}`
-      let targetDir = path.join(materialsDir, materialNameVersion, 'src')
+      const materialDir = path.join(materialsDir, materialNameVersion)
+      let targetDir = path.join(materialDir, 'src')
       // 当前本地目录是素材库的时候，直接用本地的
       if (localPkg && localPkg.name === name && localPkg.version === version) {
         console.log(
@@ -61,6 +62,10 @@ export async function copyMaterialLibraries(
         'src/libraries',
         materialNameVersion
       )
+      const metaJosnPath = path.join(materialDir, 'meta.json')
+      if (fs.existsSync(metaJosnPath)) {
+        await fs.copy(metaJosnPath, path.join(librariesDir, 'meta.json'))
+      }
       await fs.copy(targetDir, librariesDir)
     })
   )
