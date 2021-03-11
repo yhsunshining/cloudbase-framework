@@ -55,6 +55,8 @@ export const CompRenderer = observer(function (props) {
     forList =
       dataBinds && dataBinds._waFor && (dataBinds._waFor(parentForItems) || [])
   } catch (e) {
+    // 计算值出错则使用空数组兜底
+    forList = []
     console.error('_waFor data', e)
   }
   if (forList) {
