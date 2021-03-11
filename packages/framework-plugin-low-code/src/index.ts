@@ -10,15 +10,7 @@ import fs, { PathLike } from 'fs-extra'
 import path from 'path'
 import { Plugin, PluginServiceApi } from '@cloudbase/framework-core'
 import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp'
-import {
-  plugin as FunctionPlugin,
-  IFrameworkPluginFunctionInputs,
-} from '@cloudbase/framework-plugin-function'
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website'
-import {
-  plugin as DatabasePlugin,
-  IFrameworkPluginDatabaseInputs,
-} from '@cloudbase/framework-plugin-database'
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth'
 import { deserializePlatformApp } from '@cloudbase/cals'
 
@@ -31,12 +23,7 @@ import {
 } from './builder/types/common'
 import { IMaterialItem, IPlugin } from './weapps-core'
 import { handleMpPlugins } from './generate'
-import {
-  postProcessCloudFunction,
-  postprocessProjectConfig,
-  processCloudFunctionInputs,
-  processDatabaseInputs,
-} from './utils/postProcess'
+import { postprocessProjectConfig } from './utils/postProcess'
 import { merge } from 'lodash'
 import archiver from 'archiver'
 import COS from 'cos-nodejs-sdk-v5'
@@ -233,8 +220,6 @@ type ResolvedInputs = IFrameworkPluginLowCodeInputs & typeof DEFAULT_INPUTS
 class LowCodePlugin extends Plugin {
   protected _resolvedInputs: ResolvedInputs
   protected _appPath: string
-  protected _functionInputs?: IFrameworkPluginFunctionInputs
-  protected _databaseInputs?: IFrameworkPluginDatabaseInputs
   protected _authPlugin
   protected _miniprogramePlugin
   protected _webPlugin
@@ -412,24 +397,6 @@ class LowCodePlugin extends Plugin {
       })
     }
 
-    /**
-     * 资源相关
-     */
-    if (this._functionInputs) {
-      this._functionPlugin = new FunctionPlugin(
-        'function',
-        this.api,
-        this._functionInputs
-      )
-    }
-
-    if (this._databaseInputs) {
-      this._databasePlugin = new DatabasePlugin(
-        'database',
-        this.api,
-        this._databaseInputs
-      )
-    }
   }
 
   _getWebRootPath(resolveInputs: ResolvedInputs) {
@@ -557,11 +524,6 @@ class LowCodePlugin extends Plugin {
                 const { publicPath = '' } = appConfig?.window || {}
                 const { outDir = '', timeElapsed = 0, plugins } = result || {}
 
-                this._databaseInputs = processDatabaseInputs(
-                  mainAppSerializeData,
-                  { mode: this._resolvedInputs.deployOptions?.mode }
-                )
-
                 if (buildTypeList.includes(BuildType.MP)) {
                   miniAppDir = outDir
                 }
@@ -590,22 +552,10 @@ class LowCodePlugin extends Plugin {
                     cloudfunctionRoot = projectJson.cloudfunctionRoot
                   }
 
-                  let functionNames = await postProcessCloudFunction(
-                    path.resolve(miniAppDir, cloudfunctionRoot),
-                    { appId, ...mainAppSerializeData },
-                    { mode: this._resolvedInputs.deployOptions?.mode }
-                  )
-                  this._functionInputs = processCloudFunctionInputs(
-                    cloudfunctionRoot,
-                    { appId, ...mainAppSerializeData },
-                    { mode: this._resolvedInputs.deployOptions?.mode }
-                  )
 
                   await postprocessProjectConfig(projectJsonPath, {
                     appid: mpAppId,
-                    cloudfunctionRoot: functionNames.length
-                      ? cloudfunctionRoot
-                      : undefined,
+                    cloudfunctionRoot: undefined,
                     setting: PROJECT_SETTING,
                   })
 
@@ -625,16 +575,6 @@ class LowCodePlugin extends Plugin {
                 // 编译web
                 else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
                   let cloudfunctionRoot = DEFAULT_CLOUDFUNCTION_ROOT_PATH
-                  let functionNames = await postProcessCloudFunction(
-                    path.resolve(webAppDir, cloudfunctionRoot),
-                    { appId, ...mainAppSerializeData },
-                    { mode: this._resolvedInputs.deployOptions?.mode }
-                  )
-                  this._functionInputs = processCloudFunctionInputs(
-                    cloudfunctionRoot,
-                    { appId, ...mainAppSerializeData },
-                    { mode: this._resolvedInputs.deployOptions?.mode }
-                  )
 
                   const staticAppDir = path.join(staticDir, publicPath)
                   fs.ensureDirSync(staticAppDir)
@@ -870,7 +810,7 @@ class LowCodePlugin extends Plugin {
             if (!website || website?.status !== 'online') {
               await new Promise((resolve) => {
                 setTimeout(() => {
-                  resolve()
+                  resolve(true)
                 }, 8 * 1000)
               })
               return getHostingInfo(envId)
