@@ -66,7 +66,9 @@ function generateCloudFunction(
   mode: string
 ) {
   datasource.methods = datasource.methods.filter(
-    (method) => (method.type === CLOUD_FUNCTION_TYPE || method.type === 'http') && !method.disabled
+    (method) =>
+      (method.type === CLOUD_FUNCTION_TYPE || method.type === 'http') &&
+      !method.disabled
   )
   const methods = datasource.methods
   if (!methods.length) return []
@@ -262,7 +264,8 @@ export function processCloudFunctionInputs(
       let subFunctions = datasource.methods.filter(
         (mthd) =>
           (mthd.type === CLOUD_FUNCTION_TYPE ||
-          mthd.type === EXTERNAL_FUNCTION_TYPE) && !mthd.disabled
+            mthd.type === EXTERNAL_FUNCTION_TYPE) &&
+          !mthd.disabled
       )
       if (subFunctions.length) {
         let cloudFucntionName = getAppDatasourceResourceName(
@@ -273,6 +276,7 @@ export function processCloudFunctionInputs(
         arr.push({
           name: cloudFucntionName,
           handler: 'index.main',
+          timeout: 60,
           installDependency: true,
           runtime: 'Nodejs10.15',
           aclRule: { invoke: true },

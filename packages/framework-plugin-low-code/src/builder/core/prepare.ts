@@ -1,6 +1,11 @@
 import fs from 'fs-extra'
 import path from 'path'
-import { BuildType, WebpackBuildCallBack, buildAsWebByBuildType } from '../types/common'
+import {
+  BuildType,
+  WebpackBuildCallBack,
+  buildAsWebByBuildType,
+} from '../types/common'
+import * as junk from '../util/junk'
 
 export async function runPrepare(
   buildTypeList: BuildType[],
@@ -16,9 +21,9 @@ export async function runPrepare(
       } else {
         await fs.emptyDir(mpDirPath)
       }
-      const dirs = fs.readdirSync(mpDirPath)
+      const dirs = fs.readdirSync(mpDirPath).filter(junk.not)
       await Promise.all(
-        dirs.map(async dir => {
+        dirs.map(async (dir) => {
           // 云函数特殊处理，不删除
           if (projectConfig && projectConfig.cloudfunctionRoot) {
             if (projectConfig.cloudfunctionRoot.startsWith(dir)) {
@@ -54,23 +59,36 @@ export async function runPrepare(
 }
 
 export async function saveProjectConfigJson(appBuildDir: string) {
-  const projectConfigJsonPath = path.resolve(appBuildDir, './dist/mp/project.config.json')
+  const projectConfigJsonPath = path.resolve(
+    appBuildDir,
+    './dist/mp/project.config.json'
+  )
   if (fs.existsSync(projectConfigJsonPath)) {
     return await fs.readJSON(projectConfigJsonPath)
   }
   return null
 }
 
-export function createDoneCallBack({ projectConfig, appBuildDir }, cb): WebpackBuildCallBack {
+export function createDoneCallBack(
+  { projectConfig, appBuildDir },
+  cb
+): WebpackBuildCallBack {
   return async (...params) => {
     if (projectConfig) {
       const newProjectConfig: any = await saveProjectConfigJson(appBuildDir)
       if (newProjectConfig) {
         newProjectConfig.condition = projectConfig.condition
-        const projectConfigJsonPath = path.resolve(appBuildDir, './dist/mp/project.config.json')
-        await fs.writeFile(projectConfigJsonPath, JSON.stringify(newProjectConfig, null, 4), {
-          encoding: 'utf8',
-        })
+        const projectConfigJsonPath = path.resolve(
+          appBuildDir,
+          './dist/mp/project.config.json'
+        )
+        await fs.writeFile(
+          projectConfigJsonPath,
+          JSON.stringify(newProjectConfig, null, 4),
+          {
+            encoding: 'utf8',
+          }
+        )
       }
     }
     cb && cb(...params)

@@ -27,6 +27,7 @@ import NameMangler from '../util/name-mangler'
 import { IWeAppData } from '../../weapps-core'
 import { IUsedComps } from '../types/common'
 import { writeLibCommonRes2file, readComponentLibMata } from '../util'
+import * as junk from '../util/junk'
 
 const templateDir = appTemplateDir + '/mp/'
 
@@ -97,14 +98,24 @@ export async function installMaterials(
                 }
 
                 // #3 copy 组件库代码文件到项目目录
-                await fs.copy(path.join(materialsSrcDir, 'src'), targetDir)
+                await fs.copy(path.join(materialsSrcDir, 'src'), targetDir, {
+                  filter: function (src, dest) {
+                    const path = src.split('/')
+                    return !junk.is(path[path.length - 1])
+                  },
+                })
               } else {
                 console.log(
                   `Copying material ${materialId} from ${materialsSrcDir} to ${targetDir}`
                 )
 
                 // #2 link material to current project
-                await fs.copy(materialsSrcDir, targetDir)
+                await fs.copy(materialsSrcDir, targetDir, {
+                  filter: function (src, dest) {
+                    const path = src.split('/')
+                    return !junk.is(path[path.length - 1])
+                  },
+                })
               }
             }
 

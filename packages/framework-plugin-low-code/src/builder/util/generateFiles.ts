@@ -2,6 +2,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import tpl from 'lodash.template'
 import { IBuildContext } from '../mp/BuildContext'
+import * as junk from '../util/junk'
 
 const generatedFileContents = {} // generated files for incrmental build
 
@@ -71,7 +72,7 @@ export function removeFile(file: string) {
  */
 export function cleanDir(dir: string, allowedFiles: string[]) {
   if (!fs.existsSync(dir)) return
-  const allFiles = fs.readdirSync(dir)
+  const allFiles = fs.readdirSync(dir).filter(junk.not)
   allFiles.map((file) => {
     if (allowedFiles.indexOf(file) < 0) {
       removeFile(path.join(dir, file))

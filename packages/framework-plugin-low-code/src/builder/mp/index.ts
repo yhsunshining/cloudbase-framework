@@ -38,6 +38,7 @@ import { DEPLOY_MODE } from '../../index'
 import { IAppUsedComp, IUsedComps } from '../types/common'
 import { handleMixMaterials } from './mixMode'
 import { get } from 'lodash'
+import * as junk from '../util/junk'
 
 const templateDir = appTemplateDir + '/mp/'
 const em = chalk.blue.bold
@@ -470,20 +471,22 @@ async function cleanPkg(pkg: IWeAppData, projDir: string) {
  * Delete unsed materials
  */
 function cleanMaterils(materialsDir: string, usedComps: IUsedComps) {
-  fs.readdirSync(materialsDir).map((libName) => {
-    const libDir = path.join(materialsDir, libName)
+  fs.readdirSync(materialsDir)
+    .filter(junk.not)
+    .map((libName) => {
+      const libDir = path.join(materialsDir, libName)
 
-    if (
-      fs.existsSync(path.join(libDir, 'meta.json')) ||
-      fs.existsSync(path.join(libDir, 'mergeMeta.json'))
-    ) {
-      // Skip none-composited materials
-      return
-    }
-    if (!usedComps[libName]) {
-      removeFile(libDir)
-      return
-    }
-    cleanDir(libDir, [...Array.from(usedComps[libName]), 'libCommonRes'])
-  })
+      if (
+        fs.existsSync(path.join(libDir, 'meta.json')) ||
+        fs.existsSync(path.join(libDir, 'mergeMeta.json'))
+      ) {
+        // Skip none-composited materials
+        return
+      }
+      if (!usedComps[libName]) {
+        removeFile(libDir)
+        return
+      }
+      cleanDir(libDir, [...Array.from(usedComps[libName]), 'libCommonRes'])
+    })
 }

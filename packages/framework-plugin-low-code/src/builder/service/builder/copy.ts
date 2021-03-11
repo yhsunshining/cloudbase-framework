@@ -19,6 +19,7 @@ import {
   getListenersString,
   getOriginComponentAndActionList,
 } from './generate'
+import * as junk from '../../util/junk'
 
 export async function copyEntryFile(
   appBuildDir: string,
@@ -66,7 +67,12 @@ export async function copyMaterialLibraries(
       if (fs.existsSync(metaJosnPath)) {
         await fs.copy(metaJosnPath, path.join(librariesDir, 'meta.json'))
       }
-      await fs.copy(targetDir, librariesDir)
+      await fs.copy(targetDir, librariesDir, {
+        filter: (src, dest) => {
+          let path = src.split('/')
+          return !junk.is(path[path.length - 1])
+        },
+      })
     })
   )
 }
