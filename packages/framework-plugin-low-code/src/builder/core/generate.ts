@@ -7,7 +7,6 @@ import {
   generateThemeVarsFile,
   generateCodeFromTpl,
   writeLowCodeFiles,
-  generateLocalFunctions,
 } from '../service/builder/generate'
 import path from 'path'
 import { installDependencies } from '../service/builder/webpack'
@@ -116,11 +115,6 @@ export async function runGenerateCore(
         rootPath,
         deployMode,
         extraData
-      )
-      await generateLocalFunctions(
-        serialize(data),
-        path.resolve(appTemplateDir, 'src'),
-        dstDir
       )
       await writeLowCodeFiles(data, dstDir)
     })

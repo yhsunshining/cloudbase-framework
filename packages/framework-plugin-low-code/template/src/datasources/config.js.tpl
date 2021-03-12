@@ -9,11 +9,8 @@ export default {
   isProd: <%= isProd %>,
   /** 低码应用ID */
   appID: '<%= appID %>',
-
   /** 云开发环境ID */
   envID: '<%= envID %>',
-  /** 小程序应用ID */
-  miniAppID: '<%= miniAppID || "" %>',
   /** 数据源描述对象数组 */
   dataSourceProfiles: dataSourceProfiles,
   /**

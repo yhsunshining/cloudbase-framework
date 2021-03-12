@@ -1,10 +1,9 @@
 import * as sdk from '@govcloud/weapps-sdk'
 import { createComputed } from 'utils'
-import { createDataVar, dataSources, createDataset } from '../datasources'
+import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources'
 import store, { subPackageName } from '../store'
 import computed from '../store/computed'
 import common from './common'
-import { init, auth as tcbAuth } from '../datasources/tcb'
 
 const mainAppKey = '__weappsMainApp'
 const appGlobal = process.env.isMiniprogram ? getApp() : window
@@ -20,7 +19,6 @@ function createGlboalApi() {
   const globalAPI = {
     platform: 'WEB',
     formActions: {},
-    dataSources: {},
     pages: {},
     session: {
       configure: sdk.configure,
@@ -28,12 +26,10 @@ function createGlboalApi() {
       getSessionId: sdk.getSessionId,
     },
     state: store,
-    // 全局数据源变量存储位置
-    dataVar: createDataVar('$global'),
     computed: createComputed(computed.global),
     common,
-    dataSources,
-    auth: tcbAuth,
+    cloud: CLOUD_SDK,
+    dataSources: DS_SDK,
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
 

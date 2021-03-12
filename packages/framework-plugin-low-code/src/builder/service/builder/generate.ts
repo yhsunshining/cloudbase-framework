@@ -996,21 +996,14 @@ export async function generateCodeFromTpl(
     'store/computed.js': {
       pageIds,
     },
-    'datasources/index.js.tpl': {
-      envId: appData.envId,
+    'datasources/config.js.tpl': {
+      appID: appKey,
+      envID: appData.envId,
+      isProd: deployMode === DEPLOY_MODE.UPLOAD,
     },
-    'datasources/utils.js.tpl': {
-      appId: appKey,
-      isPreview: deployMode === DEPLOY_MODE.PREVIEW,
-    },
-    'datasources/datasources-profiles.js.tpl': {
+    'datasources/datasource-profiles.js.tpl': {
       datasourceProfiles: JsonToStringWithVariableName(
         getDatasourceProfiles((appData as any).datasources || [])
-      ),
-    },
-    'datasources/datavar-profiles.js.tpl': {
-      datavarProfiles: JsonToStringWithVariableName(
-        getDataVarProfiles(appData)
       ),
     },
     'datasources/dataset-profiles.js.tpl': {
@@ -1044,55 +1037,6 @@ export async function generateCodeFromTpl(
       fs.removeSync(outTplPath)
     }
   }
-}
-
-export async function generateLocalFunctions(
-  appData: IWeAppData,
-  templateDir: string,
-  appBuildDir: string
-) {
-  const FUNCTION_PATH = 'local-functions'
-
-  let dsSourceNames: string[] = []
-
-  fs.ensureDirSync(path.join(appBuildDir, FUNCTION_PATH))
-  const targetDir = path.join(appBuildDir, FUNCTION_PATH)
-  const localFnTemplateDir = path.resolve(templateDir, FUNCTION_PATH)
-
-  let promises: Promise<any>[] = []
-  if (appData.datasources) {
-    promises = appData.datasources.reduce((arr, datasource) => {
-      const [dsName, tasks] = generateDsLocalFunctions(
-        targetDir,
-        localFnTemplateDir,
-        datasource
-      )
-      if (!dsName) return arr
-      dsSourceNames.push(dsName)
-      arr.push(...tasks)
-      return arr
-    }, [])
-  }
-
-  promises.push(
-    fs.writeFile(
-      path.join(targetDir, `index.js`),
-      tpl(
-        fs.readFileSync(path.join(localFnTemplateDir, 'index.js.tpl'), 'utf8')
-      )({ dsSourceNames }),
-      { flag: 'w' }
-    )
-  )
-
-  try {
-    await Promise.all(promises)
-  } catch (e) {
-    console.error(e)
-  }
-
-  console.log(path.join(appBuildDir, `index.js`))
-
-  return dsSourceNames
 }
 
 function generateDsLocalFunctions(

@@ -5,7 +5,7 @@ import { AppRender } from 'handlers/render'
 import { initLifeCycle, pageLifeCycleMount } from 'handlers/lifecycle'
 import { createComputed } from 'utils'
 import AppLifeCycle from 'lowcode/lifecycle'
-import { createDataVar, buildDataVarFetchFn, createDataset, updateDatasetParams, createStateDatasrouceVar } from '@/datasources'
+import { createDataset, createStateDataSourceVar, generateParamsParser, EXTRA_API } from '../../datasources'
 import PageLifeCycle from '../../lowcode/<%= pageName %>/lifecycle'
 import initPageState from '../../lowcode/<%= pageName %>/state'
 import computed from '../../lowcode/<%= pageName %>/computed'
@@ -14,7 +14,6 @@ import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
 import { createWidgets, retryDataBinds, resolveComponentProps } from 'handlers/utils'
 import { useScrollTop } from 'handlers/hooks'
-import { get } from 'lodash'
 import './index.less'
 
 let ReactDOMServer;
@@ -43,14 +42,12 @@ const widgetsContext = <%= widgets %>;
 const dataBinds = <%= dataBinds %>;
 
 AppLifeCycle.beforeCustomLaunch = (query)=>{
-  updateDatasetParams('$global', query || {})
-  buildDataVarFetchFn('$global')
-  createStateDatasrouceVar('$global',{app})
+  EXTRA_API.setParams('$global', query || {})
+  createStateDataSourceVar('$global',generateParamsParser({app}))
 };
 PageLifeCycle.beforePageCustomLaunch = (query) => {
-  updateDatasetParams('<%= pageName %>', query || {})
-  createStateDatasrouceVar('<%= pageName %>',{app, $page})
-  buildDataVarFetchFn('<%= pageName %>');
+  EXTRA_API.setParams('<%= pageName %>', query || {})
+  createStateDataSourceVar('<%= pageName %>',generateParamsParser({app, $page}))
 };
 // lifecycle
 initLifeCycle({
@@ -66,8 +63,7 @@ export default function App() {
   Object.assign($page, {
     id:'<%= pageName %>',
     state: observable(initPageState),
-    computed: createComputed(computed),<% if (!isComposite) { %>
-    dataVar: createDataVar('<%= pageName %>'),<% } %>
+    computed: createComputed(computed),
     handler
   })
   let dataset = createDataset('<%= pageName %>', {app, $page})

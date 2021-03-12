@@ -33,7 +33,7 @@ import {
   getDataVarProfiles,
   getDatasetProfiles,
 } from '../../utils/dataSource'
-import { generateLocalFunctions } from '../service/builder/generate'
+
 import { DEPLOY_MODE } from '../../index'
 import { IAppUsedComp, IUsedComps } from '../types/common'
 import { handleMixMaterials } from './mixMode'
@@ -166,7 +166,6 @@ export async function generateWxMp(
   await generateFiles(datasourceFileData, templateDir, projDir, buildContext)
 
   console.log('Generating ' + em('local-function') + ' files')
-  await generateLocalFunctions(mainAppData, templateDir, projDir)
 
   // 生成子包
   await Promise.all(
