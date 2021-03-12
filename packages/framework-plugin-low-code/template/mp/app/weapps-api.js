@@ -5,7 +5,7 @@ import process from '<%= subLevelPath %>../common/process'
 import state from '../lowcode/state'
 import computed from '../lowcode/computed'
 import common from './common'
-import { createDataVar, dataSources, createDataset } from '../datasources/index'
+import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
 import weappApis from '<%= subLevelPath %>../common/weapp-sdk'
 
@@ -18,7 +18,8 @@ function createGlboalApi() {
   const globalAPI = {
     platform: 'MINIPROGRAME',
     activePage: null,
-    dataSources,
+    dataSources: DS_SDK,
+    cloud: CLOUD_SDK,
     pages: {},
     session: {
       //configure: sdk.configure,
@@ -26,8 +27,6 @@ function createGlboalApi() {
       //getSessionId: sdk.getSessionId,
     },
     state: observable(state),
-    // 全局数据源变量存储位置
-    dataVar: createDataVar('$global'),
     computed: createComputed(computed),
     common,
     // ... other sdk apis & apis from mp

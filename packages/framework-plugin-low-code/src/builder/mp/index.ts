@@ -133,27 +133,15 @@ export async function generateWxMp(
   )
 
   const datasourceFileData = {
-    'datasources/database.js': {},
-    'datasources/datasources.js': {},
-    'datasources/datavar.js': {},
-    'datasources/dataset.js': {},
-    'datasources/operators.js': {},
-    'datasources/tcb.js': {},
-    'datasources/utils.js.tpl': {
-      appId,
-      isPreview: deployMode === DEPLOY_MODE.PREVIEW,
+    'datasources/index.js': {},
+    'datasources/config.js.tpl': {
+      envID: mainAppData.envId,
+      appID: appId,
+      isProd: deployMode === DEPLOY_MODE.UPLOAD,
     },
-    'datasources/index.js.tpl': {
-      envId: mainAppData.envId,
-    },
-    'datasources/datasources-profiles.js.tpl': {
+    'datasources/datasource-profiles.js.tpl': {
       datasourceProfiles: JsonToStringWithVariableName(
         getDatasourceProfiles((mainAppData as any).datasources || [])
-      ),
-    },
-    'datasources/datavar-profiles.js.tpl': {
-      datavarProfiles: JsonToStringWithVariableName(
-        getDataVarProfiles(mainAppData as any)
       ),
     },
     'datasources/dataset-profiles.js.tpl': {

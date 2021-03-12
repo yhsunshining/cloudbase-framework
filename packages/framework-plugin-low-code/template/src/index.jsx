@@ -3,8 +3,6 @@ import * as ReactDOM from 'react-dom'
 import App from './router'
 import './utils/monitor-jssdk.min'
 import './index.less'
-// 引入并执行数据源本地函数
-import './local-functions'
 // 引入数据源管理器并进行初始化
 import './datasources'
 import { initGlobalVar } from './handlers/initWebEnv'

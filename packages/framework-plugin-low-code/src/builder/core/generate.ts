@@ -14,7 +14,6 @@ import fs from 'fs-extra'
 import { notice, log } from '../util/console'
 import { appTemplateDir } from '../config'
 import chalk from 'chalk'
-import { mergeDependencies } from '../../utils/dataSource'
 import { DEPLOY_MODE, RUNTIME } from '../../index'
 
 let lastDeps: Object | null = null
@@ -60,18 +59,6 @@ export async function runGenerateCore(
     Object.entries(app.npmDependencies).forEach(([name, version]) => {
       deps[name] = version
     })
-    let npmDependenceArray =
-      app.datasources?.reduce((array, datasource) => {
-        return array.concat(
-          datasource?.methods
-            ?.filter((method) => method.type === 'local-function')
-            .map((method) => method.calleeBody?.config?.deps || {}) || []
-        )
-      }, []) || []
-    let mergedDependence = mergeDependencies(...npmDependenceArray)
-    for (let key in mergedDependence) {
-      deps[key] = mergedDependence[key]
-    }
   })
 
   // 合并组件库的公共npm

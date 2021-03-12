@@ -2,7 +2,7 @@ import { observable } from 'mobx'
 import { createComputed, createEventHandlers } from './util'
 import { createWidgets, createInitData, disposeWidget } from './widget'
 import mergeRenderer from './merge-renderer'
-import { createDataVar, buildDataVarFetchFn, createDataset, updateDatasetParams, createStateDatasrouceVar } from '../datasources/index'
+import { createDataset, EXTRA_API, createStateDataSourceVar, generateParamsParser } from '../datasources/index'
 
 export function createPage(
   lifecycle,
@@ -15,12 +15,10 @@ export function createPage(
   $page
 ) {
   $page.state = observable(pageState)
-  $page.dataVar = createDataVar($page.id)
   let dataset = createDataset($page.id)
   $page.dataset = dataset
   $page.state.dataset = dataset
   $page.computed = createComputed(pageComputed)
-  let fetchDataVar = buildDataVarFetchFn($page.id) || function() {}
 
   const evtHandlers = createEventHandlers(evtListeners)
 
@@ -71,10 +69,8 @@ export function createPage(
         this._pageActive = true
 
         let query = decodePageQuery(options || {})
-        updateDatasetParams($page.id, query)
-        // 页面创建时执行
-        fetchDataVar()
-        createStateDatasrouceVar($page.id, {app, $page})
+        EXTRA_API.setParams($page.id, query)
+        createStateDataSourceVar($page.id, generateParamsParser({app, $page}))
 
         const hook = lifecycle.onLoad || lifecycle.onPageLoad
         hook && hook.call(this, query)

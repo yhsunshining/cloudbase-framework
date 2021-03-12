@@ -1,10 +1,9 @@
 import lifeCycle from './lowcode/lifecycle'
 import { app } from './app/weapps-api'
 import WxReportV2 from './common/wx_yypt_report_v2'
-// 引入并执行数据源本地函数
-import './local-functions/index'
+
 // 引入数据源管理器并进行初始化
-import { buildDataVarFetchFn, updateDatasetParams, createStateDatasrouceVar } from './datasources/index'
+import { EXTRA_API, createStateDataSourceVar, generateParamsParser } from './datasources/index'
 
 <% if(yyptConfig.yyptAppKey) { %>
 const wxReport = new WxReportV2({
@@ -25,11 +24,9 @@ App({
     this.app = app
     const onLaunch = lifeCycle.onLaunch || lifeCycle.onAppLaunch
     let { query={} } = options
-    updateDatasetParams('$global', query )
-    createStateDatasrouceVar('$global', {app})
+    EXTRA_API.setParams('$global', query )
+    createStateDataSourceVar('$global', generateParamsParser({app}))
 
-    let fetchDataVar =  buildDataVarFetchFn('$global') || function() {}
-    fetchDataVar()
     onLaunch && onLaunch.call(this, options)
     <% if(yyptConfig.yyptAppKey) { %>
     // 挂运营平台上报对象到app里
