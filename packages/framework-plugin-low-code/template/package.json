@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@cloudbase/js-sdk": "~1.4.0",
-    "@cloudbase/weda-cloud-sdk": "^0.0.2-alpha.4",
+    "@cloudbase/weda-cloud-sdk": "^0.0.2-alpha.8",
     "@govcloud/weapps-core": "2.2.6",
     "@govcloud/weapps-sdk": "1.2.9",
     "mobx": "^5.15.4",
