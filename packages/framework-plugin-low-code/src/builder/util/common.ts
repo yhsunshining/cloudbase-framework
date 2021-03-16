@@ -186,7 +186,7 @@ export async function getInputProps(
                 metaJson = await fs.readJson(componentMetaPath)
               }
 
-              const inputProps = metaJson.inputProps || metaJson.syncProps
+              const inputProps = metaJson?.inputProps || metaJson?.syncProps
               if (inputProps) {
                 outputObj[sourceKey] = inputProps
               }

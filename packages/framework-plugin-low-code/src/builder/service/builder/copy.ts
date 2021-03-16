@@ -4,7 +4,7 @@ import fs from 'fs-extra'
 import tpl from 'lodash.template'
 import jsonSchemaDefaults from 'json-schema-defaults'
 import _ from 'lodash'
-import { getCurrentPackageJson } from '../../util'
+import { getCurrentPackageJson, readComponentLibMata } from '../../util'
 import {
   IMaterialItem,
   IWebRuntimeAppData,
@@ -46,7 +46,8 @@ export async function copyMaterialLibraries(
 ) {
   const localPkg = getCurrentPackageJson()
   await Promise.all(
-    dependencies.map(async ({ name, version }) => {
+    dependencies.map(async (componentLib) => {
+      const { name, version } = componentLib
       const materialNameVersion = `${name}@${version}`
       const materialDir = path.join(materialsDir, materialNameVersion)
       let targetDir = path.join(materialDir, 'src')
@@ -73,6 +74,14 @@ export async function copyMaterialLibraries(
           return !junk.is(path[path.length - 1])
         },
       })
+      // 副作用修改了dependence定义，trycatch 不阻塞主流程
+      try {
+        const meta = readComponentLibMata(librariesDir)
+        let [major] = meta?.schemaVersion?.split('.') || []
+        if (Number(major) >= 3) {
+          componentLib['isPlainProps'] = true
+        }
+      } catch (e) {}
     })
   )
 }

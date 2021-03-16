@@ -64,6 +64,7 @@ export interface IOriginKeyInfo {
   key: string
   variableName: string
   type?: ActionType
+  isPlainProps?: boolean
 }
 
 export async function generateAppStyleLessFile(
@@ -340,7 +341,7 @@ export function pullActionToListByInstances(
 export function pullComponentToListByInstance(
   sourceKey: string,
   originComponentList: IOriginKeyInfo[],
-  fixedDependencies: IMaterialItem[]
+  fixedDependencies: (IMaterialItem & { isPlainProps?: boolean })[]
 ) {
   const { materialName, name, variableName } = getMetaInfoBySourceKey(sourceKey)
   const componentKey = `${materialName}_${name}`
@@ -357,16 +358,19 @@ export function pullComponentToListByInstance(
       materialVersion: foundOne.version,
       key: componentKey,
       variableName: variableName || '',
+      isPlainProps: !!foundOne?.isPlainProps,
     })
   }
 }
 
 export function getVirtualFieldsString(components: IOriginKeyInfo[]) {
   const fields = components.reduce((result: any, component: IOriginKeyInfo) => {
-    const { name, materialName, variableName } = component
+    const { name, materialName, variableName, isPlainProps } = component
     result[`${materialName}:${name}`] = `%%%(props) => <${_.upperFirst(
       variableName
-    )} {...props} pageVirtualFields={virtualFields}/>%%%`
+    )} ${
+      isPlainProps ? '{...resolveComponentProps(props)}' : '{...props}'
+    } pageVirtualFields={virtualFields}/>%%%`
     return result
   }, {})
   return JSON.stringify(fields, null, 2).replace(/("%%%|%%%")/g, '')

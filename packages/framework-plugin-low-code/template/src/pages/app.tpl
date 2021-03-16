@@ -12,7 +12,7 @@ import computed from '../../lowcode/<%= pageName %>/computed'
 import { $$_<%= pageName %> as handler } from '../../app/handlers'
 import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
-import { createWidgets, retryDataBinds } from 'handlers/utils'
+import { createWidgets, retryDataBinds, resolveComponentProps } from 'handlers/utils'
 import { useScrollTop } from 'handlers/hooks'
 import { get } from 'lodash'
 import './index.less'

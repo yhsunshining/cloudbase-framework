@@ -30,7 +30,7 @@ export function resolveDataBinds(dataBinds, forItems, codeContext, throwError) {
       resolvedProps[prop] = fn(forItems, codeContext && codeContext.event)
     } catch (e) {
       console.error('Error resolving data binding', prop, dataBinds[prop], e)
-      if(throwError) {
+      if (throwError) {
         throw e
       }
     }
@@ -59,4 +59,52 @@ export function getDeep(target, key) {
     prop = prop[keys[i]]
   }
   return prop
+}
+
+/**
+ * 用于处理自定义组件props传参结构，对系统变量进行保留
+ */
+export function resolveComponentProps(props) {
+  let { data = {}, events = [], ...restProps } = props
+  const customProps = { ...data }
+
+  const builtinProps = [
+    // react 保留字
+    'ref',
+    'key',
+    'dangerouslySetInnerHTML',
+    'className',
+    'htmlFor',
+    'style',
+    'contentEditable',
+    // lowcode 保留字
+    'events',
+    'children',
+    '_parentId',
+    '_visible',
+    'classList',
+    'widgetType',
+    'getWidgetsByType',
+    'getDom',
+    'domRef',
+    'extends',
+    // 小程序保留字
+    'id',
+    'class',
+    'hidden',
+    'slot',
+  ]
+  // delete builtin props
+  builtinProps.map((prop) => delete customProps[prop])
+
+  return {
+    ...data,
+    ...restProps,
+    events: events.reduce((events, item) => {
+      const propName = item
+      const evtName = propName.substr(2).toLowerCase()
+      events[propName] = (e) => restProps.emit(evtName, e)
+      return events
+    }, {}),
+  }
 }
