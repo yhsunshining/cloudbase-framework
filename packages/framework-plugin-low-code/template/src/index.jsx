@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import { setConfig } from '@cloudbase/weda-cloud-sdk/dist/h5'
 import App from './router'
 import './utils/monitor-jssdk.min'
 import './index.less'
@@ -17,6 +18,20 @@ if (process.env.isApp) {
 }
 attachFastClick && attachFastClick.attach && attachFastClick.attach(document.body)
 
+// 设置数据源请求的 loading 及 toast 处理
+setConfig({
+  beforeDSRequest: (cfg) => {
+    if (!cfg.options || !cfg.options.showLoading) return
+    app.showLoading()
+  },
+  afterDSRequest: (cfg, error, result) => {
+    if (!cfg.options) return
+    if (cfg.options.showLoading) app.hideLoading()
+    if (!cfg.options.showToast) return
+    const isSuccess = !error && result && !result.code
+    app.showToast({icon: isSuccess ? 'success' : 'error'})
+  }
+})
 // window.app.yyptReport = window.yyptReport
 
 if (yyptReport && typeof yyptReport.pgvMain == 'function') {

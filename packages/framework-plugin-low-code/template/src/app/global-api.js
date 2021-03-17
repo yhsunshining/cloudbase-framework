@@ -28,7 +28,6 @@ function createGlboalApi() {
     state: store,
     computed: createComputed(computed.global),
     common,
-    cloud: CLOUD_SDK,
     dataSources: DS_SDK,
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
@@ -53,6 +52,8 @@ function createGlboalApi() {
   sdkModsIncluded.forEach((key) => {
     globalAPI[key] = sdk[key]
   })
+  // 避免被wx.cloud 覆盖
+  globalAPI.cloud = CLOUD_SDK
   return globalAPI
 }
 

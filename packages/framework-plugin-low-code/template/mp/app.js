@@ -1,3 +1,4 @@
+import { setConfig } from '@cloudbase/weda-cloud-sdk'
 import lifeCycle from './lowcode/lifecycle'
 import { app } from './app/weapps-api'
 import WxReportV2 from './common/wx_yypt_report_v2'
@@ -17,6 +18,21 @@ const wxReport = new WxReportV2({
     intervalTime: 3, // 间隔多久执行一次上报，默认3秒
     reportLogsNum: 5, // 每次合并上报记录条数，默认5次
 });
+
+// 设置数据源请求的 loading 及 toast 处理
+setConfig({
+  beforeDSRequest: (cfg) => {
+    if (!cfg.options || !cfg.options.showLoading) return
+    app.showLoading()
+  },
+  afterDSRequest: (cfg, error, result) => {
+    if (!cfg.options) return
+    if (cfg.options.showLoading) app.hideLoading()
+    if (!cfg.options.showToast) return
+    const isSuccess = !error && result && !result.code
+    app.showToast({icon: isSuccess ? 'success' : 'error'})
+  }
+})
 
 <% }%>
 App({

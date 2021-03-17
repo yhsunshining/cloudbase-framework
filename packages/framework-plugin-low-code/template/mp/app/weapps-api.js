@@ -19,7 +19,6 @@ function createGlboalApi() {
     platform: 'MINIPROGRAME',
     activePage: null,
     dataSources: DS_SDK,
-    cloud: CLOUD_SDK,
     pages: {},
     session: {
       //configure: sdk.configure,
@@ -50,6 +49,8 @@ function createGlboalApi() {
     // is mainApp
     appGlobal[mainAppKey] = globalAPI
   }
+  // 避免被wx.cloud 覆盖
+  globalAPI.cloud = CLOUD_SDK
 
   // # expose some sdk modules
   /* const sdkModsIncluded = ['flow', 'getPageOptions', 'getLaunchOptions']
