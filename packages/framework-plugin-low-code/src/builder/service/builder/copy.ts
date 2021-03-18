@@ -13,7 +13,7 @@ import {
   ICompositedComponent,
 } from '../../../weapps-core'
 import { appTemplateDir } from '../../config'
-import { IComponentInputProps } from '../../types/common'
+import { IComponentInputProps, IComponentsInfoMap } from '../../types/common'
 import {
   getComponentSchemaString,
   getListenersString,
@@ -90,7 +90,7 @@ export async function genCompositeComponentLibraries(
   dependencies: IMaterialItem[] = [],
   appBuildDir: string,
   materialGroupVersionMap: { [name: string]: string } = {},
-  componentsInputProps: IComponentInputProps
+  componentsInfoMap: IComponentsInfoMap
 ) {
   await Promise.all(
     dependencies.map(async ({ name, version, components }) => {
@@ -119,7 +119,7 @@ export async function genCompositeComponentLibraries(
           } = getComponentSchemaString(
             componentSchemaJson,
             true,
-            componentsInputProps,
+            componentsInfoMap,
             wrapperClass
           )
           const templateData = {

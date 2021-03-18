@@ -10,7 +10,14 @@ import { getDom } from '../utils/widgets'
 export const ForContext = createContext({})
 
 export const CompRenderer = observer(function (props) {
-  const { id: compId, xProps, virtualFields, slots = {}, codeContext } = props
+  const {
+    id: compId,
+    xProps,
+    virtualFields,
+    slots = {},
+    codeContext,
+    emitEvents = [],
+  } = props
 
   const isInComposite = !!props.codeContext
   // 判断 widgets 是从 page 来的，还是组件来的
@@ -95,6 +102,7 @@ export const CompRenderer = observer(function (props) {
             style={forItemStyle}
             className={forItemClassNameList.join(' ')}
             emit={emitWithForItems}
+            events={emitEvents}
             compositeParent={codeContext}
             forIndexes={forItemsIndexes}
             $node={currentWidget}
@@ -142,6 +150,7 @@ export const CompRenderer = observer(function (props) {
       style={finalStyle}
       className={finalClassNameList.join(' ')}
       emit={emitWithForItems}
+      events={emitEvents}
       compositeParent={codeContext}
       forIndexes={forIndexes}
       $node={currentWidget}

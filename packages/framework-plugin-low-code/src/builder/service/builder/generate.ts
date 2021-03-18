@@ -30,6 +30,7 @@ import {
 } from '../../../weapps-core'
 import {
   deepDealSchema,
+  getComponentsInfo,
   getInputProps,
   getMetaInfoBySourceKey,
   JsonToStringWithVariableName,
@@ -44,7 +45,7 @@ import {
 } from '../../util/style'
 import {
   buildAsWebByBuildType,
-  IComponentInputProps,
+  IComponentsInfoMap,
   ISyncProp,
 } from '../../types/common'
 import { getYyptConfigInfo, writeLibCommonRes2file } from '../../util'
@@ -170,7 +171,7 @@ export async function generateSinglePageJsxFile(
     componentSchemaJson as IComponentSchemaJson,
     fixedDependencies
   )
-  const componentInputProps = await getInputProps(appBuildDir, dependencies)
+  const componentsMeta = await getComponentsInfo(appBuildDir, dependencies)
 
   const originPluginList = getOriginPluginList(pluginInstances, dependencies)
   pullActionToListByInstances(
@@ -187,7 +188,7 @@ export async function generateSinglePageJsxFile(
   const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
     componentSchemaJson as IComponentSchemaJson,
     false,
-    componentInputProps
+    componentsMeta
   )
 
   const templateData = {
@@ -398,9 +399,10 @@ function getChildrenId(properties = {}) {
 export function getComponentSchemaString(
   componentSchema: IComponentSchemaJson,
   isComposite = false,
-  componentInputProps: IComponentInputProps = {},
+  componentsInfoMap: IComponentsInfoMap = {},
   wrapperClass?: string
 ) {
+  const componentInputProps = getInputProps(componentsInfoMap) || {}
   const copyJson = simpleDeepClone<IComponentSchemaJson>(componentSchema)
   const compWidgets = {}
   const compDataBinds = {}
@@ -415,6 +417,15 @@ export function getComponentSchemaString(
       styleBind,
       classNameListBind,
     } = xProps
+
+    const componentInfo = componentsInfoMap[sourceKey]
+    if ((componentInfo as any)?.events) {
+      schema['emitEvents'] = (componentInfo as any)?.events.map(
+        (item) => item.name
+      )
+    } else if (componentsInfoMap.emitEvents) {
+      schema['emitEvents'] = componentInfo
+    }
 
     // 生成 widgets/dataBinds
     if (!isSlot(schema) && schema.key) {

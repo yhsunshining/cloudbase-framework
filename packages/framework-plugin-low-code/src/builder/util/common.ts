@@ -4,7 +4,11 @@ import url from 'url'
 import path from 'path'
 import fs from 'fs-extra'
 import { ISchema, Schema } from '@formily/react-schema-renderer'
-import { IPackageJson } from '../types/common'
+import {
+  IComponentInputProps,
+  IComponentsInfoMap,
+  IPackageJson,
+} from '../types/common'
 import {
   ICompositedComponent,
   IMaterialItem,
@@ -136,10 +140,40 @@ export function removeRequireUncached(path = '') {
   }
 }
 
-export async function getInputProps(
+export function getInputProps(
+  componentsMetaMap: IComponentsInfoMap
+): IComponentInputProps {
+  const outputObj = {}
+  for (let key in componentsMetaMap) {
+    let component = componentsMetaMap[key]
+    const sourceKey = key
+    if (component.isComposite) {
+      let compItem = component as ICompositedComponent
+      Object.keys(compItem.dataForm || {}).forEach((key) => {
+        const inputProps =
+          compItem.dataForm[key]?.inputProp || compItem.dataForm[key]?.syncProps
+        if (inputProps) {
+          outputObj[sourceKey] = {
+            [key]: inputProps,
+            ...(outputObj[sourceKey] || {}),
+          }
+        }
+      })
+    } else {
+      const inputProps =
+        component?.meta?.inputProps || component?.meta?.syncProps
+      if (inputProps) {
+        outputObj[sourceKey] = inputProps
+      }
+    }
+  }
+  return outputObj
+}
+
+export async function getComponentsInfo(
   appBuildDir: string,
   dependencies: IMaterialItem[]
-) {
+): Promise<IComponentsInfoMap> {
   const outputObj = {}
   await Promise.all(
     dependencies.map(
@@ -148,17 +182,10 @@ export async function getInputProps(
           components.forEach((component) => {
             let compItem = component as ICompositedComponent
             const sourceKey = `${materialName}:${compItem.name}`
-            Object.keys(compItem.dataForm || {}).forEach((key) => {
-              const inputProps =
-                compItem.dataForm[key]?.inputProp ||
-                compItem.dataForm[key]?.syncProps
-              if (inputProps) {
-                outputObj[sourceKey] = {
-                  [key]: inputProps,
-                  ...(outputObj[sourceKey] || {}),
-                }
-              }
-            })
+            outputObj[sourceKey] = {
+              isComposite,
+              ...compItem,
+            }
           })
         } else {
           const materialComponentsPath = path
@@ -180,16 +207,12 @@ export async function getInputProps(
               const sourceKey = `${materialName}:${name}`
               let metaJson
               if (meta) {
-                metaJson = meta?.components[name]
+                metaJson = meta.components[name]
               } else {
                 const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`
-                metaJson = await fs.readJson(componentMetaPath)
+                metaJson = { name, meta: await fs.readJson(componentMetaPath) }
               }
-
-              const inputProps = metaJson?.inputProps || metaJson?.syncProps
-              if (inputProps) {
-                outputObj[sourceKey] = inputProps
-              }
+              outputObj[sourceKey] = { isComposite, ...metaJson }
             })
           )
         }
@@ -274,7 +297,20 @@ export function getFileNameByUrl(fileUrl: string) {
   return filename
 }
 
-export function readComponentLibMata(libDir) {
+export function readComponentLibMata(
+  libDir
+): {
+  version?: string
+  schemaVersion?: string
+  styles?: IMaterialItem['styles']
+  dependencies?: IMaterialItem['dependencies']
+  components: {
+    [componentName: string]: {
+      name: string
+      meta: Object
+    }
+  }
+} | null {
   let metaPath = path.join(libDir, 'meta.json')
   let mergeMetaPath = path.join(libDir, 'mergeMeta.json')
   let isExistsMeta = fs.existsSync(metaPath)
@@ -288,8 +324,18 @@ export function readComponentLibMata(libDir) {
     : fs.readJsonSync(mergeMetaPath)
 
   let [major] = meta?.schemaVersion?.split('.') || []
+  const originComponentMetaMap = meta.components
+
   if (Number(major) >= 2) {
     meta = deserializeComponentLibraryMeta(meta)
+  }
+
+  for (let key in meta.components) {
+    meta.components[key] = {
+      ...originComponentMetaMap[key],
+      name: key,
+      meta: meta.components[key],
+    }
   }
 
   return meta

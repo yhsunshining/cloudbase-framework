@@ -8,7 +8,7 @@ import {
   genCompositeComponentLibraries,
 } from '../service/builder/copy'
 import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate'
-import { getInputProps } from '../util'
+import { getInputProps, getComponentsInfo } from '../util'
 import { RUNTIME } from '../../index'
 import * as junk from '../util/junk'
 
@@ -83,7 +83,7 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
   dependencies.forEach(
     (item) => (materialGroupVersionMap[item.name] = item.version)
   )
-  const componentsInputProps = await getInputProps(
+  const componentsMeta = await getComponentsInfo(
     path.join(appBuildDir, 'src'),
     dependencies
   )
@@ -93,7 +93,7 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
     compositeDependencies,
     appBuildDir,
     materialGroupVersionMap,
-    componentsInputProps
+    componentsMeta
   )
 
   console.timeEnd('handleCompositeComponent')

@@ -102,8 +102,7 @@ export function resolveComponentProps(props) {
     ...restProps,
     events: events.reduce((events, item) => {
       const propName = item
-      const evtName = propName.substr(2).toLowerCase()
-      events[propName] = (e) => restProps.emit(evtName, e)
+      events[propName] = (e) => restProps.emit(propName, e)
       return events
     }, {}),
   }

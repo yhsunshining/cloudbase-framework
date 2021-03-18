@@ -1,3 +1,5 @@
+import { IComponentMeta, ICompositedComponent } from 'src/weapps-core'
+
 export const enum BuildType {
   WEB = 'web',
   MP = 'mp',
@@ -57,4 +59,10 @@ export type IComponentInputProps = {
   [componentName: string]: {
     [syncName: string]: ISyncProp | ISyncProp[]
   }
+}
+
+export type IComponentsInfoMap = {
+  [componentSourceKey: string]:
+    | ({ meta: IComponentMeta } & { isComposite: false })
+    | (ICompositedComponent & { isComposite: true })
 }

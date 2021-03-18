@@ -121,13 +121,15 @@ export async function installMaterials(
 
             const libMeta = readComponentLibMata(targetDir)
             if (!lib.components) {
-              lib.components = Object.keys(libMeta.components).map((name) => ({
-                name,
-                meta: libMeta.components[name],
-              })) as any
+              lib.components = Object.keys(libMeta?.components || {}).map(
+                (name) => ({
+                  name,
+                  meta: libMeta?.components[name]?.meta,
+                })
+              ) as any
             }
-            lib.styles = libMeta.styles
-            lib.dependencies = libMeta.dependencies
+            lib.styles = libMeta?.styles
+            lib.dependencies = libMeta?.dependencies
           })
         )
       })
