@@ -19,7 +19,7 @@ const evtListeners = {<% Object.entries(eventHandlers).map(([handlerName, listen
     <%listeners.map(l=> { %>{
       handler: <% if (l.type == 'rematch') {%> _handler<%= l.handler %> <%} else {%> <%= l.handler %> <%} %>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
-      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%><%= prop %>:(lists, forItems, event) => (<%= expr %>),
+      boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%>'<%= prop %>':(lists, forItems, event) => (<%= expr %>),
         <%}) %>}
     },<%})%>
   ],<%})%>

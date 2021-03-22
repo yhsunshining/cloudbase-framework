@@ -1,4 +1,5 @@
 import { resolveDataBinds } from '../utils/common'
+import { set as lodashSet } from 'lodash'
 
 const DEFAULT_MAX_TIMEOUT = 10 * 1000
 
@@ -71,16 +72,20 @@ async function invokeListener(
   // ToDo resolve databinds
   const action = instanceFunction
   const maxTimeout = DEFAULT_MAX_TIMEOUT
+  const resolvedData = {
+    ...data,
+  }
+  const resolvedDataBinds = resolveDataBinds(
+    dataBinds,
+    args.forItems,
+    { event: args.event },
+    true
+  )
+  for (const key in resolvedDataBinds) {
+    lodashSet(resolvedData, key, resolvedDataBinds[key])
+  }
   const params = {
-    data: {
-      ...data,
-      ...resolveDataBinds(
-        dataBinds,
-        args.forItems,
-        { event: args.event },
-        true
-      ),
-    },
+    data: resolvedData,
     ...args,
   }
 

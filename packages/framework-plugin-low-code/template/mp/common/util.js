@@ -37,7 +37,7 @@ export function createEventHandlers(evtListeners) {
         let { data = {}, boundData = {} } = l
         data = { ...data }
         for (const k in boundData) {
-          data[k] = boundData[k](lists, itemsById, event)
+          set(data, k, boundData[k](lists, itemsById, event))
         }
         try {
           let res = await l.handler.call(self, { event, lists, forItems: itemsById, data })
@@ -149,4 +149,65 @@ export function deepEqual(a, b) {
     return true
   }
   return false
+}
+
+function isObject(value) {
+  var type = typeof value
+  return !!value && (type == 'object' || type == 'function')
+}
+
+function isIndex(value, length) {
+  length = length == null ? 9007199254740991 : length
+  return (
+    !!length &&
+    (typeof value == 'number' || /^(?:0|[1-9]\d*)$/.test(value)) &&
+    value > -1 &&
+    value % 1 == 0 &&
+    value < length
+  )
+}
+
+function assignValue(object, key, value) {
+  var objValue = object[key]
+  if (
+    !(
+      Object.hasOwnProperty.call(object, key) &&
+      (objValue === value || (objValue !== objValue && value !== value))
+    ) ||
+    (value === undefined && !(key in object))
+  ) {
+    object[key] = value
+  }
+}
+
+export function set(object, path, value) {
+  if (!isObject(object)) {
+    return object
+  }
+  path = path.split('.')
+
+  var index = -1,
+    length = path.length,
+    lastIndex = length - 1,
+    nested = object
+
+  while (nested != null && ++index < length) {
+    var key = path[index],
+      newValue = value
+
+    if (index != lastIndex) {
+      var objValue = nested[key]
+      newValue = undefined
+      if (newValue === undefined) {
+        newValue = isObject(objValue)
+          ? objValue
+          : isIndex(path[index + 1])
+          ? []
+          : {}
+      }
+    }
+    assignValue(nested, key, newValue)
+    nested = nested[key]
+  }
+  return object
 }
