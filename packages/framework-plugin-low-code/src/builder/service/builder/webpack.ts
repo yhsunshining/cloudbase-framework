@@ -654,7 +654,11 @@ export async function downloadAndInstallDependencies(
         return
       }
       await downloadDependencies(targetDir, srcZipUrl)
-      await installDependencies(targetDir, installOptions)
+      await installDependencies(targetDir, {
+        ...installOptions,
+        ignoreInstall:
+          name === 'gsd-h5-react' ? !!installOptions.ignoreInstall : false,
+      })
       dependenciesMap.set(targetDir, true)
     })
   )
