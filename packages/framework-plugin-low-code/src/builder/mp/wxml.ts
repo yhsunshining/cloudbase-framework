@@ -294,11 +294,60 @@ export function generateWxml(
           curForNodes
         )
       )
+
+      // 特殊处理 swiper，对swiper 子节点包裹议程 swiperItem
+      if (tagName === 'swiper') {
+        node.elements = node.elements.map((item, index) => {
+          let {
+            ['wx:for']: wxFor,
+            ['wx:for-index']: wxForIndex,
+            ['wx:key']: wxKey,
+            ...itemRestKey
+          } = item.attributes || {}
+
+          if (item.name !== 'swiper-item') {
+            let SwiperItem: INode = {
+              type: 'element',
+              name: 'swiper-item',
+              attributes: {
+                id: `${
+                  item.attributes?.id || node?.attributes?.id + index
+                }-item`,
+                'wx:for': wxFor,
+                'wx:for-index': wxForIndex,
+                'wx:key': wxKey,
+              },
+              elements: [],
+              _order: index || 0,
+              _parent: node,
+            }
+            SwiperItem.elements = [
+              {
+                ...item,
+                attributes: {
+                  ...itemRestKey,
+                },
+                _parent: SwiperItem,
+              },
+            ]
+            return SwiperItem
+          } else {
+            return item
+          }
+        })
+      }
       nodeTransform && nodeTransform(widgets[id], node)
       elements.push(node)
     }
     return elements.sort((a, b) => a._order - b._order)
   }
+
+  debugger
+  console.error('=======', util.inspect(xmlJson, { depth: 100 }))
+  writeFileSync(
+    '/Users/yang/Desktop/lowcodev2/debug.json',
+    util.inspect(xmlJson, { depth: 100 })
+  )
 
   return js2xml(xmlJson, {
     spaces: '\t',
