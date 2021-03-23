@@ -342,13 +342,6 @@ export function generateWxml(
     return elements.sort((a, b) => a._order - b._order)
   }
 
-  debugger
-  console.error('=======', util.inspect(xmlJson, { depth: 100 }))
-  writeFileSync(
-    '/Users/yang/Desktop/lowcodev2/debug.json',
-    util.inspect(xmlJson, { depth: 100 })
-  )
-
   return js2xml(xmlJson, {
     spaces: '\t',
     /* textFn: text => {
