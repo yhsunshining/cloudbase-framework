@@ -121,8 +121,8 @@ export function createWidgets(widgetProps, dataBinds) {
       }
 
       if (!Array.isArray(forList)) {
+        forList = []
         console.warn(nodeId, 'For 循环绑定的数据并不是数组，请检查')
-        return
       }
 
       // 让 forList 进行监听
