@@ -16,7 +16,6 @@ const evtListeners = {<% Object.entries(eventHanlders).map(([handlerName, listen
     <%listeners.map(l=> { %>{
       key: '<%= l.key %>',
       handler: <% if (l.type === 'rematch') {%> handlers.<%= l.handler %> <%} else if (l.type == 'material') {%> function(...args) { return require('../../materials/<%= l.handlerModule %>/actions/<%= l.handler %>/index').default(...args) } <%} else {%> <%= l.handler %> <%} %>,
-      // handler: <% if (l.type === 'rematch') {%> handlers.<%}%><%=l.handler%>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
       boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%>'<%= prop %>':(lists, forItems, event) => (<%= expr %>),
         <%}) %>}

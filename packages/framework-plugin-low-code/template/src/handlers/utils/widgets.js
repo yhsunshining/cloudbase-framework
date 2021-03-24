@@ -90,7 +90,9 @@ export function retryDataBinds(tryTime = 10) {
   } catch (e) {
     console.error('retryDataBinds', e)
   }
-  retryDataBinds(tryTime - 1)
+  setTimeout(() => {
+    retryDataBinds(tryTime - 1)
+  }, 0)
 }
 export function createWidgets(widgetProps, dataBinds) {
   const nodeTree = createWidgetTree(widgetProps, dataBinds)
@@ -115,7 +117,7 @@ export function createWidgets(widgetProps, dataBinds) {
       try {
         forList = dataBinds[nodeId]._waFor(forItems)
       } catch (e) {
-        console.error('waFor error', e)
+        console.warn('waFor error', e)
       }
 
       if (!Array.isArray(forList)) {

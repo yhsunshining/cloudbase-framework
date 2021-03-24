@@ -120,7 +120,8 @@ function runFor(curForNode, widgetProps, dataBinds, ownerMpInst, forItems, owner
         forList = []
       }
     } catch (e) {
-      console.error('For binding error', e)
+      forList = []
+      console.warn('For binding error', e)
     }
 
     // Track list change (e.g. push)
@@ -197,8 +198,13 @@ function setUpWidateDataBinds(w, dataBinds, forItems, failedBinds) {
           // Computed data bind in the next tick since data bind may read widgets data
           w[prop] = dataBinds[prop](forItems.lists, forItems.itemsById)
         } catch (e) {
-          firstRunError = e
-          console.error(`Error computing data bind ${w.id}.${prop}`, e)
+          if(prop === '_waIf'){
+            w[prop] = false
+            console.warn(`Error computing data bind ${w.id}.${prop}`, e)
+          }else {
+            firstRunError = e
+            console.error(`Error computing data bind ${w.id}.${prop}`, e)
+          }
         }
       })
       if (firstRunError) {

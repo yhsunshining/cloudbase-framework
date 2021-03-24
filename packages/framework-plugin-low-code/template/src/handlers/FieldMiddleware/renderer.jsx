@@ -55,6 +55,18 @@ export const CompRenderer = observer(function (props) {
     [props]
   )
 
+  function getSafeComponentProps({ style, classNameList }) {
+    const componentProps = {}
+    if (classNameList.length) {
+      componentProps.className = classNameList.join(' ')
+    }
+
+    if (style && Object.keys(style).length) {
+      componentProps.style = style
+    }
+    return componentProps
+  }
+
   // For循环渲染
   let forList
   try {
@@ -64,7 +76,7 @@ export const CompRenderer = observer(function (props) {
   } catch (e) {
     // 计算值出错则使用空数组兜底
     forList = []
-    console.error('_waFor data', e)
+    console.warn('_waFor data', e)
   }
   if (forList) {
     return forList.map((item, index) => {
@@ -94,13 +106,17 @@ export const CompRenderer = observer(function (props) {
         ? get(widgetsData, forItemsIndexes)
         : widgetsData
       const domRef = setGetDomApi(currentWidget, isInComposite)
+
+      const componentProps = getSafeComponentProps({
+        style: forItemStyle,
+        classNameList: forItemClassNameList,
+      })
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
             data={forItemData}
             id={compId}
-            style={forItemStyle}
-            className={forItemClassNameList.join(' ')}
+            {...componentProps}
             emit={emitWithForItems}
             events={emitEvents}
             compositeParent={codeContext}
@@ -143,12 +159,16 @@ export const CompRenderer = observer(function (props) {
     : widgetsData
   const domRef = setGetDomApi(currentWidget, props)
 
+  const componentProps = getSafeComponentProps({
+    style: finalStyle,
+    classNameList: finalClassNameList,
+  })
+
   return (
     <Field
       data={fieldData}
       id={compId}
-      style={finalStyle}
-      className={finalClassNameList.join(' ')}
+      {...componentProps}
       emit={emitWithForItems}
       events={emitEvents}
       compositeParent={codeContext}
