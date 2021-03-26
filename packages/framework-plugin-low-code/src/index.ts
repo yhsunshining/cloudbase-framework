@@ -22,7 +22,10 @@ import {
 } from './builder/types/common'
 import { IMaterialItem, IPlugin } from './weapps-core'
 import { handleMpPlugins } from './generate'
-import { postprocessProjectConfig } from './utils/postProcess'
+import {
+  postprocessDeployExtraJson,
+  postprocessProjectConfig,
+} from './utils/postProcess'
 import { merge } from 'lodash'
 import archiver from 'archiver'
 import COS from 'cos-nodejs-sdk-v5'
@@ -163,6 +166,18 @@ export interface IFrameworkPluginLowCodeInputs {
      * 小程序发布说明
      */
     description?: string
+    /**
+     * 发起构建的小程序
+     */
+    mpAppId?: string
+    /**
+     * 小程序部署密钥（需要经过base64编码）
+     */
+    mpDeployPrivateKey?: string
+    /**
+     * 部署到的目标小程序
+     */
+    targetMpAppId?: string
   }
 
   /**
@@ -267,6 +282,25 @@ class LowCodePlugin extends Plugin {
       window.basename = path
       appConfig.window = window
       this._resolvedInputs.mainAppSerializeData.appConfig = appConfig
+    } else {
+      // 小程序构建
+      const {
+        mpAppId,
+        mpDeployPrivateKey,
+        deployOptions,
+      } = this._resolvedInputs
+
+      if (deployOptions.mpAppId === undefined) {
+        deployOptions.mpAppId = mpAppId
+      }
+
+      if (deployOptions.mpDeployPrivateKey === undefined) {
+        deployOptions.mpDeployPrivateKey = mpDeployPrivateKey
+      }
+
+      if (deployOptions.targetMpAppId === undefined) {
+        deployOptions.targetMpAppId = deployOptions.mpAppId
+      }
     }
 
     this._initDir()
@@ -295,13 +329,7 @@ class LowCodePlugin extends Plugin {
       return
     }
 
-    let {
-      appId,
-      mpAppId,
-      buildTypeList,
-      mpDeployPrivateKey,
-      deployOptions,
-    } = resolveInputs
+    let { buildTypeList, deployOptions } = resolveInputs
 
     this._authPlugin = new AuthPlugin('auth', this.api, {
       configs: [
@@ -324,10 +352,13 @@ class LowCodePlugin extends Plugin {
      * 构建类型相关
      **/
     if (buildTypeList.includes(BuildType.MP)) {
-      if (mpDeployPrivateKey) {
+      if (deployOptions.mpDeployPrivateKey) {
         fs.writeFileSync(
-          path.join(this.api.projectPath, `./private.${mpAppId}.key`),
-          mpDeployPrivateKey,
+          path.join(
+            this.api.projectPath,
+            `./private.${deployOptions.mpAppId}.key`
+          ),
+          deployOptions.mpDeployPrivateKey,
           'base64'
         )
       }
@@ -348,13 +379,16 @@ class LowCodePlugin extends Plugin {
         'miniprograme',
         this.api,
         {
-          appid: mpAppId,
-          privateKeyPath: `./private.${mpAppId}.key`,
+          appid: deployOptions.mpAppId as string,
+          privateKeyPath: `./private.${deployOptions.mpAppId}.key`,
           localPath: DIST_PATH,
           ignores: ['node_modules/**/*', LOG_FILE].concat(
             cloudfunctionRoot ? [path.join(cloudfunctionRoot, '**/*')] : []
           ),
-          deployMode: deployOptions.mode,
+          deployMode:
+            deployOptions.mpAppId === deployOptions.targetMpAppId
+              ? deployOptions.mode
+              : DEPLOY_MODE.UPLOAD,
           uploadOptions: {
             version: deployOptions?.version || '1.0.0',
             desc: deployOptions?.description || '',
@@ -443,7 +477,6 @@ class LowCodePlugin extends Plugin {
       plugins,
       publicPath,
       extraData = { isComposite: false, compProps: {} },
-      mpAppId,
       calsVersion,
     } = this._resolvedInputs
 
@@ -496,6 +529,10 @@ class LowCodePlugin extends Plugin {
               isCleanDistDir: false,
               plugins,
               extraData,
+              isCrossAccount:
+                this._resolvedInputs.mpAppId !==
+                this._resolvedInputs.deployOptions?.targetMpAppId,
+              resourceAppid: this._resolvedInputs.mpAppId,
             },
             async (err: any, result) => {
               if (!err) {
@@ -526,9 +563,15 @@ class LowCodePlugin extends Plugin {
                   )
 
                   await postprocessProjectConfig(projectJsonPath, {
-                    appid: mpAppId,
+                    appid: this._resolvedInputs.deployOptions.mpAppId,
                     cloudfunctionRoot: undefined,
                   })
+
+                  // 如果是代开发的模式，则写入ext.json
+                  await postprocessDeployExtraJson(
+                    miniAppDir,
+                    this._resolvedInputs.deployOptions
+                  )
 
                   if (generateMpType === GenerateMpType.APP) {
                     // 模板拷入的 miniprogram_npm 有问题，直接删除使用重新构建的版本
@@ -668,21 +711,22 @@ class LowCodePlugin extends Plugin {
       if (debug) {
         await this._debugInfo()
       }
-      try {
-        let privateKeyPath = path.join(
-          this.api.projectPath,
-          `./private.${mpAppId}.key`
-        )
-        if (
-          fs.existsSync(privateKeyPath) &&
-          fs.existsSync(path.join(this.api.projectPath, DIST_PATH))
-        ) {
-          fs.copySync(
-            privateKeyPath,
-            path.join(this.api.projectPath, DIST_PATH)
-          )
-        }
-      } catch (e) {}
+      // 不再保留privateKeyPath产物
+      // try {
+      //   let privateKeyPath = path.join(
+      //     this.api.projectPath,
+      //     `./private.${this._resolvedInputs.deployOptions.mpAppId}.key`
+      //   )
+      //   if (
+      //     fs.existsSync(privateKeyPath) &&
+      //     fs.existsSync(path.join(this.api.projectPath, DIST_PATH))
+      //   ) {
+      //     fs.copySync(
+      //       privateKeyPath,
+      //       path.join(this.api.projectPath, DIST_PATH)
+      //     )
+      //   }
+      // } catch (e) {}
       if (this._resolvedInputs.runtime === RUNTIME.CI) {
         await this._handleCIProduct()
       }
@@ -1067,9 +1111,19 @@ class LowCodePlugin extends Plugin {
 
   async _debugInfo() {
     fs.ensureDirSync(path.resolve(this.api.projectPath, DEBUG_PATH))
+    let {
+      mpDeployPrivateKey,
+      deployOptions: { mpDeployPrivateKey: _key, ...restDeployOptions },
+      ...rest
+    } = this._resolvedInputs
     fs.writeJSONSync(
       path.resolve(this.api.projectPath, DEBUG_PATH, 'input.json'),
-      this._resolvedInputs,
+      {
+        ...rest,
+        deployOptions: {
+          ...restDeployOptions,
+        },
+      },
       { spaces: 2 }
     )
     fs.writeJSONSync(

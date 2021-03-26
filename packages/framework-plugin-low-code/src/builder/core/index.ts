@@ -70,7 +70,16 @@ export async function buildWebApp(
       isComposite: false,
       compProps: {},
     },
-  }: BuildAppProps & { deployMode: DEPLOY_MODE; runtime: RUNTIME; ignoreInstall: boolean },
+
+    isCrossAccount = false,
+    resourceAppid = undefined,
+  }: BuildAppProps & {
+    deployMode: DEPLOY_MODE
+    runtime: RUNTIME
+    ignoreInstall: boolean
+    isCrossAccount: boolean
+    resourceAppid?: string
+  },
   cb?: WebpackBuildCallBack
 ) {
   if (!mainAppSerializeData) {
@@ -101,7 +110,8 @@ export async function buildWebApp(
         mode === WebpackModeType.PRODUCTION,
         deployMode,
         extraData,
-        isMixMode
+        isMixMode,
+        { isCrossAccount: !!isCrossAccount, resourceAppid }
       )
       // 如果是混合模式，则将特定的目录复制到工程下
       // 针对 app.json / package.json 则采用 merge 的操作
@@ -159,7 +169,13 @@ export async function buildWebApp(
     // 素材库
     const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial'
     console.time(runHandleMaterialTag)
-    await runHandleMaterial(appBuildDir, dependencies, materialsDir, runtime, ignoreInstall)
+    await runHandleMaterial(
+      appBuildDir,
+      dependencies,
+      materialsDir,
+      runtime,
+      ignoreInstall
+    )
     console.timeEnd(runHandleMaterialTag)
     // 安装依赖
     await runGenerateCore(
