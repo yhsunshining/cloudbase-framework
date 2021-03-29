@@ -676,7 +676,7 @@ function generateListnerInstances(
     } else if (listener.type === ActionType.Platform) {
       generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.${listener.handler.name}(data) }${REPLACE_SIGN}`
     } else if (listener.type === ActionType.DataSource) {
-      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.dataSources.$call(data) }${REPLACE_SIGN}`
+      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.cloud.callDataSource(data) }${REPLACE_SIGN}`
     } else if (listener.type === ActionType.PropEvent) {
       if (isComposite) {
         generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${listener.handler.name}', data.target) }.bind(this)${REPLACE_SIGN}`
