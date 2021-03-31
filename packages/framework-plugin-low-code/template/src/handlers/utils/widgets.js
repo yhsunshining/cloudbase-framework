@@ -86,7 +86,7 @@ export function retryDataBinds(tryTime = 10) {
   const fn = retryQueue.shift()
   if (!fn || tryTime <= 0) return
   try {
-    fn({ showLog: true })
+    fn({ showLog: tryTime <= 1 })
   } catch (e) {
     console.error('retryDataBinds', e)
   }
