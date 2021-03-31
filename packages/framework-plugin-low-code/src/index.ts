@@ -13,7 +13,6 @@ import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp'
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website'
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth'
 import { deserializePlatformApp } from '@cloudbase/cals'
-
 import { getValidNodeModulesPath } from './utils/common'
 import { default as weAppsBuild, buildAsWebByBuildType } from './builder/core'
 import {
@@ -51,19 +50,7 @@ export enum HISTORY_TYPE {
 export const DIST_PATH = './dist'
 const DEBUG_PATH = './debug'
 const QRCODE_PATH = './qrcode.jpg'
-const DEFAULT_CLOUDFUNCTION_ROOT_NAME = 'cloudfunctions'
-const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(
-  DEFAULT_CLOUDFUNCTION_ROOT_NAME,
-  '/'
-)
 const LOG_FILE = 'build.log'
-const PROJECT_SETTING = {
-  es6: true,
-  enhance: true,
-  minified: true,
-  uglifyFileName: false,
-  codeProtect: false,
-}
 
 const enum TIME_LABEL {
   LOW_CODE = 'low code lifetime',
@@ -386,17 +373,9 @@ class LowCodePlugin extends Plugin {
       this._webPlugin = new WebsitePlugin('web', this.api, {
         outputPath: DIST_PATH,
         cloudPath: this._getWebRootPath(resolveInputs),
-        ignore: [
-          '.git',
-          '.github',
-          'node_modules',
-          'cloudbaserc.js',
-          LOG_FILE,
-          DEFAULT_CLOUDFUNCTION_ROOT_NAME,
-        ],
+        ignore: ['.git', '.github', 'node_modules', 'cloudbaserc.js', LOG_FILE],
       })
     }
-
   }
 
   _getWebRootPath(resolveInputs: ResolvedInputs) {
@@ -545,18 +524,10 @@ class LowCodePlugin extends Plugin {
                     miniAppDir,
                     'project.config.json'
                   )
-                  let cloudfunctionRoot = DEFAULT_CLOUDFUNCTION_ROOT_PATH
-
-                  let projectJson = fs.readJsonSync(projectJsonPath)
-                  if (projectJson?.cloudfunctionRoot) {
-                    cloudfunctionRoot = projectJson.cloudfunctionRoot
-                  }
-
 
                   await postprocessProjectConfig(projectJsonPath, {
                     appid: mpAppId,
                     cloudfunctionRoot: undefined,
-                    setting: PROJECT_SETTING,
                   })
 
                   if (generateMpType === GenerateMpType.APP) {
@@ -574,8 +545,6 @@ class LowCodePlugin extends Plugin {
                 }
                 // 编译web
                 else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
-                  let cloudfunctionRoot = DEFAULT_CLOUDFUNCTION_ROOT_PATH
-
                   const staticAppDir = path.join(staticDir, publicPath)
                   fs.ensureDirSync(staticAppDir)
                   if (webpackMode !== WebpackModeType.PRODUCTION) {

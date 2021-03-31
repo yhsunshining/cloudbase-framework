@@ -60,6 +60,7 @@ export const defaultProjConfig = {
     checkInvalidKey: true,
     checkSiteMap: true,
     uploadWithSourceMap: true,
+    codeProtect: false,
   },
   compileType: 'miniprogram',
   libVersion: '2.11.2',
