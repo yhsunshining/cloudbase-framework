@@ -53,7 +53,11 @@ export async function generateWxMp(
   isProduction: boolean,
   deployMode: DEPLOY_MODE,
   extraData: any,
-  isMixMode: boolean
+  isMixMode: boolean,
+  options: {
+    resourceAppid?: string
+    isCrossAccount: boolean
+  }
 ) {
   const operationLabel = em('Wexin MiniProgram Generated')
   console.time(operationLabel)
@@ -137,6 +141,7 @@ export async function generateWxMp(
     'datasources/config.js.tpl': {
       envID: mainAppData.envId,
       appID: appId,
+      resourceAppid: !!options.isCrossAccount ? options.resourceAppid : '',
       isProd: deployMode === DEPLOY_MODE.UPLOAD,
     },
     'datasources/datasource-profiles.js.tpl': {
