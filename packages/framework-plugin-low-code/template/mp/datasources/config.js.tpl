@@ -11,6 +11,8 @@ export default {
   appID: '<%= appID %>',
   /** 云开发环境ID */
   envID: '<%= envID %>',
+  /** 云开发资源所属的微信app id */
+  resourceAppid: '<%= resourceAppid %>',
   /** 数据源描述对象数组 */
   dataSourceProfiles: dataSourceProfiles,
   /**
