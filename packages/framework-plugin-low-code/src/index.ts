@@ -114,7 +114,7 @@ export interface IFrameworkPluginLowCodeInputs {
   /**
    * 低码子包应用描述
    */
-  subAppSerializeDataStrList?: string[]
+  subAppSerializeDataList?: any[]
   /**
    * 低码组件依赖
    */
@@ -465,10 +465,10 @@ class LowCodePlugin extends Plugin {
   async build() {
     let { logger } = this.api
     const staticDir = path.resolve(__dirname, '../../../static')
-    const {
+    let {
       debug,
       mainAppSerializeData,
-      subAppSerializeDataStrList,
+      subAppSerializeDataList,
       dependencies,
       appId,
       buildTypeList,
@@ -482,12 +482,8 @@ class LowCodePlugin extends Plugin {
 
     const webpackMode = WebpackModeType.PRODUCTION
 
-    const subAppSerializeDataList = subAppSerializeDataStrList.map((item) => {
-      let obj = JSON.parse(item)
-      if (this._checkIsVersion(calsVersion)) {
-        obj = deserializePlatformApp(obj, { dependencies })
-      }
-      return obj
+    subAppSerializeDataList = subAppSerializeDataList?.map((item) => {
+      return deserializePlatformApp(item, { dependencies })
     })
     const nodeModulesPath = getValidNodeModulesPath()
 

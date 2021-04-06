@@ -56,6 +56,7 @@ import {
   getDatasetProfiles,
 } from '../../../utils/dataSource'
 import { DEPLOY_MODE } from '../../../index'
+import { cleanDir } from '../../util/generateFiles'
 
 export interface IOriginKeyInfo {
   sourceKey: string
@@ -841,6 +842,7 @@ export async function writeLowCodeFiles(
 ) {
   const lowcodeRootDir = path.join(appBuildDir, 'lowcode')
   console.log(chalk.blue.bold('Writing lowcode files:'))
+  cleanDir(lowcodeRootDir, [])
   generateDefaultTheme(appData)
   const themeCode = appData.codeModules.find((mod) => mod.type === 'theme')
   await Promise.all(appData.codeModules.map((m) => writeCode2file(m, 'global')))

@@ -76,17 +76,26 @@ export async function installMaterials(
           }
         }
 
+        const usingMaterialMap = {}
         // 混合模式下，各个子包获取自己使用过的组件和复合组件（会出现冗余）
-        return Promise.all(
+        // 统一都放在根目录下，可以减少冗余
+        await Promise.all(
           weappsList.map(async (app) => {
             const targetDir = path.join(
               projDir,
-              app.rootPath || '',
+              // 统一放在根目录下引用
+              // app.rootPath || '',
               materialsDirName,
               name
             )
+            if (usingMaterialMap[targetDir]) {
+              return
+            } else {
+              usingMaterialMap[targetDir] = true
+            }
             if (libUpdated(targetDir, version)) {
-              if (fs.existsSync(path.join(materialsSrcDir, 'src'))) {
+              const materialsSrcDirPath = path.join(materialsSrcDir, 'src')
+              if (fs.existsSync(materialsSrcDirPath)) {
                 console.log(
                   `Copying material ${materialId} from ${materialsSrcDir}/src to ${targetDir}`
                 )
@@ -98,7 +107,7 @@ export async function installMaterials(
                 }
 
                 // #3 copy 组件库代码文件到项目目录
-                await fs.copy(path.join(materialsSrcDir, 'src'), targetDir, {
+                await fs.copy(materialsSrcDirPath, targetDir, {
                   filter: function (src, dest) {
                     const path = src.split('/')
                     return !junk.is(path[path.length - 1])
@@ -190,7 +199,8 @@ export async function installMaterials(
           cmp,
           {
             ...ctx,
-            rootPath: app.rootPath || '', // 主包是没有 rootPath 的
+            // 只生成在主目录中，减少冗余
+            // rootPath: app.rootPath || '', // 主包是没有 rootPath 的
           },
           lib.compLibCommonResource
         )
@@ -405,10 +415,11 @@ export function getWxmlTag(
   let { tagName, path: compPath } = cmpMeta?.platforms?.mp || {}
   if (compPath) {
     // 小程序混合模式时，组件库会存在子包内
+    // 组件库永远都在根目录下，这样才能减少冗余 - royhyang
     const rootPath = ctx.rootPath || ''
     compPath = compPath.startsWith('/')
       ? compPath
-      : `${ctx.isMixMode ? '/' + rootPath : ''}/materials/${
+      : `${/*ctx.isMixMode ? '/' + rootPath : */''}/materials/${
           cmp.moduleName
         }/${compPath}`
     tagName = moduleName + '-' + name

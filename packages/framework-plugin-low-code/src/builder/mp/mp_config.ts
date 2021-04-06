@@ -15,8 +15,8 @@ import { downloadFile } from '../util/net';
 export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   const appConfig = { useExtendedLib: { weui: true } };
   const projConfig: any = merge({}, defaultProjConfig, {
-    projectname: 'WeApps-' + ctx.appId,
-  });
+    projectname: 'WeDa-' + ctx.appId,
+  })
   const pageConfigs = weapps.map((app) => {
     const pageConfig = {};
     // #1 Get page config from mp config
