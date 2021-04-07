@@ -70,7 +70,6 @@ export async function buildWebApp(
       isComposite: false,
       compProps: {},
     },
-
     isCrossAccount = false,
     resourceAppid = undefined,
   }: BuildAppProps & {
@@ -88,7 +87,7 @@ export async function buildWebApp(
   }
   console.log('应用名', appKey)
   console.log('生成模式', generateMpType)
-  if (generateMpType === 'subpackage') {
+  if (generateMpType === GenerateMpType.SUBPACKAGE) {
     console.log('主包项目路径', generateMpPath)
   }
 
@@ -97,8 +96,10 @@ export async function buildWebApp(
 
   const startTime = Date.now()
   if (buildTypeList.includes(BuildType.MP)) {
-    const isMixMode = generateMpType === 'subpackage' && !!generateMpPath
     appBuildDir = path.join(appBuildDir, 'mp')
+
+    const isMixMode = generateMpType === GenerateMpType.SUBPACKAGE
+
     const apps = [mainAppSerializeData, ...subAppSerializeDataList]
     try {
       const result = await generateWxMp(
@@ -116,11 +117,12 @@ export async function buildWebApp(
       // 如果是混合模式，则将特定的目录复制到工程下
       // 针对 app.json / package.json 则采用 merge 的操作
       if (isMixMode) {
+        generateMpPath = appBuildDir
         console.log(chalk.green('【混合模式】'), generateMpPath)
         await handleMixMode({
           apps,
           generateMpPath,
-          appBuildDir,
+          miniprogramRoot: result.miniprogramRoot,
           plugins,
         })
       }
@@ -133,6 +135,7 @@ export async function buildWebApp(
         })
       return appBuildDir
     } catch (e) {
+      console.log('generateWxMp error', e)
       cb && cb(e)
       return
     }

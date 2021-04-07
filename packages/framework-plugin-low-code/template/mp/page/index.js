@@ -1,7 +1,7 @@
 import { createPage } from '<%= subLevelPath %>../../common/weapp-page'
 import { mpCompToWidget } from '<%= subLevelPath %>../../common/widget'
 import { concatClassList, px2rpx } from '<%= subLevelPath %>../../common/style'
-import { app } from '../../app/weapps-api'
+import { app } from '<%= subLevelPath %>../../app/weapps-api'
 import { $page } from './api'
 import { <%= pageName %> as handlers } from '../../app/handlers'
 import lifecyle from '../../lowcode/<%= pageName %>/lifecycle'
@@ -29,5 +29,6 @@ const dataBinds = {<% Object.entries(dataBinds).map(([id, widgetBinds])=>{%>
 }
 
 $page.id = '<%= pageName %>'
+$page.uuid = '<%= pageUUID %>'
 $page.handler = handlers
 createPage(lifecyle, widgetProps, state, computed, evtListeners, dataBinds, app, $page)

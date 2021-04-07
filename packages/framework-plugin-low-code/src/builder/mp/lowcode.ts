@@ -30,7 +30,14 @@ export async function writeCode2file(
       const baseDir = path
         .relative(path.dirname(file), appDir)
         .replace(/\\/g, '/')
-      let weappsApiPrefix = `import { app, process } from '${baseDir}/app/weapps-api'` // windows compatibility
+
+      // 子包混合模式需要添加相对索引到根目录
+      const relativeRoot =
+        ctx?.isMixMode && ctx.rootPath
+          ? path.relative(ctx.rootPath, '') + '/'
+          : ''
+
+      let weappsApiPrefix = `import { app, process } from '${relativeRoot}${baseDir}/app/weapps-api'` // windows compatibility
       if (pageId !== 'global') {
         weappsApiPrefix += `\nimport { $page } from '${baseDir}/pages/${pageId}/api'`
       }
@@ -57,12 +64,6 @@ export async function writeCode2file(
     } catch (e) {
       console.error('processLess Error', e)
     }
-  }
-
-  // 混合模式下，引用公共路径要多增加一层，并加多一层命名
-  if (ctx?.isMixMode && ctx?.rootPath) {
-    code = code.replace(/..\/..\/..\/common\//g, '../../../../common/')
-    code = code.replace(/..\/..\/..\/app\//g, '../../../../app/')
   }
 
   await writeFile(file, code)

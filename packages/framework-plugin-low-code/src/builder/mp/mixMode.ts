@@ -1,32 +1,38 @@
 import { IWeAppData, IPlugin, IMaterialItem } from '../../weapps-core'
 import path from 'path'
-import fs, { lstatSync } from 'fs-extra'
-import { mergeSubPackages, mergePackageJson, mergePages } from '../util/mp'
+import fs, { lstatSync, write, writeFile } from 'fs-extra'
+import {
+  mergeSubPackages,
+  mergePackageJson,
+  mergePages,
+  mergePackageDependiences,
+} from '../util/mp'
 import { installDep } from '../core'
 import { getPluginType } from '../service/builder/plugin'
 import { IAppUsedComp } from '../types/common'
 import _ from 'lodash'
 import chalk from 'chalk'
+import { cleanDir, removeFile } from '../util/generateFiles'
 
 // 将 BUILD 目录往混合模式移动
 export async function handleMixMode({
   apps = [],
   generateMpPath,
-  appBuildDir,
+  miniprogramRoot,
   plugins = [],
 }: {
   apps: IWeAppData[]
   generateMpPath: string
-  appBuildDir: string
+  miniprogramRoot: string
   plugins: IPlugin[]
 }) {
-  await handleMainApp()
-  await handleAppPages()
+  // await handleMainApp()
+  // await handleAppPages()
   await handleSubApps()
 
-  await handleAppJson()
-  await handlePkgJson()
-  await installDep(generateMpPath)
+  // await handleAppJson()
+  // await handlePkgJson()
+  await installDep(miniprogramRoot)
   await handlePlugins()
 
   // 复制框架公用内容
@@ -37,7 +43,7 @@ export async function handleMixMode({
     const dirs = aloneDirs
     await Promise.all(
       dirs.map(async (dirname) => {
-        const srcDir = path.join(appBuildDir, dirname)
+        const srcDir = path.join(miniprogramRoot, dirname)
         if (await fs.pathExists(srcDir)) {
           const distDir = path.join(generateMpPath, dirname)
           if (aloneDirs.includes(dirname)) {
@@ -52,7 +58,7 @@ export async function handleMixMode({
   // 复制主包的页面，需要判断是否有冲突
   async function handleAppPages() {
     // 需要特殊处理的
-    const srcDir = path.join(appBuildDir, 'pages')
+    const srcDir = path.join(miniprogramRoot, 'pages')
     const distDir = path.join(generateMpPath, 'pages')
     const pageList = await fs.readdir(srcDir)
 
@@ -73,17 +79,97 @@ export async function handleMixMode({
     )
   }
 
-  // 复制整个子包
   async function handleSubApps() {
-    return Promise.all(
+    let modifiedAppJson = false
+    const rootAppJosnPath = path.join(miniprogramRoot, 'app.json')
+    let rootAppJosn = await fs.readJSON(rootAppJosnPath)
+
+    let modifiedPackageJosn = false
+    const rootPackageJosnPath = path.join(miniprogramRoot, 'package.json')
+    let rootPackageJson = fs.existsSync(rootPackageJosnPath)
+      ? await fs.readJson(rootPackageJosnPath)
+      : {
+          name: 'WeDa-app',
+          version: '1.0.0',
+        }
+    let mergeDependencies = {}
+
+    await Promise.all(
       apps
         .filter((app) => app.rootPath)
         .map(async (app) => {
-          const subAppPath = path.join(appBuildDir, app.rootPath || '')
-          const distDir = path.join(generateMpPath, app.rootPath || '')
-          await fs.copy(subAppPath, distDir, { overwrite: true })
+          const subAppPath = path.join(miniprogramRoot, app.rootPath || '')
+          // 复制整个子包
+          // 新模式下已经生成，感觉无需进行复制 @royhyang
+          // const distDir = path.join(generateMpPath, app.rootPath || '')
+          // await fs.copy(subAppPath, distDir, { overwrite: true })
+
+          const appJsonPath = path.join(subAppPath, 'app.json')
+          if (fs.existsSync(appJsonPath)) {
+            let appJson = await fs.readJson(appJsonPath)
+            if (appJson) {
+              let { subpackages = [] } = rootAppJosn
+              const find = subpackages.find((item) => item.root == app.rootPath)
+              if (find) {
+                find.pages = appJson.pages
+              } else {
+                if (!rootAppJosn.subpackages) {
+                  rootAppJosn.subpackages = []
+                }
+                rootAppJosn.subpackages.push({
+                  root: app.rootPath,
+                  pages: appJson.pages,
+                })
+              }
+              modifiedAppJson = true
+            }
+          }
+
+          const packageJosnPath = path.join(subAppPath, 'package.json')
+          if (fs.existsSync(packageJosnPath)) {
+            mergeDependencies = {
+              ...mergeDependencies,
+              ...(await mergePackageDependiences(
+                mergeDependencies,
+                await fs.readJson(packageJosnPath)
+              )),
+            }
+            modifiedPackageJosn = true
+          }
+
+          await Promise.all(
+            [
+              'app.json',
+              'app.js',
+              'app.wxss',
+              'project.config.json',
+              'package.json',
+              'node_modules',
+              'miniprograme_npm',
+            ].map((name) => {
+              let clearPath = path.join(subAppPath, name)
+              return name.includes('.')
+                ? removeFile(clearPath)
+                : cleanDir(clearPath, [])
+            })
+          )
         })
     )
+    if (modifiedAppJson) {
+      await writeFile(
+        rootAppJosnPath,
+        JSON.stringify(rootAppJosn, undefined, 2)
+      )
+    }
+    if (modifiedPackageJosn) {
+      await writeFile(
+        rootPackageJosnPath,
+        JSON.stringify({
+          ...rootPackageJson,
+          ...mergePackageDependiences(mergeDependencies, rootPackageJson), // 主包优先
+        })
+      )
+    }
   }
 
   // 复制插件
@@ -103,7 +189,7 @@ export async function handleMixMode({
           path.join(pluginNodeModuleDir, 'package.json')
         )
         const { pluginName } = pluginPkgJson
-        const pluginDir = path.join(appBuildDir, pluginName)
+        const pluginDir = path.join(miniprogramRoot, pluginName)
         const distDir = path.join(generateMpPath, pluginName)
         await fs.copy(pluginDir, distDir, { overwrite: true })
       })
@@ -112,14 +198,14 @@ export async function handleMixMode({
 
   async function handleAppJson() {
     const baseAppJsonPath = path.join(generateMpPath, 'app.json')
-    const mergeAppJsonPath = path.join(appBuildDir, 'app.json')
+    const mergeAppJsonPath = path.join(miniprogramRoot, 'app.json')
     await mergePages(baseAppJsonPath, mergeAppJsonPath)
     await mergeSubPackages(baseAppJsonPath, mergeAppJsonPath)
   }
 
   async function handlePkgJson() {
     const basePkgJsonPath = path.join(generateMpPath, 'package.json')
-    const mergePkgJsonPath = path.join(appBuildDir, 'package.json')
+    const mergePkgJsonPath = path.join(miniprogramRoot, 'package.json')
     await mergePackageJson(basePkgJsonPath, mergePkgJsonPath)
   }
 }

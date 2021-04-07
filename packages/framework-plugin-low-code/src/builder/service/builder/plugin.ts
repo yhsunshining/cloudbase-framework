@@ -116,17 +116,17 @@ export async function getKbonePluginEntry(appBuildDir: string, plugins: IPlugin[
  */
 export async function getPluginKboneSubpackage(appBuildDir: string, plugins: IPlugin[]) {
   // 异步循环，使用 for...of...
-  const subPackages = {}
+  const subpackages = {}
   for (const plugin of plugins) {
     if (plugin.type === 'kbone') {
       const pluginName = plugin.name
       const entrys = await getKbonePluginEntry(appBuildDir, plugins)
-      subPackages[pluginName] = Object.keys(entrys).filter(entryPath =>
+      subpackages[pluginName] = Object.keys(entrys).filter(entryPath =>
         entryPath.includes(pluginName)
       )
     }
   }
-  return subPackages
+  return subpackages
 }
 
 // 合并 Kbone 插件的 mp_config 配置
@@ -147,7 +147,7 @@ export async function mergeKbonePluginConfig(
 
     // plugin 的 app/pages 的配置合并
     const pluginAppConfig = pluginMpConfig.app
-    pluginMpConfig.generate.subPackages[pluginName].forEach((pluginPage: string) => {
+    pluginMpConfig.generate.subpackages[pluginName].forEach((pluginPage: string) => {
       if (!mpConfig.pages) mpConfig.pages = {}
 
       // App 优先，Page 用于覆盖

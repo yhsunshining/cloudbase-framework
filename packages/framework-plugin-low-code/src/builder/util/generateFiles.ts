@@ -26,16 +26,17 @@ export default async function generateFiles(
     )
 
     // 混合模式下，引用公共路径要多增加一层，并加多一层命名
-    if (ctx?.isMixMode && ctx?.rootPath) {
-      generatedCode = generatedCode.replace(
-        /..\/..\/..\/common\//g,
-        '../../../../common/'
-      )
-      generatedCode = generatedCode.replace(
-        /..\/..\/..\/app\//g,
-        '../../../../app/'
-      )
-    }
+    // 混合子包直接在对应目录上生成，而不采用替换的方式 @royhyang
+    // if (ctx?.isMixMode && ctx?.rootPath) {
+    //   generatedCode = generatedCode.replace(
+    //     /..\/..\/..\/common\//g,
+    //     '../../../../common/'
+    //   )
+    //   generatedCode = generatedCode.replace(
+    //     /..\/..\/..\/app\//g,
+    //     '../../../../app/'
+    //   )
+    // }
 
     const outFile = path.resolve(dstDir, outFileName.replace(/\.tpl$/, ''))
     if (await writeFile(outFile, generatedCode)) {
@@ -64,7 +65,7 @@ export function removeFile(file: string) {
       delete generatedFileContents[cachedFile]
     }
   })
-  return fs.remove(file)
+  return fs.removeSync(file)
 }
 
 /**

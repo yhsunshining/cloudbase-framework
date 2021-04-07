@@ -1,4 +1,4 @@
-import { IMaterialItem } from '../../weapps-core'
+import { IMaterialItem, IWeAppData } from '../../weapps-core'
 
 /**
  * All build parameters and intermediate data to be share across processes
@@ -9,6 +9,7 @@ export interface IBuildContext {
   projDir: string
   materialLibs: IMaterialItem[]
   isProduction: boolean
+  mainAppData: IWeAppData
   isMixMode: boolean
   rootPath?: string
 }

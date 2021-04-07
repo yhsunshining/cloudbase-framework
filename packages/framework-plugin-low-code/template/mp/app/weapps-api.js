@@ -1,14 +1,18 @@
-// import * as sdk from '@govcloud/weapps-sdk'
 import { observable } from 'mobx'
 import { createComputed } from '<%= subLevelPath %>../common/util'
 import process from '<%= subLevelPath %>../common/process'
-import state from '../lowcode/state'
-import computed from '../lowcode/computed'
-import common from './common'
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
 import weappApis from '<%= subLevelPath %>../common/weapp-sdk'
-
+<% if (!isBare) {%>
+import state from '../lowcode/state'
+import computed from '../lowcode/computed'
+import common from './common'
+<%} else {%>
+const state = {}
+const computed ={}
+const common = {}
+<%}%>
 const mainAppKey = '__weappsMainApp'
 
 export const app = createGlboalApi()

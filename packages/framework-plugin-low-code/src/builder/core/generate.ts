@@ -76,7 +76,7 @@ export async function runGenerateCore(
       const dstDir = path.join(
         appBuildDir,
         'src',
-        rootPath ? `packages/${rootPath}` : ''
+        rootPath ? `${rootPath}` : ''
       )
       await copy(
         [
@@ -90,6 +90,7 @@ export async function runGenerateCore(
       await generateAllPageJsxFile(
         pageInstanceList,
         dstDir,
+        rootPath,
         dependencies,
         extraData,
         buildTypeList
@@ -132,7 +133,7 @@ export async function generatePackageJSON(
 ) {
   const packageInfo = fs.readJSONSync(path.join(appTemplateDir, 'package.json'))
   packageInfo.dependencies = { ...packageInfo.dependencies, ...dependencies }
-  packageInfo.name = 'weapps-' + appKey
+  packageInfo.name = 'WeDa-' + appKey
   const dstFilePath = path.join(appBuildDir, 'package.json')
   await fs.writeFile(dstFilePath, JSON.stringify(packageInfo, null, '\t'))
 }

@@ -20,7 +20,7 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   const pageConfigs = weapps.map((app) => {
     const pageConfig = {};
     // #1 Get page config from mp config
-    const kbConfig = app.lowCodes.find((m) => m.name === MP_CONFIG_MODULE_NAME);
+    const kbConfig = app.lowCodes?.find((m) => m.name === MP_CONFIG_MODULE_NAME)
     if (kbConfig) {
       const { pagesConfigJson = {} } = eval(
         `(${kbConfig.code.replace(/export\s+default/, '')})`
@@ -29,11 +29,11 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
     }
 
     // #2 Get page config from page page.data editor UI
-    merge(pageConfig, getAppPagesConfig(app.pageInstanceList));
-    return pageConfig;
-  });
+    merge(pageConfig, getAppPagesConfig(app?.pageInstanceList || []))
+    return pageConfig
+  })
 
-  const kbConfig = weapps[0].lowCodes.find(
+  const kbConfig = weapps[0].lowCodes?.find(
     (m) => m.name === MP_CONFIG_MODULE_NAME
   );
   if (kbConfig) {
@@ -77,9 +77,9 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
 }
 
 function extractPages(weapps: IWeAppData[], pageConfigs: any[]) {
-  const pages: string[] = [];
-  const subPackages: any[] = [];
-  let homePage = '';
+  const pages: string[] = []
+  const subpackages: any[] = []
+  let homePage = ''
   weapps.forEach((weapp, index) => {
     const { rootPath } = weapp;
     const subPackage: {
@@ -87,11 +87,11 @@ function extractPages(weapps: IWeAppData[], pageConfigs: any[]) {
       pages: string[];
     } = { root: rootPath, pages: [] };
     if (rootPath) {
-      subPackages.push(subPackage);
+      subpackages.push(subPackage)
     }
-    loopDealWithFn(weapp.pageInstanceList, (page) => {
-      const pageConfig = pageConfigs[index];
-      const pageFileName = get(pageConfig, `${page.id}.pageFileName`, 'index');
+    loopDealWithFn(weapp.pageInstanceList || [], (page) => {
+      const pageConfig = pageConfigs[index]
+      const pageFileName = get(pageConfig, `${page.id}.pageFileName`, 'index')
       if (rootPath) {
         subPackage.pages.push(`pages/${page.id}/${pageFileName}`);
       } else if (!page.isHome) {
@@ -104,7 +104,7 @@ function extractPages(weapps: IWeAppData[], pageConfigs: any[]) {
   if (homePage) {
     pages.unshift(homePage);
   }
-  return { pages, subPackages };
+  return { pages, subpackages }
 }
 
 function getAppPagesConfig(pages: IWeAppPage[]) {

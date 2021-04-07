@@ -419,7 +419,7 @@ export function getWxmlTag(
     const rootPath = ctx.rootPath || ''
     compPath = compPath.startsWith('/')
       ? compPath
-      : `${/*ctx.isMixMode ? '/' + rootPath : */''}/materials/${
+      : `${/*ctx.isMixMode ? '/' + rootPath : */ ''}/${materialsDirName}/${
           cmp.moduleName
         }/${compPath}`
     tagName = moduleName + '-' + name
