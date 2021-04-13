@@ -27,7 +27,9 @@ const evtListeners = {<% Object.entries(eventHandlers).map(([handlerName, listen
 
 const behaviors = [<% if(formEvents) { %>'wx://form-field'<% } %>]
 
-const properties = {<% Object.entries(propDefs).map(([prop, def])=> {%>
+const properties = {<% Object.entries(propDefs).filter(([prop,def])=>{
+  return !!jsonSchemaType2jsClass[def.type]
+}).map(([prop, def])=> {%>
   <%= prop %>: {
     type: <%= jsonSchemaType2jsClass[def.type] %>,<%if(def.extraTypes) { %>
     optionalTypes: [<%= def.extraTypes.split('|').map(t => jsonSchemaType2jsClass[t]).join(',') %>], <% }%>
