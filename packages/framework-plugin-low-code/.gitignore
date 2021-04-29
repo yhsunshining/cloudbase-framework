@@ -1,3 +1,5 @@
 lib
 node_modules
 __tests__/test.js
+__tests__/.temp
+__tests__/package.json
