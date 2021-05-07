@@ -170,12 +170,6 @@ export function getDatasetProfiles(
   if (mainAppData.dataset) {
     result['$global'] = _generateDynamicDataset(mainAppData.dataset);
   }
-  mainAppData.pageInstanceList?.forEach((pageInstance) => {
-    let p = pageInstance as IPageInstance;
-    if (p.dataset) {
-      result[p.id] = _generateDynamicDataset(p.dataset);
-    }
-  });
   (apps || []).forEach((app) => {
     app.pageInstanceList?.forEach((pageInstance) => {
       let p = pageInstance as IPageInstance;

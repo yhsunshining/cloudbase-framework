@@ -15,7 +15,7 @@ export function createPage(
   $page
 ) {
   $page.state = observable(pageState)
-  let dataset = createDataset($page.id)
+  let dataset = createDataset($page.uuid)
   $page.dataset = dataset
   $page.state.dataset = dataset
   $page.computed = createComputed(pageComputed)
@@ -69,8 +69,8 @@ export function createPage(
         this._pageActive = true
 
         let query = decodePageQuery(options || {})
-        EXTRA_API.setParams($page.id, query)
-        createStateDataSourceVar($page.id, generateParamsParser({app, $page}))
+        EXTRA_API.setParams($page.uuid, query)
+        createStateDataSourceVar($page.uuid, generateParamsParser({app, $page}))
 
         const hook = lifecycle.onLoad || lifecycle.onPageLoad
         hook && hook.call(this, query)
