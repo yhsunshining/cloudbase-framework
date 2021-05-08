@@ -8,6 +8,7 @@ import common from './common'
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
 import weappApis from '<%= subLevelPath %>../common/weapp-sdk'
+import { utils } from '../common/util'
 
 const mainAppKey = '__weappsMainApp'
 
@@ -28,6 +29,7 @@ function createGlboalApi() {
     state: observable(state),
     computed: createComputed(computed),
     common,
+    utils: utils,
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
 
