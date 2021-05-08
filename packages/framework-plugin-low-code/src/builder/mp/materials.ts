@@ -5,7 +5,7 @@ import {
   IMaterialItem,
   ICompositedComponent,
   IWeAppComponentInstance,
-  compositedComponentApi,
+  COMPONENT_API_PREFIX,
   getCompositedComponentClass,
   ICompLibCommonResource,
 } from '../../weapps-core'
@@ -329,13 +329,13 @@ async function generateCompositeComponent(
         .map((m) => m.name),
       eventHandlers: createEventHanlders(
         compositedComp.componentInstances,
-        compositedComponentApi,
+        COMPONENT_API_PREFIX,
         ctx
       ),
       // protectEventKeys: builtinMpEvents,
       emitEvents: compositedComp.emitEvents.map((evt) => evt.eventName),
       widgetProps: createWidgetProps(compositedComp.componentInstances, ctx),
-      compApi: compositedComponentApi,
+      compApi: COMPONENT_API_PREFIX,
       jsonSchemaType2jsClass,
       key: compositedComp.materialName + ':' + compositedComp.name,
       dataBinds: createDataBinds(compositedComp.componentInstances, ctx),

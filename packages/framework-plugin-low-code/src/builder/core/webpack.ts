@@ -1,26 +1,21 @@
-import {
-  WebpackBuildCallBack,
-  buildAsWebByBuildType,
-  BuildType,
-} from '../types/common'
-import { IPlugin, IWebRuntimeAppData } from '../../weapps-core'
+import { WebpackBuildCallBack, buildAsWebByBuildType } from '../types/common';
+import { IPlugin, IWebRuntimeAppData } from '../../weapps-core';
 import {
   generateMpJsonConfigFile,
   generateWebpackWebBuildParamsFile,
   startCompile,
   generateWebpackWebDevServerFile,
-} from '../service/builder/webpack'
-import { fixProcessCwd } from '../service/builder'
-import { BuildAppProps } from './index'
+} from '../service/builder/webpack';
+import { BuildAppProps } from './index';
 
 interface IWebpackCoreProps extends BuildAppProps {
-  appBuildDir: string
-  materialsDir: string
-  cb: WebpackBuildCallBack
-  mpConfig: any
-  mainAppData: IWebRuntimeAppData
-  subAppDataList: IWebRuntimeAppData[]
-  assets: string[]
+  appBuildDir: string;
+  materialsDir: string;
+  cb: WebpackBuildCallBack;
+  mpConfig: any;
+  mainAppData: IWebRuntimeAppData;
+  subAppDataList: IWebRuntimeAppData[];
+  assets: string[];
 }
 
 export async function runWebpackCore({
@@ -42,9 +37,9 @@ export async function runWebpackCore({
   plugins,
   assets = [],
 }: IWebpackCoreProps) {
-  console.time('runWebpackCore')
-  console.time('webpackGenerate')
-  const allAppDataList = subAppDataList.concat(mainAppData)
+  console.time('runWebpackCore');
+  console.time('webpackGenerate');
+  const allAppDataList = subAppDataList.concat(mainAppData);
   const webWebpackConfigPath = await generateWebpackWebBuildParamsFile({
     allAppDataList,
     appBuildDir,
@@ -58,12 +53,12 @@ export async function runWebpackCore({
     watch,
     buildTypeList,
     assets,
-  })
-  console.timeEnd('webpackGenerate')
+  });
+  console.timeEnd('webpackGenerate');
 
   // compile
-  const taskList = [] as Promise<any>[]
-  console.time('generateMpJsonConfigFile')
+  const taskList = [] as Promise<any>[];
+  console.time('generateMpJsonConfigFile');
   await generateMpJsonConfigFile(
     allAppDataList,
     mpConfig,
@@ -74,13 +69,13 @@ export async function runWebpackCore({
       // @ts-ignore
       generateMpType,
     }
-  )
-  console.timeEnd('generateMpJsonConfigFile')
+  );
+  console.timeEnd('generateMpJsonConfigFile');
   if (buildAsWebByBuildType(buildTypeList)) {
     await generateWebpackWebDevServerFile({
       appBuildDir,
       buildTypeList,
-    })
+    });
     startCompile(
       {
         appBuildDir,
@@ -88,10 +83,10 @@ export async function runWebpackCore({
         appKey,
       },
       cb as any
-    )
+    );
   }
-  console.time('webpackCompile')
-  await Promise.all(taskList)
-  console.timeEnd('webpackCompile')
-  console.timeEnd('runWebpackCore')
+  console.time('webpackCompile');
+  await Promise.all(taskList);
+  console.timeEnd('webpackCompile');
+  console.timeEnd('runWebpackCore');
 }

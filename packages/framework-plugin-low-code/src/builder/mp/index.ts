@@ -11,7 +11,7 @@ import {
   toCssStyle,
   IWeAppCode,
 } from '../../weapps-core';
-import { appTemplateDir, rootDir, materialsDirName } from '../config';
+import { appTemplateDir, materialsDirName } from '../config';
 import { getWxmlDataPrefix } from '../config/mp';
 import generateFiles, {
   removeFile,
@@ -19,10 +19,7 @@ import generateFiles, {
   writeFile,
 } from '../util/generateFiles';
 import { extractUsedCompsRecursively, installMaterials } from './materials';
-import {
-  installDependencies,
-  getMainAppDataByList,
-} from '../service/builder/webpack';
+import { installDependencies } from '../service/builder/webpack';
 import { IBuildContext } from './BuildContext';
 import {
   createWidgetProps,
@@ -38,14 +35,12 @@ import { getYyptConfigInfo, JsonToStringWithVariableName } from '../util';
 import { generateDefaultTheme, generateDefaultStyle } from '../util/style';
 import {
   getDatasourceProfiles,
-  getDataVarProfiles,
   getDatasetProfiles,
 } from '../../utils/dataSource';
 
-import { DEPLOY_MODE } from '../../index';
+import { DEPLOY_MODE } from '../../types';
 import { IAppUsedComp, IUsedComps } from '../types/common';
-import { handleMixMaterials } from './mixMode';
-import { get, merge } from 'lodash';
+import { get } from 'lodash';
 import * as junk from '../util/junk';
 import pt from 'path';
 import { downloadZip } from '../util/net';
@@ -90,8 +85,6 @@ export async function generateWxMp(
     weapps,
     materials,
   });
-
-  console.log(appUsedComps[0], '========', allAppUsedComps);
 
   // 安装依赖库
   await installMaterials(projDir, allAppUsedComps, weapps, buildContext);
@@ -479,8 +472,6 @@ async function generateFramework(
   await generateFiles(fileData, templateDir, outDir, ctx);
 }
 
-const THEME = 'theme';
-const STYLE = 'style';
 export async function writeLowCodeFiles(
   appData: IWeAppData,
   outDir: string,

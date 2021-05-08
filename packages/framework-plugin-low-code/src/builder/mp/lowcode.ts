@@ -5,7 +5,7 @@ import {
   IWeAppCode,
   getCompositedComponentClass,
   ICompositedComponent,
-  compositedComponentApi,
+  COMPONENT_API_PREFIX,
 } from '../../weapps-core'
 import { processLessToRpx } from '../util/style'
 import { IBuildContext } from './BuildContext'
@@ -50,7 +50,7 @@ export async function writeCode2file(
         mod.type === 'handler-fn' ? '../' : ''
       }../../../../common/weapp-sdk'\n${code.replace(
         /\$comp/g,
-        compositedComponentApi
+        COMPONENT_API_PREFIX
       )}`
     }
   } else {

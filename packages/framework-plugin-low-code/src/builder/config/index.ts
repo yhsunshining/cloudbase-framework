@@ -1,24 +1,5 @@
-import * as path from 'path'
-import * as os from 'os'
-export * from './common'
+import * as path from 'path';
+import os from 'os';
 
-export const rootDir = path.resolve(__dirname, '../../')
-export const appTemplateDir = path.resolve(__dirname, '../../../template')
-export const npmRegistry = 'https://mirrors.tencent.com/npm/'
-export const materialsDirName = 'materials' // materials diretory of current project
-export const sharedMaterialsDir = path.join(os.homedir(), '.weapps-materials')
-
-// Config for pxToRem
-export const remConfig = {
-  rootValue: 28,
-  propList: ['*'],
-  unitPrecision: 5,
-  selectorBlackList: [],
-  replace: true,
-  mediaQuery: false,
-  minPixelValue: 0,
-}
-
-export const rpxConfig = {
-  zoom: 1,
-}
+export * from '../../generator/config/index';
+export const sharedMaterialsDir = path.join(os.homedir(), '.weapps-materials');

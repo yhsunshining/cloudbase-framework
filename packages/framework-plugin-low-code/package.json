@@ -23,7 +23,10 @@
     "url": "git+https://github.com/TencentCloudBase/cloudbase-framework.git"
   },
   "scripts": {
+    "template": "node ./scripts/generateTemplate.js",
+    "watch:template": "npm run template --watch",
     "dev": "tsc -w",
+    "prebuild": "rm -rf ./lib && rm ./tsconfig.tsbuildinfo && npm run template",
     "build": "tsc",
     "test": "jest"
   },
@@ -48,6 +51,7 @@
     "json-schema-defaults": "^0.4.0",
     "less": "^3.10.3",
     "lodash": "^4.17.11",
+    "lodash.uniqby": "^4.7.0",
     "lodash.clone": "^4.5.0",
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",

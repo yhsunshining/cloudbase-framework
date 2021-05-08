@@ -1,33 +1,33 @@
-import _uniq from 'lodash/uniq'
-import _map from 'lodash/map'
-import { CSSProperties, ICommonStyle } from '../types'
+import _uniq from 'lodash/uniq';
+import _map from 'lodash/map';
+import { CSSProperties, ICommonStyle } from '../types';
 import {
   PERCENTAGE_KEY_LIST,
   DISTANCE_KEY_LIST,
   SELF_REMOVE_STYLE_KEY_LIST,
   WRAPPER_REMOVE_STYLE_KEY_LIST,
   SELF_REMOVE_WITH_PERCENTAGE_KEY_LIST,
-} from '../config'
-import { kebabCase, camelcase, isPlainObject, isEmptyObj } from './common'
+} from '../config';
+import { kebabCase, camelcase, isPlainObject, isEmptyObj } from './common';
 
 function _handleStyleNumValue(styleVal: string | number, addPXUnit: boolean) {
   if (addPXUnit) {
-    const value = `${styleVal}`
+    const value = `${styleVal}`;
     if (value.search(/^\d+$/) >= 0) {
-      return value + 'px'
+      return value + 'px';
     }
   }
-  return styleVal
+  return styleVal;
 }
 
 // Convert WeApps common style to css styles(React.CSSProperties)
 export function toCssStyle(
   commonStyle: ICommonStyle = {},
   options: {
-    toRem: boolean
-    ignoreSelf?: boolean
-    addPXUnit?: boolean
-    toRpx?: boolean
+    toRem: boolean;
+    ignoreSelf?: boolean;
+    addPXUnit?: boolean;
+    toRpx?: boolean;
   } = { toRem: true, ignoreSelf: false, addPXUnit: false, toRpx: false }
 ): CSSProperties {
   const {
@@ -44,21 +44,21 @@ export function toCssStyle(
     flexConfig,
     custom,
     self,
-  } = commonStyle
+  } = commonStyle;
 
-  const style: CSSProperties = {}
+  const style: CSSProperties = {};
 
   if (size) {
     setStyleValue(
       style,
       'width',
       _handleStyleNumValue(size.width, !!options.addPXUnit)
-    )
+    );
     setStyleValue(
       style,
       'height',
       _handleStyleNumValue(size.height, !!options.addPXUnit)
-    )
+    );
   }
 
   // if (transform) {
@@ -71,55 +71,58 @@ export function toCssStyle(
   // }
 
   if (margin) {
-    setDistanceStyle(style, margin, 'margin', !!options.addPXUnit)
+    setDistanceStyle(style, margin, 'margin', !!options.addPXUnit);
   }
 
   if (padding) {
-    setDistanceStyle(style, padding, 'padding', !!options.addPXUnit)
+    setDistanceStyle(style, padding, 'padding', !!options.addPXUnit);
   }
 
   if (display) {
-    setStyleValue(style, 'display', display)
+    setStyleValue(style, 'display', display);
   }
 
   if (display === 'flex' && flexConfig) {
     if (flexConfig.justifyContent)
-      setStyleValue(style, 'justifyContent', flexConfig.justifyContent)
+      setStyleValue(style, 'justifyContent', flexConfig.justifyContent);
     if (flexConfig.alignItems)
-      setStyleValue(style, 'alignItems', flexConfig.alignItems)
+      setStyleValue(style, 'alignItems', flexConfig.alignItems);
     if (flexConfig.flexWrap && flexConfig.flexDirection) {
       setStyleValue(
         style,
         'flexFlow',
         `${flexConfig.flexDirection} ${flexConfig.flexWrap}`
-      )
+      );
     } else {
       if (flexConfig.flexWrap)
-        setStyleValue(style, 'flexWrap', flexConfig.flexWrap)
+        setStyleValue(style, 'flexWrap', flexConfig.flexWrap);
       if (flexConfig.flexDirection)
-        setStyleValue(style, 'flexDirection', flexConfig.flexDirection)
+        setStyleValue(style, 'flexDirection', flexConfig.flexDirection);
     }
   }
 
   if (typeof zIndex === 'number' || `${zIndex}`.search(/^\d+$/) === 0) {
-    style.zIndex = zIndex
+    style.zIndex = zIndex;
   }
 
   if (text) {
-    setStyleValue(style, 'color', text.color)
+    setStyleValue(style, 'color', text.color);
     setStyleValue(
       style,
       'fontSize',
       _handleStyleNumValue(text.fontSize, !!options.addPXUnit)
-    )
-    setStyleValue(style, 'lineHeight', text.lineHeight)
-    setStyleValue(style, 'textAlign', text.textAlign)
-    setStyleValue(style, 'fontWeight', text.weight)
-    if (text.opacity) setStyleValue(style, 'opacity', text.opacity / 100)
+    );
+    setStyleValue(style, 'lineHeight', text.lineHeight);
+    setStyleValue(style, 'textAlign', text.textAlign);
+    setStyleValue(style, 'fontWeight', text.weight);
+    if (text.opacity) {
+      console.log('-----------------------')
+      setStyleValue(style, 'opacity', text.opacity / 100);
+    }
   }
 
   if (border) {
-    const { type, color, width, radius, radiusInfo } = border
+    const { type, color, width, radius, radiusInfo } = border;
     if (width !== undefined) {
       if (type) {
         setStyleValue(
@@ -128,14 +131,14 @@ export function toCssStyle(
           `${_handleStyleNumValue(width, !!options.addPXUnit)} ${type} ${
             color || ''
           }`
-        )
+        );
       } else {
         setStyleValue(
           style,
           'borderWidth',
           _handleStyleNumValue(width, !!options.addPXUnit)
-        )
-        if (color) setStyleValue(style, 'borderColor', color)
+        );
+        if (color) setStyleValue(style, 'borderColor', color);
       }
     }
     if (radius !== undefined) {
@@ -143,7 +146,7 @@ export function toCssStyle(
         style,
         'borderRadius',
         _handleStyleNumValue(radius, !!options.addPXUnit)
-      )
+      );
     }
     if (radiusInfo && !isEmptyObj(radiusInfo)) {
       if (Object.keys(radiusInfo).length === 4) {
@@ -153,7 +156,7 @@ export function toCssStyle(
             style,
             'borderRadius',
             _handleStyleNumValue(radiusInfo.topLeft, !!options.addPXUnit)
-          )
+          );
         } else if (
           radiusInfo.topLeft === radiusInfo.bottomRight &&
           radiusInfo.topRight === radiusInfo.bottomLeft
@@ -169,7 +172,7 @@ export function toCssStyle(
               radiusInfo.topRight,
               !!options.addPXUnit
             )}`
-          )
+          );
         } else if (radiusInfo.topRight === radiusInfo.bottomLeft) {
           setStyleValue(
             style,
@@ -184,7 +187,7 @@ export function toCssStyle(
               radiusInfo.bottomRight,
               !!options.addPXUnit
             )}`
-          )
+          );
         } else {
           setStyleValue(
             style,
@@ -202,29 +205,29 @@ export function toCssStyle(
               radiusInfo.bottomLeft,
               !!options.addPXUnit
             )}`
-          )
+          );
         }
       } else {
         setStyleValue(
           style,
           'borderTopLeftRadius',
           _handleStyleNumValue(radiusInfo.topLeft, !!options.addPXUnit)
-        )
+        );
         setStyleValue(
           style,
           'borderTopRightRadius',
           _handleStyleNumValue(radiusInfo.topRight, !!options.addPXUnit)
-        )
+        );
         setStyleValue(
           style,
           'borderBottomRightRadius',
           _handleStyleNumValue(radiusInfo.bottomRight, !!options.addPXUnit)
-        )
+        );
         setStyleValue(
           style,
           'borderBottomLeftRadius',
           _handleStyleNumValue(radiusInfo.bottomLeft, !!options.addPXUnit)
-        )
+        );
       }
     }
   }
@@ -238,112 +241,116 @@ export function toCssStyle(
       repeat,
       position,
       positionObj,
-    } = background
+    } = background;
     if (bgType === 'color') {
-      setStyleValue(style, 'background', color)
+      setStyleValue(style, 'background', color);
     } else if (bgType === 'image') {
       // 如 radial-gradient(crimson, skyblue);
       if (image != null) {
         if (image.search(/[()]/) >= 0) {
-          style.background = image
+          style.background = image;
         } else {
-          style.background = `url(${image})`
+          style.background = `url(${image})`;
         }
       }
-      if (repeat) style.background += ` ${repeat}`
+      if (repeat) style.background += ` ${repeat}`;
       if (size) {
         setStyleValue(
           style,
           'backgroundSize',
           _handleStyleNumValue(size, !!options.addPXUnit)
-        )
+        );
       }
-      setStyleValue(style, 'backgroundPosition', position)
+      setStyleValue(style, 'backgroundPosition', position);
       if (positionObj && !isEmptyObj(positionObj)) {
         style.background += ` ${_handleStyleNumValue(
           positionObj.left,
           !!options.addPXUnit
-        )} ${_handleStyleNumValue(positionObj.top, !!options.addPXUnit)}`
+        )} ${_handleStyleNumValue(positionObj.top, !!options.addPXUnit)}`;
       }
     }
 
     // FIXME: 这里兼容原有应用的数据，后面应去掉
     if (bgType === undefined) {
-      setStyleValue(style, 'backgroundColor', color)
+      setStyleValue(style, 'backgroundColor', color);
       if (image != null) {
-        style.backgroundImage = `url(${image})`
-        setStyleValue(style, 'backgroundRepeat', repeat)
+        style.backgroundImage = `url(${image})`;
+        setStyleValue(style, 'backgroundRepeat', repeat);
         setStyleValue(
           style,
           'backgroundSize',
           _handleStyleNumValue(size, !!options.addPXUnit)
-        )
-        setStyleValue(style, 'backgroundPosition', position)
+        );
+        setStyleValue(style, 'backgroundPosition', position);
       }
     }
   }
 
   if (position) {
-    setStyleValue(style, 'position', position.position)
+    setStyleValue(style, 'position', position.position);
     if (position.left !== undefined) {
       setStyleValue(
         style,
         'left',
         _handleStyleNumValue(position.left, !!options.addPXUnit)
-      )
+      );
     }
     if (position.right !== undefined) {
       setStyleValue(
         style,
         'right',
         _handleStyleNumValue(position.right, !!options.addPXUnit)
-      )
+      );
     }
     if (position.top !== undefined) {
       setStyleValue(
         style,
         'top',
         _handleStyleNumValue(position.top, !!options.addPXUnit)
-      )
+      );
     }
     if (position.bottom !== undefined) {
       setStyleValue(
         style,
         'bottom',
         _handleStyleNumValue(position.bottom, !!options.addPXUnit)
-      )
+      );
     }
   }
 
   if (custom && custom.length > 0) {
     custom.map((item) => {
-      setStyleValue(style, item.key, item.value)
-    })
+      setStyleValue(style, item.key, item.value);
+    });
   }
 
   if (self && !options.ignoreSelf) {
-    Object.assign(style, self)
+    Object.assign(style, self);
   }
 
   if (options.toRpx) {
-    return translateStyleToRpx(style)
+    return translateStyleToRpx(style);
   }
 
-  return options.toRem ? translateStyleToRem(style) : style
+  return options.toRem ? translateStyleToRem(style) : style;
 }
 
 export function removeInvalidStyleFormValue(
   styleForm: ICommonStyle = {}
 ): ICommonStyle {
   return Object.keys(styleForm).reduce((result, key) => {
-    const propStyleFormData = styleForm[key]
+    const propStyleFormData = styleForm[key];
     if (isPlainObject(propStyleFormData)) {
-      setStyleValue(result, key, removeInvalidStyleFormValue(propStyleFormData))
+      setStyleValue(
+        result,
+        key,
+        removeInvalidStyleFormValue(propStyleFormData)
+      );
     } else {
-      setStyleValue(result, key, styleForm[key])
+      setStyleValue(result, key, styleForm[key]);
     }
-    return result
-  }, {})
+    return result;
+  }, {});
 }
 
 function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
@@ -354,7 +361,7 @@ function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
         style,
         camelcase(`${attr}`),
         _handleStyleNumValue(distance.top, addPXUnit)
-      )
+      );
     } else if (
       distance.top === distance.bottom &&
       distance.left === distance.right
@@ -367,7 +374,7 @@ function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
           distance.top,
           addPXUnit
         )} ${_handleStyleNumValue(distance.right, addPXUnit)}`
-      )
+      );
     } else if (distance.left === distance.right) {
       setStyleValue(
         style,
@@ -379,7 +386,7 @@ function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
           distance.right,
           addPXUnit
         )} ${_handleStyleNumValue(distance.bottom, addPXUnit)}`
-      )
+      );
     } else {
       setStyleValue(
         style,
@@ -394,7 +401,7 @@ function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
           distance.bottom,
           addPXUnit
         )} ${_handleStyleNumValue(distance.left, addPXUnit)}`
-      )
+      );
     }
   } else {
     DISTANCE_KEY_LIST.forEach((key) => {
@@ -403,17 +410,17 @@ function setDistanceStyle(style, distance, attr: string, addPXUnit: boolean) {
           style,
           camelcase(`${attr}_${key}`),
           _handleStyleNumValue(distance[key], addPXUnit)
-        )
-    })
+        );
+    });
   }
 }
 
 export function translateStyleToRpx(style: CSSProperties = {}): CSSProperties {
-  return translateStyleByHandler(style, toRPX)
+  return translateStyleByHandler(style, toRPX);
 }
 
 export function translateStyleToRem(style: CSSProperties = {}): CSSProperties {
-  return translateStyleByHandler(style, toREM)
+  return translateStyleByHandler(style, toREM);
 }
 
 export function translateStyleByHandler(
@@ -421,106 +428,106 @@ export function translateStyleByHandler(
   handler: (p: string) => string
 ) {
   return Object.keys(style).reduce((result, key) => {
-    const value = style[key]
+    const value = style[key];
     if (PERCENTAGE_KEY_LIST.includes(key)) {
-      setStyleValue(result, key, value)
+      setStyleValue(result, key, value);
     } else if (value !== undefined && value !== null) {
-      setStyleValue(result, key, handler(value as string))
+      setStyleValue(result, key, handler(value as string));
     }
-    return result
-  }, {})
+    return result;
+  }, {});
 }
 
 function setStyleValue(object, key, value) {
   if (value === undefined || value === null || value === '') {
-    return
+    return;
   }
   // 特殊样式移除
   if (key === 'open') {
-    return
+    return;
   }
 
   if (isEmptyObj(value)) {
-    return
+    return;
   }
 
-  object[camelcase(key)] = value
+  object[camelcase(key)] = value;
 }
 
 function calPxToREM(px: number) {
-  if (Number.isNaN(px / 28)) return px.toString()
+  if (Number.isNaN(px / 28)) return px.toString();
   if (+px === 0) {
-    return '0'
+    return '0';
   }
-  return (px / 28).toFixed(4) + 'rem'
+  return (px / 28).toFixed(4) + 'rem';
 }
 
 export function toREM(cssLen: number | string): string {
   if (typeof cssLen === 'string') {
-    const cssLenArr = cssLen.split(' ')
+    const cssLenArr = cssLen.split(' ');
     return cssLenArr
       .map((attr) => {
-        const matchResult = attr.match(/^(-?\d+)(px)?$/)
+        const matchResult = attr.match(/^(-?\d+)(px)?$/);
         if (matchResult && matchResult[1]) {
-          return calPxToREM(+matchResult[1])
+          return calPxToREM(+matchResult[1]);
         }
-        return attr
+        return attr;
       })
-      .join(' ')
+      .join(' ');
   } else if (typeof cssLen === 'number') {
-    return calPxToREM(cssLen)
+    return calPxToREM(cssLen);
   } else {
-    throw new Error('cssLen type error')
+    throw new Error('cssLen type error');
   }
 }
 
 export function toRPX(cssLen: number | string): string {
   if (typeof cssLen === 'string') {
-    const cssLenArr = cssLen.split(' ')
+    const cssLenArr = cssLen.split(' ');
     return cssLenArr
       .map((attr) => {
-        const matchResult = attr.match(/^(-?\d+)(px)?$/)
+        const matchResult = attr.match(/^(-?\d+)(px)?$/);
         if (matchResult && matchResult[1]) {
-          return `${+matchResult[1]}rpx`
+          return `${+matchResult[1]}rpx`;
         }
-        return attr
+        return attr;
       })
-      .join(' ')
+      .join(' ');
   }
-  return `${cssLen}rpx`
+  return `${cssLen}rpx`;
 }
 
 export function removeWrapperBadEffectStyle(
   commonStyle: CSSProperties = {}
 ): CSSProperties {
   return Object.keys(commonStyle).reduce((result, key) => {
-    const value = commonStyle[key]
-    const camelcaseKey = camelcase(key)
+    const value = commonStyle[key];
+    const camelcaseKey = camelcase(key);
 
     if (WRAPPER_REMOVE_STYLE_KEY_LIST.includes(camelcaseKey)) {
-      return result
+      return result;
     }
 
     if (key === 'display' && value === 'flex') {
-      return result
+      return result;
     }
 
-    setStyleValue(result, camelcaseKey, value)
-    return result
-  }, {})
+    setStyleValue(result, camelcaseKey, value);
+    return result;
+  }, {});
 }
 
 export function removeEffectTwiceStyle(
   commonStyle: CSSProperties = {}
 ): CSSProperties {
-  const style: CSSProperties = {}
+  const style: CSSProperties = {};
   Object.keys(commonStyle).map((key) => {
-    const value = commonStyle[key]
-    const camelcaseKey = camelcase(key)
+    const value = commonStyle[key];
+    const camelcaseKey = camelcase(key);
 
     // 去掉会重复影响布局样式属性
     if (SELF_REMOVE_STYLE_KEY_LIST.includes(camelcaseKey)) {
-      return false
+      return false;
     }
 
     // 去掉特殊有百分比的样式属性，比如 width
@@ -529,12 +536,12 @@ export function removeEffectTwiceStyle(
       SELF_REMOVE_WITH_PERCENTAGE_KEY_LIST.includes(camelcaseKey) &&
       String(value).match(/.+%$/)
     ) {
-      return false
+      return false;
     }
 
-    setStyleValue(style, camelcaseKey, value)
-  })
-  return style
+    setStyleValue(style, camelcaseKey, value);
+  });
+  return style;
 }
 
 export function toCssText(
@@ -543,9 +550,9 @@ export function toCssText(
 ) {
   const attrText = Object.keys(style)
     .map((key) => {
-      const value = style[key]
-      return `${kebabCase(key)}: ${value};`
+      const value = style[key];
+      return `${kebabCase(key)}: ${value};`;
     })
-    .join('\n')
-  return `${className} { ${attrText} }\n`
+    .join('\n');
+  return `${className} { ${attrText} }\n`;
 }

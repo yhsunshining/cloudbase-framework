@@ -1,16 +1,16 @@
-import * as fs from 'fs'
-import * as path from 'path'
-import _ from 'lodash'
-import { IMaterialItem } from '../../weapps-core'
-import { downloadAndInstallDependencies } from '../service/builder/webpack'
+import * as fs from 'fs';
+import * as path from 'path';
+import _ from 'lodash';
+import { IMaterialItem } from '../../weapps-core';
+import { downloadAndInstallDependencies } from '../service/builder/webpack';
 import {
   copyMaterialLibraries,
   genCompositeComponentLibraries,
-} from '../service/builder/copy'
-import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate'
-import { getInputProps, getComponentsInfo } from '../util'
-import { RUNTIME } from '../../index'
-import * as junk from '../util/junk'
+} from '../service/builder/copy';
+import { writeLowCodeFilesForCompositeComp } from '../service/builder/generate';
+import { getComponentsInfo } from '../util';
+import { RUNTIME } from '../../types';
+import * as junk from '../util/junk';
 
 export async function runHandleMaterial(
   appBuildDir: string,
@@ -28,8 +28,8 @@ export async function runHandleMaterial(
       ignoreInstall,
     }),
     await handleCompositeComponent({ dependencies, appBuildDir }),
-  ]
-  return _.flatten(allMaterials)
+  ];
+  return _.flatten(allMaterials);
 }
 
 async function handleNormalMaterial({
@@ -39,23 +39,23 @@ async function handleNormalMaterial({
   runtime,
   ignoreInstall,
 }) {
-  const timeTag = '-------------------- handleNormalMaterial'
-  console.time(timeTag)
-  const normalDependencies = dependencies.filter((item) => !item.isComposite)
+  const timeTag = '-------------------- handleNormalMaterial';
+  console.time(timeTag);
+  const normalDependencies = dependencies.filter((item) => !item.isComposite);
   // await createNodeModulesSoftLink(appBuildDir, nodeModulesPath)
   await downloadAndInstallDependencies(normalDependencies, materialsDir, {
     runtime,
     ignoreInstall,
-  })
-  await copyMaterialLibraries(normalDependencies, materialsDir, appBuildDir)
-  console.timeEnd(timeTag)
+  });
+  await copyMaterialLibraries(normalDependencies, materialsDir, appBuildDir);
+  console.timeEnd(timeTag);
   return normalDependencies.map((metaInfo) => {
     const materialItemPath = path.join(
       appBuildDir,
       'src/libraries',
       `${metaInfo.name}@${metaInfo.version}`
-    )
-    const actionsDir = path.join(materialItemPath, 'actions')
+    );
+    const actionsDir = path.join(materialItemPath, 'actions');
     return {
       ...metaInfo,
       actions:
@@ -69,40 +69,40 @@ async function handleNormalMaterial({
         .filter(junk.not)
         .map((dirName) => ({ name: dirName })),
       plugins: [],
-    }
-  })
+    };
+  });
 }
 
 async function handleCompositeComponent({ dependencies, appBuildDir }) {
-  console.time('handleCompositeComponent')
+  console.time('handleCompositeComponent');
   const compositeDependencies: IMaterialItem[] = dependencies.filter(
     (item) => item.isComposite
-  )
+  );
 
-  const materialGroupVersionMap = {}
+  const materialGroupVersionMap = {};
   dependencies.forEach(
     (item) => (materialGroupVersionMap[item.name] = item.version)
-  )
+  );
   const componentsMeta = await getComponentsInfo(
     path.join(appBuildDir, 'src'),
     dependencies
-  )
+  );
 
-  await writeLowCodeFilesForCompositeComp(compositeDependencies, appBuildDir)
+  await writeLowCodeFilesForCompositeComp(compositeDependencies, appBuildDir);
   await genCompositeComponentLibraries(
     compositeDependencies,
     appBuildDir,
     materialGroupVersionMap,
     componentsMeta
-  )
+  );
 
-  console.timeEnd('handleCompositeComponent')
+  console.timeEnd('handleCompositeComponent');
   const result = compositeDependencies.map((metaInfo) => {
     const materialItemPath = path.join(
       appBuildDir,
       'src/libraries',
       `${metaInfo.name}@${metaInfo.version}`
-    )
+    );
     return {
       ...metaInfo,
       components:
@@ -114,7 +114,7 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
               })
               .filter(junk.not)
               .map((dirName) => ({ name: dirName })),
-    }
-  })
-  return result
+    };
+  });
+  return result;
 }

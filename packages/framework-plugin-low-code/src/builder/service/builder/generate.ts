@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import _ from 'lodash';
 import tpl from 'lodash.template';
-import { Schema, ISchema } from '@formily/react-schema-renderer';
+import { Schema } from '@formily/react-schema-renderer';
 import chalk from 'chalk';
 import os from 'os';
 import {
@@ -23,10 +23,8 @@ import {
   isEmptyObj,
   IDataBind,
   PropBindType,
-  IComponentMeta,
   getCompositedComponentClass,
   ICompositedComponent,
-  IWeAppData,
 } from '../../../weapps-core';
 import {
   deepDealSchema,
@@ -45,6 +43,7 @@ import {
 } from '../../util/style';
 import {
   buildAsWebByBuildType,
+  BuildType,
   IComponentsInfoMap,
   ISyncProp,
 } from '../../types/common';
@@ -52,11 +51,10 @@ import { getYyptConfigInfo, writeLibCommonRes2file } from '../../util';
 
 import {
   getDatasourceProfiles,
-  getDataVarProfiles,
   getDatasetProfiles,
 } from '../../../utils/dataSource';
-import { DEPLOY_MODE } from '../../../index';
 import { cleanDir } from '../../util/generateFiles';
+import { DEPLOY_MODE } from '../../../types';
 
 export interface IOriginKeyInfo {
   sourceKey: string;
@@ -343,7 +341,7 @@ export function pullActionToListByInstances(
       originActionList.push({
         name,
         materialName,
-        materialVersion: material && material.version,
+        materialVersion: material?.version,
         key: actionKey,
         type,
         variableName,
@@ -396,21 +394,6 @@ export function isSlot(comp: Schema) {
   return comp.path && !comp['x-props'];
 }
 
-function getChildrenId(properties = {}) {
-  let childrenId: string[] = [];
-
-  for (const key in properties) {
-    const comp = properties[key];
-    if (isSlot(comp)) {
-      childrenId = childrenId.concat(getChildrenId(comp.properties));
-    } else {
-      childrenId = childrenId.concat(key);
-    }
-  }
-
-  return childrenId;
-}
-
 export function getComponentSchemaString(
   componentSchema: IComponentSchemaJson,
   isComposite = false,
@@ -438,8 +421,10 @@ export function getComponentSchemaString(
       schema['emitEvents'] = (componentInfo as any)?.events.map(
         (item) => item.name
       );
-    } else if (componentsInfoMap.emitEvents) {
-      schema['emitEvents'] = componentInfo;
+    } else if ((componentInfo as any)?.emitEvents) {
+      schema['emitEvents'] = (componentInfo as any).emitEvents.map(
+        (item) => item.eventName
+      );
     }
 
     // 生成 widgets/dataBinds
@@ -689,21 +674,31 @@ function generateListnerInstances(
       const { variableName } = getMetaInfoBySourceKey(sourceKey);
       generatedListener.instanceFunction = `${REPLACE_SIGN}${variableName}${REPLACE_SIGN}`;
     } else if (listener.type === ActionType.Platform) {
-      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.${listener.handler.name}(data) }${REPLACE_SIGN}`;
+      generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.${
+        listener.handler?.name || listener.jsCode
+      }(data) }${REPLACE_SIGN}`;
     } else if (listener.type === ActionType.DataSource) {
       generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { return app.cloud.callDataSource(data) }${REPLACE_SIGN}`;
     } else if (listener.type === ActionType.PropEvent) {
       if (isComposite) {
-        generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${listener.handler.name}', data.target) }.bind(this)${REPLACE_SIGN}`;
+        generatedListener.instanceFunction = `${REPLACE_SIGN}function({data}) { this.props.emit('${
+          listener.handler?.name || listener.jsCode
+        }', data.target) }.bind(this)${REPLACE_SIGN}`;
       } else {
-        generatedListener.instanceFunction = `${REPLACE_SIGN}function(...args) { $page.props.events.${listener.handler.name}.apply(null, args) }${REPLACE_SIGN}`;
+        generatedListener.instanceFunction = `${REPLACE_SIGN}function(...args) { $page.props.events.${
+          listener.handler?.name || listener.jsCode
+        }.apply(null, args) }${REPLACE_SIGN}`;
       }
     } else {
       // Lowcode action(handler)
       if (isComposite) {
-        generatedListener.instanceFunction = `${REPLACE_SIGN}this.handler.${listener.handler.name}.bind(this)${REPLACE_SIGN}`;
+        generatedListener.instanceFunction = `${REPLACE_SIGN}this.handler.${
+          listener.handler?.name || listener.jsCode
+        }.bind(this)${REPLACE_SIGN}`;
       } else {
-        generatedListener.instanceFunction = `${REPLACE_SIGN}handler.${listener.handler.name}${REPLACE_SIGN}`;
+        generatedListener.instanceFunction = `${REPLACE_SIGN}handler.${
+          listener.handler?.name || listener.jsCode
+        }${REPLACE_SIGN}`;
       }
     }
     if (!isEmptyObj(listener.data)) {
@@ -813,7 +808,7 @@ export async function generateRouterFile(
   allAppDataList: IWebRuntimeAppData[],
   appBuildDir: string,
   basename = '',
-  buildTypeList
+  buildTypeList: BuildType[] = []
 ) {
   const routerImports: string[] = [];
   const routerRenders: string[] = [];
@@ -1060,46 +1055,4 @@ export async function generateCodeFromTpl(
       fs.removeSync(outTplPath);
     }
   }
-}
-
-function generateDsLocalFunctions(
-  targetDir: string,
-  templateDir: string,
-  datasource: any
-) {
-  const { name: dsName } = datasource;
-  const localMethods = datasource.methods?.filter(
-    (method) => method.type === 'local-function'
-  );
-  if (!localMethods || !localMethods.length) return [];
-  const methodFileNameTup: [string, string][] = [];
-  const tasks: Promise<any>[] = localMethods.map((method) => {
-    const methodName = method.name;
-    let fileName = methodName;
-    fs.ensureDirSync(path.join(targetDir, dsName));
-    // 方法名若为 index, 则改名为 _index
-    if (fileName === 'index') fileName = `_${fileName}`;
-    methodFileNameTup.push([methodName, fileName]);
-
-    return fs.writeFile(
-      path.join(targetDir, dsName, `${methodName}.js`),
-      tpl(fs.readFileSync(path.resolve(templateDir, 'fn.js.tpl'), 'utf8'))({
-        method,
-      }),
-      { flag: 'w' }
-    );
-  });
-
-  tasks.push(
-    fs.writeFile(
-      path.join(targetDir, dsName, `index.js`),
-      tpl(
-        fs.readFileSync(path.resolve(templateDir, 'fn.index.js.tpl'), 'utf8')
-      )({
-        methodFileNameTup,
-      }),
-      { flag: 'w' }
-    )
-  );
-  return [dsName, tasks];
 }

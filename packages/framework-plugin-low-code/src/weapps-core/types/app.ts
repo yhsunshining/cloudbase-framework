@@ -2,8 +2,7 @@ import { CSSProperties, ICommonStyle } from './style';
 import { ActionType } from './action';
 import { IWeAppCode } from './lowcode';
 import { IPlugin } from '../types/plugins';
-import { IDataBind } from './web';
-import { HISTORY_TYPE } from '../../index';
+import { HISTORY_TYPE } from '../../types';
 
 export interface IAppAndPageVar {
   /** 各种变量 */
@@ -85,19 +84,33 @@ export interface IWeAppComponentInstance {
     classListBind: IDynamicValue;
     commonStyle: ICommonStyle;
     styleBindPath?: string;
+    customDataForm: Record<string, any>;
   };
   xIndex?: number; // ordering
   properties?: { [key: string]: IWeAppComponentInstance };
+  /**
+   * 用于组件开发，将当前组件设为抽象组件（用户在使用时可指定其他组件代替改组件）
+   * https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/generics.html
+   */
+  genericComp?: {
+    // enabled: boolean
+    propName: string;
+    title: string;
+    description?: string;
+    allowedCompType?: string;
+    xIndex?: number;
+  };
 }
 
 export interface IEventListener extends IEventModifiers {
   key?: string;
   trigger: string;
   type: ActionType; // listener defition location
-  handler: {
+  handler?: {
     moduleName: string; // namesapce, could be rematch module, material name
     name: string; // Handler name or inline code
   };
+  jsCode?: string; // If type is inline
   data: { [prop: string]: IDynamicValue }; // user configured handler params
 }
 
@@ -137,3 +150,5 @@ export interface ILockedPage {
   username: string;
   socketId: string;
 }
+
+export type IBuildType = 'web' | 'mp' | 'app' | 'qywxH5' | 'wxH5';

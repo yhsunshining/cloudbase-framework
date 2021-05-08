@@ -2,7 +2,7 @@
 //  处理依赖合并问题
 import mergePackageJson from 'merge-package-json';
 import { IWebRuntimeAppData, IPageInstance } from 'src/weapps-core';
-import { DEPLOY_MODE } from '../index';
+import { DEPLOY_MODE } from '../types';
 import { PropBindType } from '@cloudbase/cals/lib/parser/expression';
 import { generateDataBind } from '../builder/mp/util';
 

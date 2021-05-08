@@ -5,6 +5,7 @@ import { IWeAppData, IWeAppPage, loopDealWithFn } from '../../weapps-core';
 import { IBuildContext } from './BuildContext';
 import { MP_CONFIG_MODULE_NAME } from '../config';
 import { downloadFile } from '../util/net';
+import chalk from 'chalk';
 
 /**
  * generate app.json & page.json for mp
@@ -16,11 +17,13 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   const appConfig = { useExtendedLib: { weui: true } };
   const projConfig: any = merge({}, defaultProjConfig, {
     projectname: 'WeDa-' + ctx.appId,
-  })
+  });
   const pageConfigs = weapps.map((app) => {
     const pageConfig = {};
     // #1 Get page config from mp config
-    const kbConfig = app.lowCodes?.find((m) => m.name === MP_CONFIG_MODULE_NAME)
+    const kbConfig = app.lowCodes?.find(
+      (m) => m.name === MP_CONFIG_MODULE_NAME
+    );
     if (kbConfig) {
       const { pagesConfigJson = {} } = eval(
         `(${kbConfig.code.replace(/export\s+default/, '')})`
@@ -29,9 +32,9 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
     }
 
     // #2 Get page config from page page.data editor UI
-    merge(pageConfig, getAppPagesConfig(app?.pageInstanceList || []))
-    return pageConfig
-  })
+    merge(pageConfig, getAppPagesConfig(app?.pageInstanceList || []));
+    return pageConfig;
+  });
 
   const kbConfig = weapps[0].lowCodes?.find(
     (m) => m.name === MP_CONFIG_MODULE_NAME
@@ -77,34 +80,36 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
 }
 
 function extractPages(weapps: IWeAppData[], pageConfigs: any[]) {
-  const pages: string[] = []
-  const subpackages: any[] = []
-  let homePage = ''
+  const pages: string[] = [];
+  const subpackages: any[] = [];
+  let homePage = '';
+  let homePageId = '';
   weapps.forEach((weapp, index) => {
     const { rootPath } = weapp;
     const subPackage: {
-      root;
+      root?: string;
       pages: string[];
     } = { root: rootPath, pages: [] };
     if (rootPath) {
-      subpackages.push(subPackage)
+      subpackages.push(subPackage);
     }
     loopDealWithFn(weapp.pageInstanceList || [], (page) => {
-      const pageConfig = pageConfigs[index]
-      const pageFileName = get(pageConfig, `${page.id}.pageFileName`, 'index')
+      const pageConfig = pageConfigs[index];
+      const pageFileName = get(pageConfig, `${page.id}.pageFileName`, 'index');
       if (rootPath) {
         subPackage.pages.push(`pages/${page.id}/${pageFileName}`);
       } else if (!page.isHome) {
         pages.push(`pages/${page.id}/${pageFileName}`);
       } else {
         homePage = `pages/${page.id}/${pageFileName}`;
+        homePageId = page.id;
       }
     });
   });
   if (homePage) {
     pages.unshift(homePage);
   }
-  return { pages, subpackages }
+  return { pages, subpackages, homePageId };
 }
 
 function getAppPagesConfig(pages: IWeAppPage[]) {
@@ -132,11 +137,31 @@ function transformDynamicData(originData) {
 function parseTabConfig(tabBar, projDir: string) {
   tabBar.list.map((tab, index) => {
     const { iconPath, selectedIconPath } = tab;
-    tab.iconPath = 'assets/tab' + index + '/icon' + path.extname(iconPath);
-    tab.selectedIconPath =
-      'assets/tab' + index + '/selectedIcon' + path.extname(selectedIconPath);
-
-    downloadFile(iconPath, projDir + '/' + tab.iconPath);
-    downloadFile(selectedIconPath, projDir + '/' + tab.selectedIconPath);
+    if (iconPath) {
+      tab.iconPath = parseTabIcon(iconPath, index, 'icon');
+    }
+    if (selectedIconPath) {
+      tab.selectedIconPath = parseTabIcon(
+        selectedIconPath,
+        index,
+        'selectedIcon'
+      );
+    }
   });
+
+  function parseTabIcon(iconUrl, index, filename) {
+    if (typeof iconUrl !== 'string') {
+      console.error(chalk.red('App.json invalid tabbar icon path'), iconUrl);
+      return;
+    }
+    const iconPath =
+      'assets/tab' + index + '/' + filename + path.extname(iconUrl);
+    downloadFile(iconUrl, projDir + '/' + iconPath).catch((e) => {
+      console.error(
+        chalk.red(`Fail to download tabBar icon from ${iconUrl}`),
+        e
+      );
+    });
+    return iconPath;
+  }
 }
