@@ -55,17 +55,10 @@ import {
 } from '../../../utils/dataSource';
 import { cleanDir } from '../../util/generateFiles';
 import { DEPLOY_MODE } from '../../../types';
-
-export interface IOriginKeyInfo {
-  sourceKey: string;
-  name: string;
-  materialName: string;
-  materialVersion: string;
-  key: string;
-  variableName: string;
-  type?: ActionType;
-  isPlainProps?: boolean;
-}
+import { IOriginKeyInfo as IBaseOriginKeyInfo } from '../../../generator/core/generate';
+import { camelcase } from '../../../generator/util';
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IOriginKeyInfo extends IBaseOriginKeyInfo {}
 
 export async function generateAppStyleLessFile(
   allAppDataList: IWebRuntimeAppData[],
@@ -181,6 +174,30 @@ export async function generateSinglePageJsxFile(
     originActionList,
     fixedDependencies
   );
+  const originEntryMap = {};
+  originComponentList.forEach((component) => {
+    if (!originEntryMap[component.materialName]) {
+      const info = {
+        materialName: component.materialName,
+        version: component.materialVersion,
+        entry: component.entry,
+      };
+      originEntryMap[component.materialName] = info;
+    }
+  });
+  originActionList.forEach((action) => {
+    if (!originEntryMap[action.materialName]) {
+      const info = {
+        materialName: action.materialName,
+        version: action.materialVersion,
+        entry: action.entry,
+      };
+      originEntryMap[action.materialName] = info;
+    }
+  });
+  const entryImportStringArr = getEntryImportStringArr(
+    Object.values(originEntryMap)
+  );
   const componentImportStringArr = getComponentImportStringArr(
     originComponentList
   );
@@ -196,6 +213,7 @@ export async function generateSinglePageJsxFile(
   const templateData = {
     pageUUID: rootPath ? `${rootPath}/${pageInstance.id}` : pageInstance.id,
     pageName: pageInstance.id,
+    entryImports: entryImportStringArr.join(';\n'),
     componentImports: componentImportStringArr.join(';\n'),
     pluginImports: pluginImportStringArr.join(';\n'),
     actionImports: actionImportStringArr.join(';\n'),
@@ -322,7 +340,10 @@ export function getOriginPluginList(
 export function pullActionToListByInstances(
   listenerInstances,
   originActionList,
-  fixedDependencies: IMaterialItem[]
+  fixedDependencies: (IMaterialItem & {
+    isPlainProps?: boolean;
+    entry?: string;
+  })[]
 ) {
   if (!listenerInstances || !listenerInstances.length) {
     return;
@@ -345,6 +366,7 @@ export function pullActionToListByInstances(
         key: actionKey,
         type,
         variableName,
+        entry: material?.entry,
       });
     }
   });
@@ -353,7 +375,10 @@ export function pullActionToListByInstances(
 export function pullComponentToListByInstance(
   sourceKey: string,
   originComponentList: IOriginKeyInfo[],
-  fixedDependencies: (IMaterialItem & { isPlainProps?: boolean })[]
+  fixedDependencies: (IMaterialItem & {
+    isPlainProps?: boolean;
+    entry?: string;
+  })[]
 ) {
   const { materialName, name, variableName } = getMetaInfoBySourceKey(
     sourceKey
@@ -373,6 +398,7 @@ export function pullComponentToListByInstance(
       key: componentKey,
       variableName: variableName || '',
       isPlainProps: !!foundOne?.isPlainProps,
+      entry: foundOne?.entry,
     });
   }
 }
@@ -759,18 +785,55 @@ export function getComponentImportStringArr(
   componentImportStringArr: string[] = []
 ) {
   components.map(async (component: IOriginKeyInfo) => {
-    const { name, materialName, materialVersion, variableName } = component;
+    const {
+      name,
+      materialName,
+      materialVersion,
+      variableName,
+      entry,
+    } = component;
     // const fullName = `${materialName}_${name}`
 
     // 这里将头字母变成大写是为了能在jsx中以<XXX/>去引用组件
-    const importString = `import ${_.upperFirst(
-      variableName
-    )} from 'libraries/${`${materialName}@${materialVersion}`}/components/${name}'`;
+    let importString = '';
+    if (entry) {
+      const componentsLibVariableName = camelcase(`${materialName}`);
+      importString = `const { ${name}: ${_.upperFirst(
+        variableName
+      )} } = ${componentsLibVariableName}.components`;
+    } else {
+      importString = `import ${_.upperFirst(
+        variableName
+      )} from 'libraries/${`${materialName}@${materialVersion}`}/components/${name}'`;
+    }
     if (!componentImportStringArr.includes(importString)) {
       componentImportStringArr.push(importString);
     }
   });
-  return componentImportStringArr;
+  return componentImportStringArr.filter((item) => !!item);
+}
+
+export function getEntryImportStringArr(
+  materialInfoList: {
+    materialName: string;
+    version: string;
+    entry?: string;
+  }[] = [],
+  entryImportStringArr: string[] = []
+) {
+  materialInfoList.forEach(({ materialName, version, entry }) => {
+    if (entry) {
+      const componentsLibVariableName = camelcase(`${materialName}`);
+      const importComponentLibString = `import ${componentsLibVariableName} from '${path.join(
+        `libraries/${materialName}@${version}`,
+        entry
+      )}'`;
+      if (!entryImportStringArr.includes(importComponentLibString)) {
+        entryImportStringArr.push(importComponentLibString);
+      }
+    }
+  });
+  return entryImportStringArr || [];
 }
 
 export function getActionImportStringArr(
@@ -794,9 +857,15 @@ export function pushActionToImportStringArr(
     materialName,
     materialVersion,
     variableName,
+    entry,
   } = listenerInstance;
 
-  const importString = `import ${variableName} from 'libraries/${materialName}@${materialVersion}/actions/${name}'`;
+  const componentsLibVariableName = camelcase(`${materialName}`);
+
+  const importString = entry
+    ? `const { ${name}: ${variableName} } = ${componentsLibVariableName}.actions`
+    : `import ${variableName} from 'libraries/${materialName}@${materialVersion}/actions/${name}'`;
+
   if (actionImportStringArr.includes(importString)) {
     return;
   }

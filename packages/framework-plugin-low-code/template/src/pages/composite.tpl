@@ -16,8 +16,11 @@ import handler$<%= handler.name %> from "./lowcode/handler/<%= handler.name %>.j
 <% }) %>
 
 // Import Components
-<% useComponents.forEach(compItem => {%>
-import <%= compItem.var %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/components/<%= compItem.name %>";
+<% var componentsMap = {}; useComponents.forEach(compItem => {%>
+<% if(compItem.entry){ %><% if(!componentsMap[compItem.moduleName]){ componentsMap[compItem.moduleName] = true %>
+import <%= compItem.moduleNameVar %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/<%= compItem.entry %>";
+<% } %>const { <%= compItem.name %>: <%= compItem.var %> } = <%= compItem.moduleNameVar %>.components
+<% } else { %>import <%= compItem.var %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/components/<%= compItem.name %>";<% } %>
 <%}) %>
 
 import * as constObj from '../../libCommonRes/const'

@@ -42,9 +42,15 @@ async function handleCompositeComponent({
   const compositeDependencies: IMaterialItem[] = dependencies.filter(
     (item) => item.isComposite
   );
-  const materialGroupVersionMap = {};
+  const materialGroupInfoMap = {};
   dependencies.forEach(
-    (item) => (materialGroupVersionMap[item.name] = item.version)
+    (item) =>
+      (materialGroupInfoMap[item.name] = {
+        isComposite: item.isComposite,
+        version: item.version,
+        entry: item.entry,
+        schemaVersion: item.schemaVersion,
+      })
   );
   const componentsInfoMap = await getComponentsInfo(
     path.join(appBuildDir, 'src'),
@@ -61,7 +67,7 @@ async function handleCompositeComponent({
   await genCompositeComponentLibraries(
     compositeDependencies,
     appBuildDir,
-    materialGroupVersionMap,
+    materialGroupInfoMap,
     componentsInfoMap,
     i18nConfig,
     fileCodeMap,
@@ -194,7 +200,14 @@ export function generateDefaultLowcodeIndex(data) {
 export async function genCompositeComponentLibraries(
   dependencies: IMaterialItem[] = [],
   appBuildDir: string,
-  materialGroupVersionMap: { [name: string]: string } = {},
+  materialGroupInfoMap: {
+    [name: string]: {
+      isComposite?: boolean;
+      version?: string;
+      entry?: string;
+      schemaVersion?: string;
+    };
+  } = {},
   componentsInfoMap: IComponentsInfoMap,
   i18nConfig: any,
   fileMap: any,
@@ -257,9 +270,7 @@ export async function genCompositeComponentLibraries(
               JSON.stringify(compItem.componentInstances, (key, value) => {
                 if (key === 'xComponent') {
                   const { moduleName, name } = value;
-                  const compLib = dependencies.find(
-                    (item) => item.name === moduleName
-                  );
+                  const compLib = materialGroupInfoMap[moduleName];
 
                   let isPlainProps = false;
                   if (compLib) {
@@ -276,9 +287,11 @@ export async function genCompositeComponentLibraries(
                     name,
                     key: `${moduleName}:${name}`,
                     var: camelcase(`${moduleName}:${name}`),
-                    version: materialGroupVersionMap[moduleName],
+                    moduleNameVar: camelcase(moduleName),
+                    version: compLib?.version,
                     isComposite: compLib?.isComposite,
                     isPlainProps,
+                    entry: compLib?.entry,
                   });
                 }
                 return value;

@@ -1,32 +1,32 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
-import path from 'path'
-import fs from 'fs-extra'
-import tpl from 'lodash.template'
-import jsonSchemaDefaults from 'json-schema-defaults'
-import _ from 'lodash'
-import { getCurrentPackageJson, readComponentLibMata } from '../../util'
+import path from 'path';
+import fs, { readJsonSync } from 'fs-extra';
+import tpl from 'lodash.template';
+import jsonSchemaDefaults from 'json-schema-defaults';
+import _ from 'lodash';
+import { getCurrentPackageJson, readComponentLibMata } from '../../util';
 import {
   IMaterialItem,
   IWebRuntimeAppData,
   readCmpInstances,
   getCompositedComponentClass,
   ICompositedComponent,
-} from '../../../weapps-core'
-import { appTemplateDir } from '../../config'
-import { IComponentInputProps, IComponentsInfoMap } from '../../types/common'
+} from '../../../weapps-core';
+import { appTemplateDir } from '../../config';
+import { IComponentInputProps, IComponentsInfoMap } from '../../types/common';
 import {
   getComponentSchemaString,
   getListenersString,
   getOriginComponentAndActionList,
-} from './generate'
-import * as junk from '../../util/junk'
+} from './generate';
+import * as junk from '../../util/junk';
 
 export async function copyEntryFile(
   appBuildDir: string,
   appContent: IWebRuntimeAppData
 ) {
-  const entryFilePath = path.resolve(appTemplateDir, './src/index.jsx')
-  const content = await fs.readFile(entryFilePath)
+  const entryFilePath = path.resolve(appTemplateDir, './src/index.jsx');
+  const content = await fs.readFile(entryFilePath);
   await fs.writeFile(
     path.join(appBuildDir, 'src/index.jsx'),
     tpl(content + '')({
@@ -36,7 +36,7 @@ export async function copyEntryFile(
       ...appContent,
     }),
     { flag: 'w' }
-  )
+  );
 }
 
 export async function copyMaterialLibraries(
@@ -44,74 +44,95 @@ export async function copyMaterialLibraries(
   materialsDir: string,
   appBuildDir: string
 ) {
-  const localPkg = getCurrentPackageJson()
+  const localPkg = getCurrentPackageJson();
   await Promise.all(
     dependencies.map(async (componentLib) => {
-      const { name, version } = componentLib
-      const materialNameVersion = `${name}@${version}`
-      const materialDir = path.join(materialsDir, materialNameVersion)
-      let targetDir = path.join(materialDir, 'src')
+      const { name, version } = componentLib;
+      const materialNameVersion = `${name}@${version}`;
+      const materialDir = path.join(materialsDir, materialNameVersion);
+      const srcDir = 'src';
+      let targetDir = path.join(materialDir, srcDir);
       // 当前本地目录是素材库的时候，直接用本地的
       if (localPkg && localPkg.name === name && localPkg.version === version) {
         console.log(
           '当前本地目录是素材库的时候，直接用本地的',
           materialNameVersion
-        )
-        targetDir = path.join(process.cwd(), 'src')
+        );
+        targetDir = path.join(process.cwd(), 'src');
       }
       const librariesDir = path.join(
         appBuildDir,
         'src/libraries',
         materialNameVersion
-      )
-      const metaJosnPath = path.join(materialDir, 'meta.json')
+      );
+      const metaJosnPath = path.join(materialDir, 'meta.json');
       if (fs.existsSync(metaJosnPath)) {
-        await fs.copy(metaJosnPath, path.join(librariesDir, 'meta.json'))
+        await fs.copy(metaJosnPath, path.join(librariesDir, 'meta.json'));
       }
       await fs.copy(targetDir, librariesDir, {
         filter: (src, dest) => {
-          let path = src.split('/')
-          return !junk.is(path[path.length - 1])
+          let path = src.split('/');
+          return !junk.is(path[path.length - 1]);
         },
-      })
+      });
       // 副作用修改了dependence定义，trycatch 不阻塞主流程
       try {
-        const meta = readComponentLibMata(librariesDir)
-        let [major] = meta?.schemaVersion?.split('.') || []
+        const meta = readComponentLibMata(librariesDir);
+        let [major] = meta?.schemaVersion?.split('.') || [];
         if (Number(major) >= 3) {
-          componentLib['isPlainProps'] = true
+          componentLib['isPlainProps'] = true;
+        }
+      } catch (e) {}
+
+      try {
+        const packageJson = readJsonSync(
+          path.join(materialDir, 'package.json')
+        );
+
+        if (packageJson.lowcode) {
+          componentLib['entry'] = path.posix.relative(
+            srcDir,
+            packageJson.lowcode
+          );
         }
       } catch (e) {}
     })
-  )
+  );
 }
 
 export async function genCompositeComponentLibraries(
   dependencies: IMaterialItem[] = [],
   appBuildDir: string,
-  materialGroupVersionMap: { [name: string]: string } = {},
+  materialGroupInfoMap: {
+    [name: string]: {
+      isComposite: boolean;
+      version?: string;
+      entry?: string;
+      schemaVersion?: string;
+    };
+  } = {},
   componentsInfoMap: IComponentsInfoMap
 ) {
   await Promise.all(
     dependencies.map(async ({ name, version, components }) => {
-      const materialNameVersion = `${name}@${version}`
+      const materialNameVersion = `${name}@${version}`;
       const librariesDir = path.join(
         appBuildDir,
         'src/libraries',
         materialNameVersion
-      )
+      );
       await Promise.all(
         components.map(async (component) => {
-          let compItem = component as ICompositedComponent
-          compItem.materialName = name
+          let compItem = component as ICompositedComponent;
+          compItem.materialName = name;
           const wrapperClass = getCompositedComponentClass(
             compItem as ICompositedComponent
-          )
+          );
           const componentSchemaJson = {
             type: 'object',
             // @ts-ignore
             properties: readCmpInstances(compItem.componentInstances),
-          }
+          };
           const {
             widgets,
             dataBinds,
@@ -121,7 +142,7 @@ export async function genCompositeComponentLibraries(
             true,
             componentsInfoMap,
             wrapperClass
-          )
+          );
           const templateData = {
             // @ts-ignore
             id: compItem.id,
@@ -143,27 +164,31 @@ export async function genCompositeComponentLibraries(
             // @ts-ignore
             useComponents: (function () {
               const list: {
-                moduleName
-                name
-                key
-                var
-                version
-              }[] = []
+                moduleName;
+                name;
+                key;
+                var: string;
+                moduleNameVar: string;
+                version: string;
+                entry?: string;
+              }[] = [];
               // @ts-ignore
               JSON.stringify(compItem.componentInstances, (key, value) => {
                 if (key === 'xComponent') {
-                  const { moduleName, name } = value
+                  const { moduleName, name } = value;
                   list.push({
                     moduleName,
                     name,
                     key: `${moduleName}:${name}`,
                     var: _.camelCase(`${moduleName}:${name}`),
-                    version: materialGroupVersionMap[moduleName],
-                  })
+                    moduleNameVar: _.camelCase(moduleName),
+                    version: materialGroupInfoMap[moduleName]?.version || '',
+                    entry: materialGroupInfoMap[moduleName]?.entry,
+                  });
                 }
-                return value
-              })
-              return _.uniqBy(list, 'key')
+                return value;
+              });
+              return _.uniqBy(list, 'key');
             })(),
             widgets,
             dataBinds,
@@ -171,23 +196,23 @@ export async function genCompositeComponentLibraries(
             // @ts-ignore
             pageListenerInstances: getListenersString(compItem.listeners, true),
             materialName: name,
-          }
+          };
 
           const dest = path.resolve(
             librariesDir,
             `./components/${compItem.name}/index.jsx`
-          )
+          );
           const template = await fs.readFile(
             path.resolve(appTemplateDir, './src/pages/composite.tpl'),
             {
               encoding: 'utf8',
             }
-          )
-          const jsx = tpl(template)(templateData)
-          await fs.ensureFile(dest)
-          await fs.writeFile(dest, jsx)
+          );
+          const jsx = tpl(template)(templateData);
+          await fs.ensureFile(dest);
+          await fs.writeFile(dest, jsx);
         })
-      )
+      );
     })
-  )
+  );
 }

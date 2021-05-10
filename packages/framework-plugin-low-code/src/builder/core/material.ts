@@ -79,9 +79,15 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
     (item) => item.isComposite
   );
 
-  const materialGroupVersionMap = {};
+  const materialGroupInfoMap = {};
   dependencies.forEach(
-    (item) => (materialGroupVersionMap[item.name] = item.version)
+    (item) =>
+      (materialGroupInfoMap[item.name] = {
+        isComposite: item.isComposite,
+        version: item.version,
+        entry: item.entry,
+        schemaVersion: item.schemaVersion,
+      })
   );
   const componentsMeta = await getComponentsInfo(
     path.join(appBuildDir, 'src'),
@@ -92,7 +98,7 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
   await genCompositeComponentLibraries(
     compositeDependencies,
     appBuildDir,
-    materialGroupVersionMap,
+    materialGroupInfoMap,
     componentsMeta
   );
 

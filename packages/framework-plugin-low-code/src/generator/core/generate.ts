@@ -195,6 +195,7 @@ export interface IOriginKeyInfo {
   type?: ActionType;
   isComposite?: boolean;
   isPlainProps?: boolean;
+  entry?: string;
 }
 
 export async function generateSinglePageJsxFile(
@@ -337,7 +338,10 @@ export function getOriginComponentAndActionList(
 export function pullActionToListByInstances(
   listenerInstances,
   originActionList,
-  fixedDependencies: IMaterialItem[]
+  fixedDependencies: (IMaterialItem & {
+    isPlainProps?: boolean;
+    entry?: string;
+  })[]
 ) {
   if (!listenerInstances || !listenerInstances.length) {
     return;
@@ -360,6 +364,7 @@ export function pullActionToListByInstances(
         key: actionKey,
         type,
         variableName,
+        entry: material?.entry,
       });
     }
   });
@@ -398,6 +403,7 @@ export function pullComponentToListByInstance(
       key: componentKey,
       variableName: variableName || '',
       isPlainProps,
+      entry: (foundOne as IMaterialItem & { entry?: string })?.entry,
     });
   }
 }

@@ -138,21 +138,29 @@ export async function getComponentsInfo(
             .replace(/packages\/\w+\//, ''); // HACK：去除子包的目录，找根目录的素材地址。后续提供一个方法获取这些关键路径。
 
           const meta = readComponentLibMata(componentLibPath);
-          const components = await fs.readdir(materialComponentsPath);
 
-          await Promise.all(
-            components.map(async (name) => {
+          if (meta) {
+            const { components: componentsMap } = meta;
+            for (let name in componentsMap) {
               const sourceKey = `${materialName}:${name}`;
-              let metaJson;
-              if (meta) {
-                metaJson = meta.components[name];
-              } else {
-                const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`;
-                metaJson = { name, meta: await fs.readJson(componentMetaPath) };
-              }
+              let metaJson = componentsMap[name];
               outputObj[sourceKey] = { isComposite, ...metaJson };
-            })
-          );
+            }
+          } else {
+            // 老格式，需要从子目录下读取
+            const components = await fs.readdir(materialComponentsPath);
+            await Promise.all(
+              components.map(async (name) => {
+                const sourceKey = `${materialName}:${name}`;
+                const componentMetaPath = `${materialComponentsPath}/${name}/meta.json`;
+                let metaJson = {
+                  name,
+                  meta: await fs.readJson(componentMetaPath),
+                };
+                outputObj[sourceKey] = { isComposite, ...metaJson };
+              })
+            );
+          }
         }
       }
     )

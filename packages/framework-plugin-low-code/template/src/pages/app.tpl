@@ -22,6 +22,9 @@ if(process.env.SSR) {
   ReactDOMServer = require('react-dom/server');
 }
 
+// Import dependencies entry
+<%= entryImports %>
+
 // Import Components
 <%= componentImports %>
 
