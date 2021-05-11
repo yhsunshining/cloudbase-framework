@@ -499,6 +499,6 @@ class CustomDate {
 
 const dataInstance = new CustomDate();
 export const formatDate = new CustomDate().format.bind(dataInstance);
-export const utils = {
-  formatDate,
-};
+// export const utils = {
+//   formatDate,
+// };

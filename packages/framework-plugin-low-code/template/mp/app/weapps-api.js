@@ -1,5 +1,5 @@
 import { observable } from 'mobx'
-import { createComputed, utils } from '<%= subLevelPath %>../common/util'
+import { createComputed, formatDate } from '<%= subLevelPath %>../common/util'
 import process from '<%= subLevelPath %>../common/process'
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
@@ -34,7 +34,9 @@ function createGlboalApi() {
     state: observable(state),
     computed: createComputed(computed),
     common,
-    utils: utils,
+    utils: {
+      formatDate
+    },
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
 

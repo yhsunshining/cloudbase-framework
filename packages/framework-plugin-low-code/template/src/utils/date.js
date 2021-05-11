@@ -1,5 +1,5 @@
 // 日期转换
-class CusDate {
+class CustomDate {
   constructor() {
     this.i18n = {
       dayNames: [
@@ -58,8 +58,8 @@ class CusDate {
       longTime: 'h:MM:ss TT Z',
       isoDate: 'yyyy-mm-dd',
       isoTime: 'HH:MM:ss',
-      isoDateTime: 'yyyy-mm-dd\'T\'HH:MM:sso',
-      isoUtcDateTime: 'UTC:yyyy-mm-dd\'T\'HH:MM:ss\'Z\'',
+      isoDateTime: "yyyy-mm-dd'T'HH:MM:sso",
+      isoUtcDateTime: "UTC:yyyy-mm-dd'T'HH:MM:ss'Z'",
       expiresHeaderFormat: 'ddd, dd mmm yyyy HH:MM:ss Z',
     };
     this.token = /d{1,4}|D{3,4}|m{1,4}|yy(?:yy)?|([HhMsTt])\1?|W{1,2}|[LlopSZN]|"[^"]*"|'[^']*'/g;
@@ -91,20 +91,21 @@ class CusDate {
     let newDate = date;
     let newUtc = utc;
     let newGmt = gmt;
-    if (arguments.length === 1 && this._kindOf(newDate) === 'string' && !/\d/.test(newDate))
+    if (
+      arguments.length === 1 &&
+      this._kindOf(newDate) === 'string' &&
+      !/\d/.test(newDate)
+    )
       newDate = undefined;
     newDate = newDate || newDate === 0 ? newDate : new Date();
-    if (!(newDate instanceof Date))
-      newDate = new Date(newDate);
-    if (isNaN(newDate))
-      throw TypeError('Invalid date');
+    if (!(newDate instanceof Date)) newDate = new Date(newDate);
+    if (isNaN(newDate)) throw TypeError('Invalid date');
     newMask = String(this.masks[newMask] || newMask || this.masks['default']);
     const maskSlice = newMask.slice(0, 4);
     if (maskSlice === 'UTC:' || maskSlice === 'GMT:') {
       newMask = newMask.slice(4);
       newUtc = true;
-      if (maskSlice === 'GMT:')
-        newGmt = true;
+      if (maskSlice === 'GMT:') newGmt = true;
     }
     const _ = newUtc ? 'getUTC' : 'get';
     const _d = newDate[`${_}Date`]();
@@ -126,15 +127,29 @@ class CusDate {
       d: () => _d,
       dd: () => self._pad(_d),
       ddd: () => self.i18n.dayNames[D],
-      DDD: () => self._getDayName({ y, m: _m, d: _d, _, dayName: self.i18n.dayNames[D], short: true }),
+      DDD: () =>
+        self._getDayName({
+          y,
+          m: _m,
+          d: _d,
+          _,
+          dayName: self.i18n.dayNames[D],
+          short: true,
+        }),
       dddd: () => self.i18n.dayNames[D + 7],
-      DDDD: () => self._getDayName({ y: y, m: _m, d: _d, _: _, dayName: self.i18n.dayNames[D + 7] }),
+      DDDD: () =>
+        self._getDayName({
+          y: y,
+          m: _m,
+          d: _d,
+          _: _,
+          dayName: self.i18n.dayNames[D + 7],
+        }),
       m: () => _m + 1,
       mm: () => self._pad(_m + 1),
       mmm: () => self.i18n.monthNames[_m],
       mmmm: () => self.i18n.monthNames[_m + 12],
-      yy: () => String(y)
-        .slice(2),
+      yy: () => String(y).slice(2),
       yyyy: () => self._pad(y, 4),
       h: () => _H % 12 || 12,
       hh: () => self._pad(_H % 12 || 12),
@@ -151,14 +166,27 @@ class CusDate {
       T: () => (_H < 12 ? self.i18n.timeNames[4] : self.i18n.timeNames[5]),
       TT: () => (_H < 12 ? self.i18n.timeNames[6] : self.i18n.timeNames[7]),
       // eslint-disable-next-line no-nested-ternary
-      Z: () => newGmt ? 'GMT' : newUtc ? 'UTC' : (String(newDate)
-        .match(self.timezone) || ['']).pop()
-        .replace(self.timezoneClip, '')
-        .replace(/GMT\+0000/g, 'UTC'),
-      o: () => (_o > 0 ? '-' : '+') + self._pad(Math.floor(Math.abs(_o) / 60) * 100 + (Math.abs(_o) % 60), 4),
-      p: () => `${(_o > 0 ? '-' : '+') + self._pad(Math.floor(Math.abs(_o) / 60), 2)}:${self._pad(Math.floor(Math.abs(_o) % 60), 2)}`,
+      Z: () =>
+        newGmt
+          ? 'GMT'
+          : newUtc
+          ? 'UTC'
+          : (String(newDate).match(self.timezone) || [''])
+              .pop()
+              .replace(self.timezoneClip, '')
+              .replace(/GMT\+0000/g, 'UTC'),
+      o: () =>
+        (_o > 0 ? '-' : '+') +
+        self._pad(Math.floor(Math.abs(_o) / 60) * 100 + (Math.abs(_o) % 60), 4),
+      p: () =>
+        `${
+          (_o > 0 ? '-' : '+') + self._pad(Math.floor(Math.abs(_o) / 60), 2)
+        }:${self._pad(Math.floor(Math.abs(_o) % 60), 2)}`,
       // @ts-ignore
-      S: () => ['th', 'st', 'nd', 'rd'][_d % 10 > 3 ? 0 : (((_d % 100) - (_d % 10) != 10) * _d) % 10],
+      S: () =>
+        ['th', 'st', 'nd', 'rd'][
+          _d % 10 > 3 ? 0 : (((_d % 100) - (_d % 10) != 10) * _d) % 10
+        ],
       W: () => _W,
       WW: () => self._pad(_W),
       N: () => _N,
@@ -229,11 +257,20 @@ class CusDate {
   }
 
   _getWeek(date) {
-    const targetThursday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    targetThursday.setDate(targetThursday.getDate() - ((targetThursday.getDay() + 6) % 7) + 3);
+    const targetThursday = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+    targetThursday.setDate(
+      targetThursday.getDate() - ((targetThursday.getDay() + 6) % 7) + 3
+    );
     const firstThursday = new Date(targetThursday.getFullYear(), 0, 4);
-    firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3);
-    const ds = targetThursday.getTimezoneOffset() - firstThursday.getTimezoneOffset();
+    firstThursday.setDate(
+      firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3
+    );
+    const ds =
+      targetThursday.getTimezoneOffset() - firstThursday.getTimezoneOffset();
     targetThursday.setHours(targetThursday.getHours() - ds);
     const weekDiff = (targetThursday - firstThursday) / (864e5 * 7);
     return 1 + Math.floor(weekDiff);
@@ -260,10 +297,7 @@ class CusDate {
     if (Array.isArray(val)) {
       return 'array';
     }
-    return {}.toString
-      .call(val)
-      .slice(8, -1)
-      .toLowerCase();
+    return {}.toString.call(val).slice(8, -1).toLowerCase();
   }
 
   _typeof(obj) {
@@ -273,7 +307,10 @@ class CusDate {
       };
     } else {
       this._typeof = function _typeof(obj) {
-        return obj && typeof Symbol === 'function' && obj.constructor === Symbol && obj !== Symbol.prototype
+        return obj &&
+          typeof Symbol === 'function' &&
+          obj.constructor === Symbol &&
+          obj !== Symbol.prototype
           ? 'symbol'
           : typeof obj;
       };
@@ -282,9 +319,5 @@ class CusDate {
   }
 }
 
-const dataInstance = new CusDate();
-export const formatDate = new CusDate().format.bind(dataInstance);
-export const utils = {
-  formatDate,
-};
-
+const dataInstance = new CustomDate();
+export const formatDate = new CustomDate().format.bind(dataInstance);
