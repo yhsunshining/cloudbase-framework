@@ -1,11 +1,11 @@
-const path = require('path')
-const webpack = require('webpack')
-const TerserPlugin = require('terser-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const HardSourceWebpackPlugin = require('hard-source-webpack-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const themeVars = require('./themeVars')
+const path = require('path');
+const webpack = require('webpack');
+const TerserPlugin = require('terser-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const themeVars = require('./themeVars');
 
 module.exports = function (options) {
   const {
@@ -21,8 +21,8 @@ module.exports = function (options) {
       meta: {},
     },
     definePlugin = {},
-  } = options
-  const isDevelopment = mode !== 'production'
+  } = options;
+  const isDevelopment = mode !== 'production';
   let plugins = [
     new HtmlWebpackPlugin({
       template: htmlTemplatePath,
@@ -54,9 +54,9 @@ module.exports = function (options) {
         },
       ],
     }),
-  ]
+  ];
   if (isDevelopment) {
-    plugins.concat([new HardSourceWebpackPlugin()])
+    plugins.concat([new HardSourceWebpackPlugin()]);
   } else {
     plugins = plugins.concat([
       new webpack.HashedModuleIdsPlugin({
@@ -68,7 +68,7 @@ module.exports = function (options) {
         SSR: false,
         WEBPACK_ENV: 'production',
       }),
-    ])
+    ]);
   }
   return {
     context,
@@ -160,7 +160,7 @@ module.exports = function (options) {
                       // todo
                       selectorBlackList: ['.weui-picker__indicator'],
                     }),
-                  ]
+                  ];
                 },
               },
             },
@@ -214,7 +214,7 @@ module.exports = function (options) {
       ],
     },
     plugins,
-    optimization: true
+    optimization: isDevelopment
       ? {
           minimize: false,
           removeAvailableModules: false,
@@ -238,22 +238,43 @@ module.exports = function (options) {
           ],
           splitChunks: {
             cacheGroups: {
-              commons: {
-                test: /[\\/]node_modules[\\/]/,
-                // cacheGroupKey here is `commons` as the key of the cacheGroup
-                name(module, chunks, cacheGroupKey) {
-                  const { name: moduleFileName } = path
-                    .parse(module.identifier())
-                    .reduceRight((item) => item)
-                  const allChunksNames = chunks
-                    .map((item) => item.name)
-                    .join('~')
-                  return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`
-                },
+              base: {
+                test: /(react|react-dom|react-router|react-router-dom|mobx|mobx-react-lite|@cloudbase\/js-sdk)/,
                 chunks: 'all',
+                priority: 100, //优先级
               },
+              utils: {
+                test: /(lodash|dayjs|axios|kbone-api|fastclick)/,
+                chunks: 'all',
+                priority: 100, //优先级
+              },
+              'async-commons': {
+                chunks: 'async',
+                minChunks: 2,
+                priority: 20,
+              },
+              commons: {
+                chunks: 'all',
+                minChunks: 2,
+                priority: 20,
+              },
+
+              // commons: {
+              //   test: /[\\/]node_modules[\\/]/,
+              //   // cacheGroupKey here is `commons` as the key of the cacheGroup
+              //   name(module, chunks, cacheGroupKey) {
+              //     const { name: moduleFileName } = path
+              //       .parse(module.identifier())
+              //       .reduceRight((item) => item);
+              //     const allChunksNames = chunks
+              //       .map((item) => item.name)
+              //       .join('~');
+              //     return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
+              //   },
+              //   chunks: 'all',
+              // },
             },
           },
         },
-  }
-}
+  };
+};

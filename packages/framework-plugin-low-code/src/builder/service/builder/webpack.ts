@@ -35,6 +35,7 @@ import {
 import { appTemplateDir } from '../../config';
 import { notice } from '../../util/console';
 import { HISTORY_TYPE, RUNTIME } from '../../../types';
+import { isWindows } from 'src/utils';
 const yarnExists = commandExistsSync('yarn');
 
 export interface IMpConfig {
@@ -540,7 +541,14 @@ export function getWebpackWebBuildParams(
       },
       delevopment: mode !== 'production',
     },
-    externals: {},
+    externals:
+      mode !== 'production'
+        ? {}
+        : {
+            mobx: 'window.mobx',
+            '@cloudbase/js-sdk': 'window.cloudbase',
+            '@cloudbase/weda-cloud-sdk/dist/h5': 'window.CloudSDK',
+          },
     resolveModules: [
       path.resolve(appBuildDir, 'node_modules'),
       path.resolve(appBuildDir, 'src'),
