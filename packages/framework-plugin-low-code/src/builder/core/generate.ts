@@ -123,8 +123,7 @@ export async function runGenerateCore(
     await generatePackageJSON(deps, appBuildDir, appKey);
     await installDependencies(appBuildDir, {
       runtime,
-      ignoreInstall: false,
-      // packageName: '@cloudbase/weda-cloud-sdk@^0.1.0',
+      ignoreInstall,
     });
     lastDeps = deps;
   }
