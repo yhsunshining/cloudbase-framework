@@ -507,11 +507,13 @@ export function getWebpackWebBuildParams(
   if (assets && assets.length > 0) {
     if (buildTypeList.includes(BuildType.APP)) {
       const targetDir = path.resolve(appBuildDir, './assets');
-      assets.forEach(async (assetUrl) => {
-        const fileName = getFileNameByUrl(assetUrl);
-        jsApis.push(`./${fileName}`);
-        await downloadAssets(targetDir, assetUrl);
-      });
+      assets
+        .filter((assetUrl) => !!assetUrl)
+        .forEach(async (assetUrl) => {
+          const fileName = getFileNameByUrl(assetUrl);
+          jsApis.push(`./${fileName}`);
+          await downloadAssets(targetDir, assetUrl);
+        });
     } else {
       jsApis = jsApis.concat(assets);
     }

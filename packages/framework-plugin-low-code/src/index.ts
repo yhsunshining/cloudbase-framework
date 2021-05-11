@@ -246,20 +246,15 @@ class LowCodePlugin extends Plugin {
     }
 
     if (this._checkIsVersion(this._resolvedInputs.calsVersion)) {
-      this._resolvedInputs.mainAppSerializeData = deserializePlatformApp(
-        this._resolvedInputs.mainAppSerializeData,
-        { dependencies: this._resolvedInputs.dependencies }
-      );
+      const cals = this._resolvedInputs.mainAppSerializeData;
+      this._resolvedInputs.mainAppSerializeData = deserializePlatformApp(cals, {
+        dependencies: this._resolvedInputs.dependencies,
+      });
     }
 
     if (!this._resolvedInputs.mainAppSerializeData?.envId) {
       this._resolvedInputs.mainAppSerializeData.envId = envId;
     }
-
-    // if (this._resolvedInputs.deployOptions.mode === DEPLOY_MODE.PREVIEW
-    //   && buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
-    //   this._resolvedInputs.mainAppSerializeData.historyType = HISTORY_TYPE.HASH
-    // }
 
     if (buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
       let { appConfig = {} } = this._resolvedInputs.mainAppSerializeData;
@@ -797,8 +792,11 @@ class LowCodePlugin extends Plugin {
         await this._miniprogramePlugin.deploy();
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
-        let historyType = this._resolvedInputs.mainAppSerializeData
-          ?.historyType;
+        let historyType =
+          this._resolvedInputs.mainAppSerializeData?.historyType ||
+          this._resolvedInputs.buildTypeList.includes(BuildType.APP)
+            ? HISTORY_TYPE.HASH
+            : '';
         try {
           async function getHostingInfo(envId) {
             let [website, hostingDatas] = await HostingProvider.getHostingInfo({

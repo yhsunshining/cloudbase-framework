@@ -4,6 +4,7 @@ import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources'
 import store, { subPackageName } from '../store'
 import computed from '../store/computed'
 import common from './common'
+import { utils } from '../utils/utils'
 
 const mainAppKey = '__weappsMainApp'
 const appGlobal = process.env.isMiniprogram ? getApp() : window
@@ -29,6 +30,7 @@ function createGlboalApi() {
     computed: createComputed(computed.global),
     common,
     dataSources: DS_SDK,
+    utils: utils,
     // ... other sdk apis & apis from mp
   } // The global api exposed to lowcode
 

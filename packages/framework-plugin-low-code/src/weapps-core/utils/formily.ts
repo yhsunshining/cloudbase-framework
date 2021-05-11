@@ -1,3 +1,11 @@
+/**
+ * Tencent is pleased to support the open source community by making CloudBaseFramework - 云原生一体化部署工具 available.
+ *
+ * Copyright (C) 2020 THL A29 Limited, a Tencent company.  All rights reserved.
+ *
+ * Please refer to license text included with this package for license details.
+ */
+
 // @ts-nocheck
 import {
   IWeAppPage,
@@ -10,8 +18,8 @@ import {
   IDynamicValue,
   PropBindType,
   ActionType,
+  IWebRuntimeAppData,
 } from '../types';
-import { IWebRuntimeAppData } from '../types';
 import { IDataBind, IDataType, IComponentSchemaJson } from '../types/web';
 import {
   isValidClassNameListBind,
@@ -52,7 +60,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     collection: IWeAppPage[]
   ) {
     pageInstanceList.map((pageData) => {
-      const newPage = {
+      const newPage: IWeAppPage = {
         id: pageData.id,
       } as IWeAppPage;
       setValidValue(newPage, 'isHome', pageData.isHome);
@@ -82,7 +90,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
       setValidValue(newPage, 'pluginInstances', pageData.pluginInstances);
       setValidValue(newPage, 'lowCodes', pageData.codeModules);
 
-      if (pageData.children && pageData.children.length) {
+      if (pageData.children?.length) {
         newPage.children = newPage.children || [];
         handlePageInstanceList(pageData.children, newPage.children);
       }
@@ -108,7 +116,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
           moduleName: cmpParts[0],
           name: cmpParts[1],
         });
-        const componentXProps = {} as IWeAppComponentInstance['xProps'];
+        const componentXProps: IWeAppComponentInstance['xProps'] = {};
         setValidValue(componentXProps, 'data', readDynamicData(srcProps));
         setValidValue(
           componentXProps,
@@ -128,7 +136,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
           removeInvalidStyleFormValue(srcProps.commonStyle)
         );
         setValidValue(componentXProps, 'styleBindPath', srcProps.styleBindPath);
-        if (srcProps.styleBind && srcProps.styleBind.bindDataPath) {
+        if (srcProps.styleBind?.bindDataPath) {
           componentXProps.styleBind = {
             type: srcProps.styleBind.type,
             value: srcProps.styleBind.bindDataPath,
@@ -173,7 +181,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
       };
     }
 
-    if (cmp.dataBinds && cmp.dataBinds.length) {
+    if (cmp.dataBinds?.length) {
       const bind = cmp.dataBinds.find(
         (bind) => bind.propertyPath === '_visible'
       );
@@ -215,22 +223,21 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
       data[prop] = { value: cmp.data[prop] };
     }
     // Read data binds
-    cmp.dataBinds &&
-      cmp.dataBinds.forEach((bind) => {
-        if (ignoredProps.indexOf(bind.propertyPath) > -1) {
-          return;
-        }
+    cmp.dataBinds?.forEach((bind) => {
+      if (ignoredProps.indexOf(bind.propertyPath) > -1) {
+        return;
+      }
 
-        const foundDataType = (cmp.dataTypes || []).find(
-          (dataType) => dataType.propertyPath === bind.propertyPath
-        );
-        if (foundDataType && foundDataType.type === 'bind') {
-          data[bind.propertyPath] = {
-            type: bind.type || PropBindType.state,
-            value: bind.bindDataPath,
-          };
-        }
-      });
+      const foundDataType = (cmp.dataTypes || []).find(
+        (dataType) => dataType.propertyPath === bind.propertyPath
+      );
+      if (foundDataType && foundDataType.type === 'bind') {
+        data[bind.propertyPath] = {
+          type: bind.type || PropBindType.state,
+          value: bind.bindDataPath,
+        };
+      }
+    });
 
     return data;
   }
@@ -298,13 +305,13 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
     collection: IPageInstance[]
   ) {
     pageInstanceList.map((srcPage) => {
-      const page = {
+      const page: IPageInstance = {
         id: srcPage.id,
         data: {},
         dataBinds: [],
         vars: { data: [] },
         dataset: srcPage.dataset,
-      } as IPageInstance;
+      };
       page.vars = srcPage.vars ? srcPage.vars : page.vars;
       page.isHome = srcPage.isHome || false;
       page.style = srcPage.commonStyle || {};
@@ -331,7 +338,7 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
       }
 
       readDynamicData(srcPage.data, page);
-      if (srcPage.children && srcPage.children.length) {
+      if (srcPage.children?.length) {
         page.children = page.children || [];
         handlePageInstanceList(srcPage.children, page.children);
       }
@@ -371,7 +378,7 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
 
       // for compatibility with error data
       const legacyClassList = classList as any;
-      if (legacyClassList && legacyClassList.value) {
+      if (legacyClassList?.value) {
         if (!legacyClassList.type || legacyClassList.type === 'static') {
           classList = legacyClassList.value;
         } else {
@@ -407,7 +414,6 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
           } else {
             xProps.dataBinds = xProps.dataBinds || [];
             xProps.dataBinds.push({
-              // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
               // @ts-ignore
               type: waIf.type || PropBindType.state,
               propertyPath: '_visible',
