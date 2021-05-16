@@ -1,7 +1,7 @@
 import { observable } from 'mobx'
 import { createComputed, formatDate } from '<%= subLevelPath %>../common/util'
 import process from '<%= subLevelPath %>../common/process'
-import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources/index'
+import { DS_SDK, CLOUD_SDK, createDataset } from '<%= subLevelPath %>../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
 import weappApis from '<%= subLevelPath %>../common/weapp-sdk'
 

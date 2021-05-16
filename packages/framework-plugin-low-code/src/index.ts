@@ -60,7 +60,7 @@ const DEFAULT_INPUTS = {
   buildTypeList: [BuildType.MP],
   generateMpType: GenerateMpType.APP,
   generateMpPath: '',
-  subAppSerializeDataStrList: [],
+  subAppSerializeDataList: [],
   dependencies: [],
   plugins: [],
   operationService: {},
@@ -101,7 +101,7 @@ export interface IFrameworkPluginLowCodeInputs {
   /**
    * 低码子包应用描述
    */
-  subAppSerializeDataStrList?: string[];
+  subAppSerializeDataList?: any[];
   /**
    * 低码组件依赖
    */
@@ -247,9 +247,17 @@ class LowCodePlugin extends Plugin {
 
     if (this._checkIsVersion(this._resolvedInputs.calsVersion)) {
       const cals = this._resolvedInputs.mainAppSerializeData;
-      this._resolvedInputs.mainAppSerializeData = deserializePlatformApp(cals, {
-        dependencies: this._resolvedInputs.dependencies,
-      });
+      if (!this._resolvedInputs.mainAppSerializeData.mpPkgUrl) {
+        this._resolvedInputs.mainAppSerializeData = deserializePlatformApp(
+          cals,
+          { dependencies: this._resolvedInputs.dependencies }
+        );
+      } else {
+        this._resolvedInputs.mainAppSerializeData = {
+          ...cals,
+          datasources: cals.datasources || cals.dataSources || [],
+        };
+      }
     }
 
     if (!this._resolvedInputs.mainAppSerializeData?.envId) {
@@ -264,6 +272,7 @@ class LowCodePlugin extends Plugin {
       window.basename = path;
       appConfig.window = window;
       this._resolvedInputs.mainAppSerializeData.appConfig = appConfig;
+      this._resolvedInputs.subAppSerializeDataList = [];
     } else {
       // 小程序构建
       const {
@@ -348,7 +357,7 @@ class LowCodePlugin extends Plugin {
       let projectJson = fs.readJsonSync(
         path.resolve(this.api.projectPath, DIST_PATH, 'project.config.json')
       );
-      let { cloudfunctionRoot } = projectJson;
+      let { cloudfunctionRoot, miniprogramRoot = './' } = projectJson;
 
       let setting = {
         es6: true,
@@ -379,7 +388,12 @@ class LowCodePlugin extends Plugin {
           previewOptions: {
             qrcodeOutputPath: path.resolve(this.api.projectPath, QRCODE_PATH),
             pagePath: fs.readJsonSync(
-              path.resolve(this.api.projectPath, DIST_PATH, 'app.json')
+              path.resolve(
+                this.api.projectPath,
+                DIST_PATH,
+                miniprogramRoot,
+                'app.json'
+              )
             )?.pages?.[0],
             setting,
           },
@@ -447,10 +461,10 @@ class LowCodePlugin extends Plugin {
   async build() {
     let { logger } = this.api;
     const staticDir = path.resolve(__dirname, '../../../static');
-    const {
+    let {
       debug,
       mainAppSerializeData,
-      subAppSerializeDataStrList,
+      subAppSerializeDataList,
       dependencies,
       appId,
       buildTypeList,
@@ -464,13 +478,15 @@ class LowCodePlugin extends Plugin {
 
     const webpackMode = WebpackModeType.PRODUCTION;
 
-    const subAppSerializeDataList = subAppSerializeDataStrList.map((item) => {
-      let obj = JSON.parse(item);
+    subAppSerializeDataList = subAppSerializeDataList?.map((item) => {
       if (this._checkIsVersion(calsVersion)) {
-        obj = deserializePlatformApp(obj, { dependencies });
+        return item.mpPkgUrl
+          ? { ...item, datasources: item.datasources || item.dataSources || [] }
+          : deserializePlatformApp(item, { dependencies });
       }
-      return obj;
-    });
+      return item;
+    }) as any;
+
     const nodeModulesPath = getValidNodeModulesPath();
 
     let miniAppDir = '';
@@ -537,8 +553,6 @@ class LowCodePlugin extends Plugin {
                 );
 
                 if (buildTypeList.includes(BuildType.MP) && miniAppDir) {
-                  let projDir = outDir;
-
                   let projectJsonPath = path.resolve(
                     miniAppDir,
                     'project.config.json'

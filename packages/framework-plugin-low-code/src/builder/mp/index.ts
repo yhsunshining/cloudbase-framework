@@ -86,6 +86,8 @@ export async function generateWxMp(
     materials,
   });
 
+  console.log(allAppUsedComps);
+
   // 安装依赖库
   await installMaterials(projDir, allAppUsedComps, weapps, buildContext);
 
@@ -175,8 +177,14 @@ export async function generateWxMp(
       }
     }
     appJson.subpackages = subpackages;
-    console.log(appJson);
     await writeFile(appJsonPath, JSON.stringify(appJson, undefined, 2));
+
+    let appJsPath = path.join(miniprogramRoot, 'app.js');
+    let appJsContent = await fs.readFile(appJsPath);
+    await writeFile(
+      appJsPath,
+      `import { app as wedaApp } from './app/weapps-api'\n${appJsContent}`
+    );
   } else {
     appFileData = {
       ...appFileData,

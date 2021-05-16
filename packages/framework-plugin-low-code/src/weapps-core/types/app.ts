@@ -34,7 +34,7 @@ export interface IWeAppData {
   presetColors?: string[];
   appConfig?: Record<string, any>;
   envId: string; // 云开发环境ID
-  datasources: any[];
+  datasources: any[]; // cals 把 dataSources 转成小写了，应该统一
   dataset?: IAppAndPageVar['dataset'];
   vars: IAppAndPageVar['vars'];
 }
