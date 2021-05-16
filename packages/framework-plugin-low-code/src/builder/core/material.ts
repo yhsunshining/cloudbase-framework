@@ -19,17 +19,14 @@ export async function runHandleMaterial(
   runtime: RUNTIME = RUNTIME.NONE,
   ignoreInstall: boolean = false
 ) {
-  const allMaterials = [
-    await handleNormalMaterial({
-      dependencies,
-      materialsDir,
-      appBuildDir,
-      runtime,
-      ignoreInstall,
-    }),
-    await handleCompositeComponent({ dependencies, appBuildDir }),
-  ];
-  return _.flatten(allMaterials);
+  await handleNormalMaterial({
+    dependencies,
+    materialsDir,
+    appBuildDir,
+    runtime,
+    ignoreInstall,
+  });
+  await handleCompositeComponent({ dependencies, appBuildDir });
 }
 
 async function handleNormalMaterial({
@@ -49,28 +46,6 @@ async function handleNormalMaterial({
   });
   await copyMaterialLibraries(normalDependencies, materialsDir, appBuildDir);
   console.timeEnd(timeTag);
-  return normalDependencies.map((metaInfo) => {
-    const materialItemPath = path.join(
-      appBuildDir,
-      'src/libraries',
-      `${metaInfo.name}@${metaInfo.version}`
-    );
-    const actionsDir = path.join(materialItemPath, 'actions');
-    return {
-      ...metaInfo,
-      actions:
-        fs.existsSync(actionsDir) &&
-        fs
-          .readdirSync(actionsDir)
-          .filter(junk.not)
-          .map((dirName) => ({ name: dirName })),
-      components: fs
-        .readdirSync(path.join(materialItemPath, 'components'))
-        .filter(junk.not)
-        .map((dirName) => ({ name: dirName })),
-      plugins: [],
-    };
-  });
 }
 
 async function handleCompositeComponent({ dependencies, appBuildDir }) {
@@ -103,24 +78,4 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
   );
 
   console.timeEnd('handleCompositeComponent');
-  const result = compositeDependencies.map((metaInfo) => {
-    const materialItemPath = path.join(
-      appBuildDir,
-      'src/libraries',
-      `${metaInfo.name}@${metaInfo.version}`
-    );
-    return {
-      ...metaInfo,
-      components:
-        metaInfo.components.length === 0
-          ? []
-          : fs
-              .readdirSync(path.join(materialItemPath, 'components'), {
-                encoding: 'utf-8',
-              })
-              .filter(junk.not)
-              .map((dirName) => ({ name: dirName })),
-    };
-  });
-  return result;
 }

@@ -178,6 +178,7 @@ export async function buildWebApp(
       ignoreInstall
     );
     console.timeEnd(runHandleMaterialTag);
+
     // 安装依赖
     await runGenerateCore(
       appBuildDir,
