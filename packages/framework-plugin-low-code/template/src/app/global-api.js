@@ -5,6 +5,7 @@ import store, { subPackageName } from '../store';
 import computed from '../store/computed';
 import common from './common';
 import { formatDate } from '../utils/date';
+import { getter, setter } from '../utils';
 
 const mainAppKey = '__weappsMainApp';
 const appGlobal = process.env.isMiniprogram ? getApp() : window;
@@ -30,7 +31,11 @@ function createGlboalApi() {
     computed: createComputed(computed.global),
     common,
     dataSources: DS_SDK,
-    utils: { formatDate },
+    utils: {
+      formatDate,
+      get: getter,
+      set: setter,
+    },
     // ... other sdk apis & apis from mp
   }; // The global api exposed to lowcode
 

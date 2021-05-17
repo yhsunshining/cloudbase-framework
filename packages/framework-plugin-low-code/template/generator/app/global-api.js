@@ -27,6 +27,7 @@ function createGlboalApi() {
     globalAPI.mainApp = window[`$$app`];
     window[`$$subapp_${subPackageName}`] = globalAPI;
   } else {
+    window['app'] = globalAPI;
     window[`$$app`] = globalAPI;
   }
 
