@@ -14,7 +14,10 @@ import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp';
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website';
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth';
 import { deserializePlatformApp } from '@cloudbase/cals';
-import { getValidNodeModulesPath } from './utils/common';
+import {
+  getValidNodeModulesPath,
+  processPkgUrlCals2WeappData,
+} from './utils/common';
 import { default as weAppsBuild, buildAsWebByBuildType } from './builder/core';
 import {
   BuildType,
@@ -253,10 +256,9 @@ class LowCodePlugin extends Plugin {
           { dependencies: this._resolvedInputs.dependencies }
         );
       } else {
-        this._resolvedInputs.mainAppSerializeData = {
-          ...cals,
-          datasources: cals.datasources || cals.dataSources || [],
-        };
+        this._resolvedInputs.mainAppSerializeData = processPkgUrlCals2WeappData(
+          cals
+        );
       }
     }
 
@@ -481,7 +483,7 @@ class LowCodePlugin extends Plugin {
     subAppSerializeDataList = subAppSerializeDataList?.map((item) => {
       if (this._checkIsVersion(calsVersion)) {
         return item.mpPkgUrl
-          ? { ...item, datasources: item.datasources || item.dataSources || [] }
+          ? processPkgUrlCals2WeappData(item)
           : deserializePlatformApp(item, { dependencies });
       }
       return item;
@@ -534,102 +536,110 @@ class LowCodePlugin extends Plugin {
             },
             async (err: any, result) => {
               if (!err) {
-                const { appConfig = {} } = mainAppSerializeData;
-                const { publicPath = '' } = appConfig?.window || {};
-                const { outDir = '', timeElapsed = 0, plugins } = result || {};
+                try {
+                  const { appConfig = {} } = mainAppSerializeData;
+                  const { publicPath = '' } = appConfig?.window || {};
+                  const { outDir = '', timeElapsed = 0, plugins } =
+                    result || {};
 
-                if (buildTypeList.includes(BuildType.MP)) {
-                  miniAppDir = outDir;
-                }
-
-                if (buildAsWebByBuildType(buildTypeList)) {
-                  webAppDir = path.resolve(outDir, 'preview');
-                }
-
-                logger.debug(
-                  `=== Compilation finished at ${outDir}, elapsed time: ${
-                    timeElapsed / 1000
-                  }s.===\n`
-                );
-
-                if (buildTypeList.includes(BuildType.MP) && miniAppDir) {
-                  let projectJsonPath = path.resolve(
-                    miniAppDir,
-                    'project.config.json'
-                  );
-
-                  await postprocessProjectConfig(projectJsonPath, {
-                    appid: this._resolvedInputs.deployOptions.mpAppId,
-                    cloudfunctionRoot: undefined,
-                  });
-
-                  // 如果是代开发的模式，则写入ext.json
-                  await postprocessDeployExtraJson(
-                    miniAppDir,
-                    this._resolvedInputs.deployOptions
-                  );
-
-                  if (generateMpType === GenerateMpType.APP) {
-                    // 模板拷入的 miniprogram_npm 有问题，直接删除使用重新构建的版本
-                    // 模板需要占位保证 mp 文件夹存在
-                    fs.removeSync(path.resolve(miniAppDir, 'miniprogram_npm'));
+                  if (buildTypeList.includes(BuildType.MP)) {
+                    miniAppDir = outDir;
                   }
 
-                  if (outDir) {
-                    // 原生小程序的插件在这里进行插入
-                    if (plugins) {
-                      await handleMpPlugins(plugins, outDir);
+                  if (buildAsWebByBuildType(buildTypeList)) {
+                    webAppDir = path.resolve(outDir, 'preview');
+                  }
+
+                  logger.debug(
+                    `=== Compilation finished at ${outDir}, elapsed time: ${
+                      timeElapsed / 1000
+                    }s.===\n`
+                  );
+
+                  if (buildTypeList.includes(BuildType.MP) && miniAppDir) {
+                    let projectJsonPath = path.resolve(
+                      miniAppDir,
+                      'project.config.json'
+                    );
+
+                    await postprocessProjectConfig(projectJsonPath, {
+                      appid: this._resolvedInputs.deployOptions.mpAppId,
+                      cloudfunctionRoot: undefined,
+                    });
+
+                    // 如果是代开发的模式，则写入ext.json
+                    await postprocessDeployExtraJson(
+                      miniAppDir,
+                      this._resolvedInputs.deployOptions
+                    );
+
+                    if (generateMpType === GenerateMpType.APP) {
+                      // 模板拷入的 miniprogram_npm 有问题，直接删除使用重新构建的版本
+                      // 模板需要占位保证 mp 文件夹存在
+                      fs.removeSync(
+                        path.resolve(miniAppDir, 'miniprogram_npm')
+                      );
+                    }
+
+                    if (outDir) {
+                      // 原生小程序的插件在这里进行插入
+                      if (plugins) {
+                        await handleMpPlugins(plugins, outDir);
+                      }
                     }
                   }
-                }
-                // 编译web
-                else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
-                  const staticAppDir = path.join(staticDir, publicPath);
-                  fs.ensureDirSync(staticAppDir);
-                  if (webpackMode !== WebpackModeType.PRODUCTION) {
-                    // if (!startWebDevServer.get(appId)) {
-                    //   const devConfig = devServerConf
-                    //   const params = devConfig ? ['--devServerConf', devConfig] : []
-                    //   const devServerPath = path.resolve(appBuildDir, './webpack/devServer.js')
-                    //   logger.info(`start node ${devServerPath} --devServerConf ${devConfig}....`)
-                    //   const env = process.env
-                    //   env.NODE_PATH = appBuildDir
-                    //   logger.info('spawn env 环境：', env.NODE_PATH)
-                    //   const ls = spawn('node', [devServerPath, ...params], {
-                    //     env,
-                    //   })
-                    //   startWebDevServer.set(appId, true)
-                    //   ls.stdout.on('data', data => {
-                    //     logger.info(`${data}`, 'devServer stdout:')
-                    //     if (data.includes('dev server listening on port 8001')) {
-                    //       startWebDevServer.set(appId, true)
-                    //     }
-                    //   })
-                    //   ls.stderr.on('data', data => {
-                    //     logger.error(`${data}`, 'devServer strerr:')
-                    //   })
-                    //   ls.on('close', code => {
-                    //     logger.error(`子进程退出，退出码 ${code}`)
-                    //   })
-                    // }
-                  } else {
-                    // try {
-                    //   await symlinkDir(webAppDir, staticAppDir + '/' + appId)
-                    // } catch (e) { }
-                    // logger.info(`h5 url: ${h5url}`)
-                    // openBrowser(h5url)
+                  // 编译web
+                  else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
+                    const staticAppDir = path.join(staticDir, publicPath);
+                    fs.ensureDirSync(staticAppDir);
+                    if (webpackMode !== WebpackModeType.PRODUCTION) {
+                      // if (!startWebDevServer.get(appId)) {
+                      //   const devConfig = devServerConf
+                      //   const params = devConfig ? ['--devServerConf', devConfig] : []
+                      //   const devServerPath = path.resolve(appBuildDir, './webpack/devServer.js')
+                      //   logger.info(`start node ${devServerPath} --devServerConf ${devConfig}....`)
+                      //   const env = process.env
+                      //   env.NODE_PATH = appBuildDir
+                      //   logger.info('spawn env 环境：', env.NODE_PATH)
+                      //   const ls = spawn('node', [devServerPath, ...params], {
+                      //     env,
+                      //   })
+                      //   startWebDevServer.set(appId, true)
+                      //   ls.stdout.on('data', data => {
+                      //     logger.info(`${data}`, 'devServer stdout:')
+                      //     if (data.includes('dev server listening on port 8001')) {
+                      //       startWebDevServer.set(appId, true)
+                      //     }
+                      //   })
+                      //   ls.stderr.on('data', data => {
+                      //     logger.error(`${data}`, 'devServer strerr:')
+                      //   })
+                      //   ls.on('close', code => {
+                      //     logger.error(`子进程退出，退出码 ${code}`)
+                      //   })
+                      // }
+                    } else {
+                      // try {
+                      //   await symlinkDir(webAppDir, staticAppDir + '/' + appId)
+                      // } catch (e) { }
+                      // logger.info(`h5 url: ${h5url}`)
+                      // openBrowser(h5url)
+                    }
                   }
+
+                  let distPath = path.resolve(this.api.projectPath, DIST_PATH);
+
+                  if (miniAppDir) {
+                    fs.copySync(miniAppDir, distPath);
+                  } else if (webAppDir) {
+                    fs.copySync(webAppDir, distPath);
+                  }
+
+                  resolve(distPath);
+                } catch (e) {
+                  reject(e);
+                  throw e;
                 }
-
-                let distPath = path.resolve(this.api.projectPath, DIST_PATH);
-
-                if (miniAppDir) {
-                  fs.copySync(miniAppDir, distPath);
-                } else if (webAppDir) {
-                  fs.copySync(webAppDir, distPath);
-                }
-
-                resolve(distPath);
               } else {
                 if (err.length) {
                   let messageList = (err[0] || '').split('\n');

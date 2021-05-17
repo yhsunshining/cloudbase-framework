@@ -430,15 +430,17 @@ async function generateFramework(
   let fileData: Record<string, any> = {};
 
   if (appData.mpPkgUrl) {
-    fileData = {
-      ...fileData,
-      'app/app-global.js': {},
-      'app/weapps-api.js': {
-        subLevelPath: '',
-        subPackageName: '',
-        isBare: true,
-      },
-    };
+    if (!appData.rootPath) {
+      fileData = {
+        ...fileData,
+        'app/app-global.js': {},
+        'app/weapps-api.js': {
+          subLevelPath: '',
+          subPackageName: '',
+          isBare: true,
+        },
+      };
+    }
   } else {
     const allCodeModules: { id: string; lowCodes: IWeAppCode[] }[] = [];
     loopDealWithFn(appData.pageInstanceList || [], (p) => {

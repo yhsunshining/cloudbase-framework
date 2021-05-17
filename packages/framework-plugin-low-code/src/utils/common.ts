@@ -168,3 +168,12 @@ export function getIPAdress() {
     }
   }
 }
+
+export function processPkgUrlCals2WeappData(cals) {
+  const { extra = {}, datasources, dataSources, ...restCals } = cals;
+  return {
+    ...extra,
+    ...restCals,
+    datasources: datasources || dataSources || [],
+  };
+}
