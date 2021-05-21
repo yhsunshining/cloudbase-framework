@@ -95,8 +95,9 @@ class CustomDate {
       arguments.length === 1 &&
       this._kindOf(newDate) === 'string' &&
       !/\d/.test(newDate)
-    )
+    ) {
       newDate = undefined;
+    }
     newDate = newDate || newDate === 0 ? newDate : new Date();
     if (!(newDate instanceof Date)) newDate = new Date(newDate);
     if (isNaN(newDate)) throw TypeError('Invalid date');
