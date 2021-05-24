@@ -48,6 +48,7 @@ function createGlboalApi() {
     globalAPI.mainApp = appGlobal[mainAppKey];
   } else {
     // is mainApp
+    appGlobal['app'] = globalAPI;
     appGlobal[mainAppKey] = globalAPI;
   }
 
