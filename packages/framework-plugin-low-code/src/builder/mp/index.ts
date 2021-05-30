@@ -86,8 +86,6 @@ export async function generateWxMp(
     materials,
   });
 
-  console.log(allAppUsedComps);
-
   // 安装依赖库
   await installMaterials(projDir, allAppUsedComps, weapps, buildContext);
 
@@ -284,6 +282,22 @@ export async function generateWxMp(
           pageConfigs[index]
         );
         await generateFramework(app, subpackageRootPath, subpackageBuildCtx);
+
+        // 生成package.json
+        let packageJsonPath = path.join(subpackageRootPath, 'package.json');
+        if (!fs.existsSync(packageJsonPath)) {
+          await generateFiles(
+            {
+              'package.json': {
+                appId,
+                extraDeps: resolveNpmDeps(),
+              },
+            },
+            templateDir,
+            subpackageRootPath,
+            buildContext
+          );
+        }
       }
     })
   );
