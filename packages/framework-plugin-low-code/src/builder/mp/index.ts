@@ -86,7 +86,7 @@ export async function generateWxMp(
     materials,
   });
 
-  // 安装依赖库
+  // 安装依赖库，生成 materials 目录
   await installMaterials(projDir, allAppUsedComps, weapps, buildContext);
 
   const wxmlDataPrefix = getWxmlDataPrefix(!isProduction);
@@ -352,7 +352,7 @@ async function generatePkg(
   if (weapp.mpPkgUrl) {
     // 清空历史文件，使用zip覆盖
     console.log(`Removing ${appRoot}`);
-    await cleanDir(appRoot, []);
+    await cleanDir(appRoot, ['materials']);
     await downloadZip(weapp.mpPkgUrl, appRoot);
     if (fs.existsSync(path.join(appRoot, '__MACOSX'))) {
       await fs.remove(path.join(appRoot, '__MACOSX'));
