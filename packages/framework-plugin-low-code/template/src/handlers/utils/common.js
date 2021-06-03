@@ -17,7 +17,13 @@ export function pathTransformSymbolToDot(str) {
  * @param {*} dataBinds
  * @param {*} forItems
  */
-export function resolveDataBinds(dataBinds, forItems, codeContext, throwError) {
+export function resolveDataBinds(
+  dataBinds,
+  forItems,
+  codeContext,
+  scopeContext,
+  throwError
+) {
   const resolvedProps = {};
   for (const prop in dataBinds) {
     let fn = dataBinds[prop];
@@ -25,7 +31,11 @@ export function resolveDataBinds(dataBinds, forItems, codeContext, throwError) {
       if (codeContext && codeContext.$WEAPPS_COMP) {
         fn = fn.bind(codeContext.$WEAPPS_COMP);
       }
-      resolvedProps[prop] = fn(forItems, codeContext && codeContext.event);
+      resolvedProps[prop] = fn(
+        forItems,
+        codeContext && codeContext.event,
+        scopeContext
+      );
     } catch (e) {
       console.error('Error resolving data binding', prop, dataBinds[prop], e);
       if (throwError) {

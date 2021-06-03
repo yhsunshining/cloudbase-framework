@@ -31,11 +31,12 @@ import {
   BuildType,
   WebpackModeType,
   WebpackBuildCallBack,
+  buildAsAdminPortalByBuildType,
 } from '../../types/common';
 import { appTemplateDir } from '../../config';
 import { notice } from '../../util/console';
 import { HISTORY_TYPE, RUNTIME } from '../../../types';
-import { isWindows } from 'src/utils';
+import { CLOUD_SDK_FILE_NAME } from '../../../index';
 const yarnExists = commandExistsSync('yarn');
 
 export interface IMpConfig {
@@ -524,6 +525,13 @@ export function getWebpackWebBuildParams(
     watch,
     entry: path.resolve(appBuildDir, 'src/index.jsx'),
     output: {
+      // ...(buildAsAdminPortalByBuildType(buildTypeList)
+      //   ? {
+      //       library: 'lowcode',
+      //       libraryTarget: 'umd',
+      //       jsonpFunction: 'webpackJsonp_lowcode',
+      //     }
+      //   : {}),
       path: path.resolve(appBuildDir, './preview'),
       filename:
         mode !== 'production'
@@ -533,7 +541,11 @@ export function getWebpackWebBuildParams(
         mode !== 'production'
           ? '[name].chunk.js'
           : '[name].[contenthash].chunk.js',
-      publicPath: buildTypeList.includes(BuildType.APP) ? '' : publicPath,
+      publicPath:
+        buildTypeList.includes(BuildType.APP) ||
+        buildTypeList.includes(BuildType.ADMIN_PORTAL)
+          ? ''
+          : publicPath,
       pathinfo: false,
     },
     htmlTemplatePath: path.resolve(appBuildDir, './html/index.html.ejs'),
@@ -542,6 +554,8 @@ export function getWebpackWebBuildParams(
         jsApis,
       },
       delevopment: mode !== 'production',
+      cloudSDKFileName: CLOUD_SDK_FILE_NAME,
+      isAdminPortal: buildTypeList.includes(BuildType.ADMIN_PORTAL),
     },
     externals:
       mode !== 'production'
@@ -559,6 +573,7 @@ export function getWebpackWebBuildParams(
     definePlugin: {
       'process.env.buildType': `"${buildTypeList[0]}"`,
       'process.env.isApp': buildTypeList.includes(BuildType.APP), // 注入环境变量，注入isApp
+      'process.env.isAdminPortal': buildAsAdminPortalByBuildType(buildTypeList), // 注入环境变量，判断 ADMIN_PORTAL 应用
       ...extraDefine,
     },
   } as any;
@@ -804,7 +819,8 @@ export async function generateWebpackWebDevServerFile({
   const jsContent = tpl(template, {
     interpolate: /<%=([\s\S]+?)%>/g,
   })({
-    isApp: buildTypeList.includes('app'),
+    isApp: buildTypeList.includes(BuildType.APP),
+    isAdminPortal: buildAsAdminPortalByBuildType(buildTypeList),
   });
   await fs.ensureFile(dest);
   await fs.writeFile(dest, jsContent);

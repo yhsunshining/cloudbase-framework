@@ -139,6 +139,7 @@ export enum PropBindType {
   dataVar = 'dataVar',
   stateData = 'state',
   paramData = 'params',
+  scope = 'scope',
 }
 
 export enum BindPropertyPath {

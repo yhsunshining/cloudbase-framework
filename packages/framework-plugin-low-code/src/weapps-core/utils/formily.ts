@@ -280,6 +280,8 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
  */
 export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
   const webRuntimeAppData: IWebRuntimeAppData = {
+    appTitle: (weAppData as any).label,
+    label: (weAppData as any).label,
     selectedPageId: weAppData.selectedPageId,
     historyType: weAppData.historyType || HISTORY_TYPE.BROWSER,
     pageInstanceList: [],

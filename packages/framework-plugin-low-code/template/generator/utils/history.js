@@ -1,10 +1,10 @@
 import { createHashHistory, createBrowserHistory } from 'history';
 
 const createHistory = (options, isHash = false) => {
-  if (process.env.isApp || isHash) {
+  if (process.env.isApp || process.env.isAdminPortal || isHash) {
     return createHashHistory({
-      ...options,
       basename: '', // The base URL of the app (see below)
+      ...options,
     });
   }
   return createBrowserHistory(options);

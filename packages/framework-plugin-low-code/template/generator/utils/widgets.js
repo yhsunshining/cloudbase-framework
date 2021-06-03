@@ -230,14 +230,11 @@ export function createWidgets(widgetProps, dataBinds) {
                   w[prop] = dataBinds[node.id][prop](subForItems);
                   disposeError = false;
                 } catch (e) {
+                  console.warn(`Error computing data bind ${w.id}.${prop}`, e);
                   if (prop === '_waIf') {
                     w[prop] = false;
-                    console.warn(
-                      `Error computing data bind ${w.id}.${prop}`,
-                      e
-                    );
                   } else {
-                    options.showLog && console.error(e);
+                    options.showLog && console.warn(e);
                     retryQueue.push(getBindData);
                     disposeError = true;
                   }

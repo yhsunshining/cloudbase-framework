@@ -34,9 +34,10 @@
     "url": "https://github.com/TencentCloudBase/cloudbase-framework/issues"
   },
   "dependencies": {
-    "@cloudbase/cals": "0.1.2-2",
+    "@cloudbase/cals": "0.2.10-alpha.1",
     "@cloudbase/framework-core": "^1.6.13",
     "@cloudbase/framework-plugin-auth": "^1.6.13",
+    "@cloudbase/framework-plugin-function": "^1.6.13",
     "@cloudbase/framework-plugin-mp": "v1.3.6-beta.8",
     "@cloudbase/framework-plugin-website": "^1.6.14",
     "@formily/react-schema-renderer": "1.1.7",

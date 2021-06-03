@@ -22,7 +22,7 @@ function Loading() {
 export default () => {
   window.$$global.homePageId = '<%= homePageId %>'
   // 显式声明HASH 或 app 的 路由使用 hash router，而其他web应用使用 BrowserRouter
-  if (process.env.isApp || <%= isHash %>) {
+  if (process.env.isApp || process.env.isAdminPortal || <%= isHash %>) {
     return (
       <Router history={history}>
         <React.Suspense fallback={<Loading/>}>

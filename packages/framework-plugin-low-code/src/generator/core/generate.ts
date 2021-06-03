@@ -595,16 +595,18 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
     let funcCode = '()=>{}';
     if (bind.type === PropBindType.forItem) {
       funcCode = `(forItems) => forItems.${bind.bindDataPath}`;
+    } else if (bind.type === PropBindType.scope) {
+      funcCode = `() => ({__type: "scopedValue", getValue: ($scope)=>$scope.${bind.bindDataPath}})}`;
     } else if (bind.type === PropBindType.expression) {
       if (isComposite) {
         funcCode = `(forItems) => {const $for = forItems; return (${bind.bindDataPath
           .replace(/\$comp/g, 'this.$WEAPPS_COMP')
           .replace(/;$/, '')})}`;
       } else {
-        funcCode = `(forItems, event) => { const $for = forItems; return (${bind.bindDataPath.replace(
-          /;$/,
-          ''
-        )})}`;
+        const code = bind.bindDataPath.replace(/;$/, '');
+        funcCode = /\$scope\./.test(code)
+          ? `(forItems, event) => ({__type: "scopedValue", getValue: ($scope) => { const $for = forItems;return (${code})}})`
+          : `(forItems, event) => { const $for = forItems;return (${code})}`;
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath;
@@ -968,6 +970,7 @@ export async function generateCodeFromTpl(
       ),
     },
   };
+
   if (!rootPath) {
     templatesData['index.jsx'] = {
       ...yyptConfig,

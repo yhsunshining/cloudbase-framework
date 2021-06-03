@@ -126,7 +126,6 @@ module.exports = function (options) {
               '@babel/plugin-proposal-class-properties',
               ['@babel/plugin-proposal-decorators', { legacy: true }],
               '@babel/plugin-proposal-export-default-from',
-              ['@babel/plugin-transform-modules-commonjs', { noInterop: true }],
               '@babel/plugin-proposal-export-namespace-from',
               '@babel/plugin-proposal-optional-chaining',
               '@babel/plugin-proposal-partial-application',
@@ -214,7 +213,7 @@ module.exports = function (options) {
       ],
     },
     plugins,
-    optimization: isDevelopment
+    optimization: true
       ? {
           minimize: false,
           removeAvailableModules: false,

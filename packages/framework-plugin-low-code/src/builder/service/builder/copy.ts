@@ -23,13 +23,15 @@ import * as junk from '../../util/junk';
 
 export async function copyEntryFile(
   appBuildDir: string,
-  appContent: IWebRuntimeAppData
+  appContent: IWebRuntimeAppData,
+  adminPortalKey
 ) {
   const entryFilePath = path.resolve(appTemplateDir, './src/index.jsx');
   const content = await fs.readFile(entryFilePath);
   await fs.writeFile(
     path.join(appBuildDir, 'src/index.jsx'),
     tpl(content + '')({
+      adminPortalKey,
       yyptAppKey: '',
       reportUrl: '',
       stopReport: false,

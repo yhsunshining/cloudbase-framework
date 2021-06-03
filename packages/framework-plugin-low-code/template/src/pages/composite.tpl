@@ -73,7 +73,7 @@ class CompositeCompWrapper extends React.Component {
     this.state = this.$WEAPPS_COMP.state = observable(getStateFn.bind(this)())
     this.computed = this.$WEAPPS_COMP.computed = createComputed(computed, this)
     this.node = this.$WEAPPS_COMP.node = this.createWidgetNode(this) || {}
-    this.widgets = createWidgets(widgetContext, dataBinds)
+    this.widgets = createWidgets(widgetContext, dataBinds, {})
     // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
     retryDataBinds()
     Object.keys(this.widgets || {}).forEach(widgetId => {

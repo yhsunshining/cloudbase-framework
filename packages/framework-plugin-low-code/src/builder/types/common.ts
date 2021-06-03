@@ -5,6 +5,7 @@ export {
   WebpackBuildCallBack,
   IPackageJson,
   buildAsWebByBuildType,
+  buildAsAdminPortalByBuildType,
   IAppUsedComp,
   IUsedComps,
   ISyncProp,

@@ -5,8 +5,8 @@
     "build-web": "webpack --config ./webpack/webpack.web.prod.js"
   },
   "dependencies": {
-    "@cloudbase/js-sdk": "~1.4.0",
-    "@cloudbase/weda-cloud-sdk": "^0.1.3",
+    "@cloudbase/js-sdk": "1.5.3-alpha.0",
+    "@cloudbase/weda-cloud-sdk": "0.1.10-alpha.4.3",
     "@govcloud/weapps-core": "2.2.6",
     "@govcloud/weapps-sdk": "1.2.9",
     "mobx": "^5.15.4",

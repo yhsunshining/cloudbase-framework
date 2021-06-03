@@ -14,6 +14,7 @@ export const CompRenderer = observer(function (props) {
     virtualFields,
     slots = {},
     codeContext = {},
+    scopeContext = {},
     genericComp = {},
     emitEvents = [],
   } = props;
@@ -46,7 +47,7 @@ export const CompRenderer = observer(function (props) {
 
   // 最终用于执行的事件函数
   const emit = useCallback(
-    (trigger, eventData, forItems, domEvent) => {
+    (trigger, eventData, forItems, domEvent, scopeContext) => {
       const listeners = listenerInstances;
       const event = {
         detail: eventData,
@@ -59,12 +60,17 @@ export const CompRenderer = observer(function (props) {
         ...forItems,
         forIndexes: getForIndexes(forItems, widgetsData),
       };
-      emitEvent(trigger, listeners, {
-        event,
-        customEventData: event,
-        forItems,
-        domEvent,
-      });
+      emitEvent(
+        trigger,
+        listeners,
+        {
+          event,
+          customEventData: event,
+          forItems,
+          domEvent,
+        },
+        scopeContext
+      );
     },
     [props]
   );
@@ -101,7 +107,7 @@ export const CompRenderer = observer(function (props) {
         fieldData: forItemData,
         finalStyle: forItemStyle,
         finalClassNameList: forItemClassNameList,
-      } = getBindData(forItems);
+      } = getBindData(forItems, scopeContext);
       if (!checkVisible(forItemData)) {
         return null;
       }
@@ -110,7 +116,7 @@ export const CompRenderer = observer(function (props) {
         set(forItemData, slotProp, slots[slotProp]);
       });
       const emitWithForItems = (trigger, eventData, domEvent) =>
-        emit(trigger, eventData, forItems, domEvent);
+        emit(trigger, eventData, forItems, domEvent, scopeContext);
       delete forItemData.style;
 
       // 获取当前元素的 ref
@@ -142,10 +148,12 @@ export const CompRenderer = observer(function (props) {
   }
 
   // 单节点渲染
-  const { fieldData, finalClassNameList, finalStyle } =
-    getBindData(parentForItems);
+  const { fieldData, finalClassNameList, finalStyle } = getBindData(
+    parentForItems,
+    scopeContext
+  );
   const emitWithFiedle = (trigger, eventData, domEvent) =>
-    emit(trigger, eventData, parentForItems, domEvent);
+    emit(trigger, eventData, parentForItems, domEvent, scopeContext);
 
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
@@ -189,7 +197,7 @@ export const CompRenderer = observer(function (props) {
   );
 
   // TODO: 需要不断移除 dataBinds(style/classList)
-  function getBindData(forItems) {
+  function getBindData(forItems, scopeContext) {
     // bindData
     let wData = widgetsData;
     if (Array.isArray(wData)) {
@@ -200,6 +208,21 @@ export const CompRenderer = observer(function (props) {
     }
     wData = wData || {};
     const fieldData = { ...wData };
+
+    // 再次计算 scope value
+    for (let key in fieldData) {
+      if (Object.prototype.hasOwnProperty.call(fieldData, key)) {
+        const value = fieldData[key];
+        if (value && value.__type === 'scopedValue') {
+          try {
+            fieldData[key] = value.getValue(scopeContext);
+          } catch (e) {
+            console.warn(`Error computing data bind '${key}' error:`, e);
+            fieldData[key] = '';
+          }
+        }
+      }
+    }
 
     // bindStyle
     let bindStyle = fieldData.style || {};

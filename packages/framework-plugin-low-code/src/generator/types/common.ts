@@ -2,6 +2,7 @@ import { IComponentMeta, ICompositedComponent } from 'src/weapps-core';
 
 export const enum BuildType {
   PC = 'pc',
+  ADMIN_PORTAL = 'adminPortal',
   WEB = 'web',
   MP = 'mp',
   APP = 'app',
@@ -42,10 +43,17 @@ export const buildAsWebByBuildType = (buildTypeList: BuildType[] = []) => {
   return (
     buildTypeList.includes(BuildType.WEB) ||
     buildTypeList.includes(BuildType.PC) ||
+    buildTypeList.includes(BuildType.ADMIN_PORTAL) ||
     buildTypeList.includes(BuildType.APP) ||
     buildTypeList.includes(BuildType.WECHAT_WORK_H5) ||
     buildTypeList.includes(BuildType.WECHAT_H5)
   );
+};
+
+export const buildAsAdminPortalByBuildType = (
+  buildTypeList: BuildType[] = []
+) => {
+  return buildTypeList.includes(BuildType.ADMIN_PORTAL);
 };
 
 export interface IAppUsedComp {

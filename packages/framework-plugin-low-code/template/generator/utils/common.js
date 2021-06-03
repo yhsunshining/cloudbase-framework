@@ -3,7 +3,13 @@
  * @param {*} dataBinds
  * @param {*} forItems
  */
-export function resolveDataBinds(dataBinds, forItems, codeContext, throwError) {
+export function resolveDataBinds(
+  dataBinds,
+  forItems,
+  codeContext,
+  scopeContext,
+  throwError
+) {
   const resolvedProps = {};
   for (const prop in dataBinds) {
     let fn = dataBinds[prop];
@@ -11,7 +17,11 @@ export function resolveDataBinds(dataBinds, forItems, codeContext, throwError) {
       if (codeContext && codeContext.$WEAPPS_COMP) {
         fn = fn.bind(codeContext.$WEAPPS_COMP);
       }
-      resolvedProps[prop] = fn(forItems, codeContext && codeContext.event);
+      resolvedProps[prop] = fn(
+        forItems,
+        codeContext && codeContext.event,
+        scopeContext
+      );
     } catch (e) {
       console.error('Error resolving data binding', prop, dataBinds[prop], e);
       if (throwError) {
@@ -111,4 +121,30 @@ export function resolveComponentProps(props) {
       return events;
     }, {}),
   };
+}
+
+const SCOPE_SLOT_MAP = {
+  ['tea_basis:TableMatching']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:TableExpanded']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:TabsTable']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:Table']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+};
+
+export function isScopeSlot(comp, slot) {
+  const { 'x-props': xProps } = comp;
+  const sourceKey = xProps && xProps.sourceKey;
+  const map = SCOPE_SLOT_MAP[sourceKey];
+  return map && map[slot];
 }

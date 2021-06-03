@@ -94,9 +94,9 @@ export function retryDataBinds(tryTime = 10) {
     retryDataBinds(tryTime - 1);
   }, 0);
 }
-export function createWidgets(widgetProps, dataBinds) {
+export function createWidgets(widgetProps, dataBinds, scopeContext = {}) {
   const nodeTree = createWidgetTree(widgetProps, dataBinds);
-  const widgets = runFor(nodeTree, {}, null, null);
+  const widgets = runFor(nodeTree, {}, null, null, scopeContext);
   return widgets;
 
   /**
@@ -105,17 +105,24 @@ export function createWidgets(widgetProps, dataBinds) {
    * @param {*} forItems
    * @param {*} parentLevelWidgets
    * @param {*} parentWidget
+   * @param {*} scopeContext
    * @returns top level widgets or for dispose
    */
-  function runFor(curForNode, forItems, parentLevelWidgets, parentWidget) {
+  function runFor(
+    curForNode,
+    forItems,
+    parentLevelWidgets,
+    parentWidget,
+    scopeContext
+  ) {
     const nodeId = curForNode.id;
     if (!curForNode.value) {
-      return createSubTree(curForNode, {});
+      return createSubTree(curForNode, {}, scopeContext);
     }
     const dispose = autorun(() => {
       let forList = [];
       try {
-        forList = dataBinds[nodeId]._waFor(forItems);
+        forList = dataBinds[nodeId]._waFor(forItems, undefined, scopeContext);
       } catch (e) {
         console.warn('waFor error', e);
       }
@@ -140,7 +147,7 @@ export function createWidgets(widgetProps, dataBinds) {
 
         forList.forEach((item, index) => {
           const subForItems = { ...forItems, [nodeId]: item };
-          createSubTree(curForNode, subForItems);
+          createSubTree(curForNode, subForItems, scopeContext);
         });
 
         // 非初始化时遇到需要重新构建 dataBinds
@@ -150,7 +157,7 @@ export function createWidgets(widgetProps, dataBinds) {
 
     return dispose;
 
-    function createSubTree(curForNode, subForItems) {
+    function createSubTree(curForNode, subForItems, scopeContext) {
       const widgets = {};
 
       // traverse down the tree to set all widgets
@@ -194,12 +201,16 @@ export function createWidgets(widgetProps, dataBinds) {
             if (prop === '_waFor') {
               return;
             }
-            (function getBindData(options = {}) {
+            function getBindData(options = {}) {
               let disposeError = false;
               const dispose = autorun(() => {
                 try {
                   // Computed data bind in the next tick since data bind may read widgets data
-                  w[prop] = dataBinds[node.id][prop](subForItems);
+                  w[prop] = dataBinds[node.id][prop](
+                    subForItems,
+                    undefined,
+                    scopeContext
+                  );
                   disposeError = false;
                 } catch (e) {
                   options.showLog && console.error(e);
@@ -207,10 +218,11 @@ export function createWidgets(widgetProps, dataBinds) {
                   disposeError = true;
                 }
               });
-              !disposeError &&
-                curForNode.id &&
+              if (!!disposeError && curForNode.id) {
                 widgets[curForNode.id]._disposers.push(dispose);
-            })();
+              }
+            }
+            getBindData();
           });
         } else {
           if (parentLevelWidgets) {
@@ -226,15 +238,15 @@ export function createWidgets(widgetProps, dataBinds) {
       dfsTree(curForNode, (node, parentNode) => {
         if (
           node.forCount === curForNode.forCount + 1 &&
-          dataBinds[node.id] &&
-          dataBinds[node.id]._waFor
+          dataBinds[node.id]?._waFor
         ) {
           widgets[node.id]._disposers = { dataBinds: [] };
           const dispose = runFor(
             node,
             subForItems,
             widgets,
-            node.parent && widgets[node.parent.id]
+            node.parent && widgets[node.parent.id],
+            scopeContext
           );
           curForNode.id && widgets[curForNode.id]._disposers.push(dispose);
         }

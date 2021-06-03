@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { useRef } from 'react';
 import { CompRenderer } from './NodeRenderer';
+import lodashSet from 'lodash.set';
+import cloneDeep from 'lodash.clonedeep';
+import { isScopeSlot } from '../utils/common';
 
 function getComponentChildren(component) {
   const { properties } = component;
@@ -20,6 +23,7 @@ export function AppRender(props) {
     renderSlot,
     rootNode = true,
     codeContext,
+    scopeContext = {},
   } = props;
 
   const {
@@ -74,13 +78,33 @@ export function AppRender(props) {
   for (const key in properties) {
     const child = properties[key];
     if (!child['x-props']) {
-      slots[key] = (
+      slots[key] = isScopeSlot(componentSchema, key) ? (
+        (props) => {
+          let clonedScopeContext = cloneDeep(scopeContext);
+          lodashSet(
+            clonedScopeContext,
+            `${componentSchema.key}.${child.key}`,
+            props
+          );
+          return (
+            <AppRender
+              key={child.key}
+              componentSchema={child}
+              renderSlot
+              virtualFields={virtualFields}
+              codeContext={codeContext}
+              scopeContext={clonedScopeContext}
+            />
+          );
+        }
+      ) : (
         <AppRender
           key={child.key}
           componentSchema={child}
           renderSlot
           virtualFields={virtualFields}
           codeContext={codeContext}
+          scopeContext={scopeContext}
         />
       );
     }
@@ -94,6 +118,7 @@ export function AppRender(props) {
       virtualFields={virtualFields}
       slots={slots}
       codeContext={codeContext}
+      scopeContext={scopeContext}
       genericComp={genericComp}
     >
       {children.map((comp) => (
@@ -104,6 +129,7 @@ export function AppRender(props) {
           renderSlot={false}
           virtualFields={virtualFields}
           codeContext={codeContext}
+          scopeContext={scopeContext}
         />
       ))}
     </CompRenderer>

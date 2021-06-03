@@ -11,7 +11,12 @@ export function getMetaInfoBySourceKey(sourceKey) {
   };
 }
 
-export async function emitEvent(trigger, listeners = [], args) {
+export async function emitEvent(
+  trigger,
+  listeners = [],
+  args,
+  scopeContext = {}
+) {
   const targetListeners = listeners.filter((l) => l.trigger === trigger);
   for (const listener of targetListeners) {
     // 当前非捕获Event，再判断冒泡行为
@@ -25,7 +30,7 @@ export async function emitEvent(trigger, listeners = [], args) {
       (args?.customEventData?.detail?.isCapturePhase || false)
     ) {
       try {
-        const res = await invokeListener(listener, args);
+        const res = await invokeListener(listener, args, scopeContext);
         const eventName = `${listener.key}.success`;
         const event = {
           detail: {
@@ -35,11 +40,16 @@ export async function emitEvent(trigger, listeners = [], args) {
           },
           name: eventName,
         };
-        emitEvent(eventName, listeners, {
-          ...args,
-          event,
-          customEventData: event,
-        });
+        emitEvent(
+          eventName,
+          listeners,
+          {
+            ...args,
+            event,
+            customEventData: event,
+          },
+          scopeContext
+        );
       } catch (e) {
         const eventName = `${listener.key}.fail`;
         const event = {
@@ -50,11 +60,16 @@ export async function emitEvent(trigger, listeners = [], args) {
           },
           name: eventName,
         };
-        emitEvent(eventName, listeners, {
-          ...args,
-          event,
-          customEventData: event,
-        });
+        emitEvent(
+          eventName,
+          listeners,
+          {
+            ...args,
+            event,
+            customEventData: event,
+          },
+          scopeContext
+        );
         // 之前 invoke 内部catch 了错误，不会抛错
         // throw e
       }
@@ -62,7 +77,11 @@ export async function emitEvent(trigger, listeners = [], args) {
   }
 }
 
-function invokeListener({ instanceFunction, data = {}, dataBinds = {} }, args) {
+function invokeListener(
+  { instanceFunction, data = {}, dataBinds = {} },
+  args,
+  scopeContext
+) {
   // ToDo resolve databinds
   const action = instanceFunction;
   const resolvedData = {
@@ -72,10 +91,28 @@ function invokeListener({ instanceFunction, data = {}, dataBinds = {} }, args) {
     dataBinds,
     args.forItems,
     { event: args.event },
+    scopeContext,
     true
   );
+
+  // eslint-disable-next-line no-restricted-syntax
   for (const key in resolvedDataBinds) {
-    lodashSet(resolvedData, key, resolvedDataBinds[key]);
+    if (
+      resolvedDataBinds[key] &&
+      resolvedDataBinds[key].__type === 'scopedValue'
+    ) {
+      try {
+        lodashSet(
+          resolvedData,
+          key,
+          resolvedDataBinds[key].getValue(scopeContext)
+        );
+      } catch (e) {
+        lodashSet(resolvedData, key, '');
+      }
+    } else {
+      lodashSet(resolvedData, key, resolvedDataBinds[key]);
+    }
   }
   const params = {
     data: resolvedData,

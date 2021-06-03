@@ -73,7 +73,7 @@ export default function App() {
   $page.dataset = dataset
   $page.state.dataset = dataset
 
-  $page.widgets = createWidgets(widgetsContext, dataBinds)
+  $page.widgets = createWidgets(widgetsContext, dataBinds, {})
   // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
   retryDataBinds()
   // Web 环境页面级别生命周期

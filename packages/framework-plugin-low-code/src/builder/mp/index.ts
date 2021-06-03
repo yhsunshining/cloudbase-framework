@@ -40,7 +40,7 @@ import {
 
 import { DEPLOY_MODE } from '../../types';
 import { IAppUsedComp, IUsedComps } from '../types/common';
-import { get } from 'lodash';
+import { add, get } from 'lodash';
 import * as junk from '../util/junk';
 import pt from 'path';
 import { downloadZip } from '../util/net';

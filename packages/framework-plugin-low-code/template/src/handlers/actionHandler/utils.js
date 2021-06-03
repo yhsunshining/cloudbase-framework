@@ -1,25 +1,30 @@
-import { resolveDataBinds } from '../utils/common'
-import { set as lodashSet } from 'lodash'
+import { resolveDataBinds } from '../utils/common';
+import { set as lodashSet } from 'lodash';
 
-const DEFAULT_MAX_TIMEOUT = 10 * 1000
+const DEFAULT_MAX_TIMEOUT = 10 * 1000;
 
 export function getMetaInfoBySourceKey(sourceKey) {
-  const [materialName, name] = sourceKey.split(':')
+  const [materialName, name] = sourceKey.split(':');
   return {
     materialName,
     name,
-  }
+  };
 }
 
-export async function emitEvent(trigger, listeners = [], args) {
-  const targetListeners = listeners.filter((l) => l.trigger === trigger)
+export async function emitEvent(
+  trigger,
+  listeners = [],
+  args,
+  scopeContext = {}
+) {
+  const targetListeners = listeners.filter((l) => l.trigger === trigger);
   for (const listener of targetListeners) {
     // 当前非捕获Event，再判断冒泡行为
     if (
       !args?.customEventData?.detail?.isCapturePhase &&
       listener.noPropagation
     ) {
-      args?.customEventData?.detail?.stopPropagation()
+      args?.customEventData?.detail?.stopPropagation();
     }
 
     // 判断捕获的执行，只有执行的捕获与配置的捕获一致时。才会执行。
@@ -28,36 +33,46 @@ export async function emitEvent(trigger, listeners = [], args) {
       (args?.customEventData?.detail?.isCapturePhase || false)
     ) {
       try {
-        let res = await invokeListener(listener, args)
-        let eventName = `${listener.key}.success`
-        let event = {
+        const res = await invokeListener(listener, args, scopeContext);
+        const eventName = `${listener.key}.success`;
+        const event = {
           detail: {
             value: res,
             origin: args.event,
             isCapturePhase: !!args.event?.isCapturePhase,
           },
           name: eventName,
-        }
-        emitEvent(eventName, listeners, {
-          ...args,
-          event,
-          customEventData: event,
-        })
+        };
+        emitEvent(
+          eventName,
+          listeners,
+          {
+            ...args,
+            event,
+            customEventData: event,
+          },
+          scopeContext
+        );
       } catch (e) {
-        let eventName = `${listener.key}.fail`
-        let event = {
+        const eventName = `${listener.key}.fail`;
+        const event = {
           detail: {
             value: e,
             origin: args.event,
             isCapturePhase: !!args.event?.isCapturePhase,
           },
           name: eventName,
-        }
-        emitEvent(eventName, listeners, {
-          ...args,
-          event,
-          customEventData: event,
-        })
+        };
+        emitEvent(
+          eventName,
+          listeners,
+          {
+            ...args,
+            event,
+            customEventData: event,
+          },
+          scopeContext
+        );
         // 之前 invoke 内部catch 了错误，不会抛错
         // throw e
       }
@@ -67,50 +82,70 @@ export async function emitEvent(trigger, listeners = [], args) {
 
 async function invokeListener(
   { instanceFunction, data = {}, dataBinds = {} },
-  args
+  args,
+  scopeContext
 ) {
   // ToDo resolve databinds
-  const action = instanceFunction
-  const maxTimeout = DEFAULT_MAX_TIMEOUT
+  const action = instanceFunction;
+  const maxTimeout = DEFAULT_MAX_TIMEOUT;
   const resolvedData = {
     ...data,
-  }
+  };
   const resolvedDataBinds = resolveDataBinds(
     dataBinds,
     args.forItems,
     { event: args.event },
+    scopeContext,
     true
-  )
+  );
+
+  // eslint-disable-next-line no-restricted-syntax
   for (const key in resolvedDataBinds) {
-    lodashSet(resolvedData, key, resolvedDataBinds[key])
+    if (
+      resolvedDataBinds[key] &&
+      resolvedDataBinds[key].__type === 'scopedValue'
+    ) {
+      try {
+        lodashSet(
+          resolvedData,
+          key,
+          resolvedDataBinds[key].getValue(scopeContext)
+        );
+      } catch (e) {
+        lodashSet(resolvedData, key, '');
+      }
+    } else {
+      lodashSet(resolvedData, key, resolvedDataBinds[key]);
+    }
   }
+
   const params = {
     data: resolvedData,
     ...args,
-  }
+  };
 
   try {
     if (maxTimeout === 'Infinity') {
-      await action(params)
+      await action(params);
     } else {
-      const p = action(params)
+      const p = action(params);
       if (p instanceof Promise) {
-        let timeout = null
+        let timeout = null;
         await Promise.race([
           new Promise((resolve, reject) => {
             timeout = setTimeout(() => {
-              reject(new Error(`timeout in ${maxTimeout}ms`))
-            }, maxTimeout)
+              reject(new Error(`timeout in ${maxTimeout}ms`));
+            }, maxTimeout);
           }),
           p,
-        ])
+        ]);
         if (timeout) {
-          clearTimeout(timeout)
+          clearTimeout(timeout);
         }
       }
     }
   } catch (e) {
-    console.error('Action error: ', e)
-    throw e
+    console.error('Action error: ', e);
+    throw e;
   }
 }

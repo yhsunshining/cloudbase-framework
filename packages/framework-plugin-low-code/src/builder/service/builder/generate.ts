@@ -606,16 +606,19 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
     funcCode = `() => ${funcCode}`;
     if (bind.type === PropBindType.forItem) {
       funcCode = `(forItems) => forItems.${bind.bindDataPath}`;
+    } else if (bind.type === PropBindType.scope) {
+      funcCode = `() => ({__type: "scopedValue", getValue: ($scope)=>$scope.${bind.bindDataPath}})}`;
     } else if (bind.type === PropBindType.expression) {
+      let code = bind.bindDataPath.replace(/\n/g, ' ');
       if (isComposite) {
-        funcCode = `(forItems) => { const $for = forItems; return (${bind.bindDataPath
-          .replace(/\n/g, ' ')
-          .replace(/\$comp/g, 'this.$WEAPPS_COMP')})}`;
-      } else {
-        funcCode = `(forItems, event) => { const $for = forItems;return (${bind.bindDataPath.replace(
-          /\n/g,
-          ' '
+        funcCode = `(forItems) => { const $for = forItems; return (${code.replace(
+          /\$comp/g,
+          'this.$WEAPPS_COMP'
         )})}`;
+      } else {
+        funcCode = /\$scope\./.test(code)
+          ? `(forItems, event) => ({__type: "scopedValue", getValue: ($scope) => { const $for = forItems;return (${code})}})`
+          : `(forItems, event) => { const $for = forItems;return (${code})}`;
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath;
@@ -1090,7 +1093,11 @@ export async function generateCodeFromTpl(
   };
 
   if (!rootPath) {
-    templatesData['index.jsx'] = yyptConfig;
+    templatesData['index.jsx'] = {
+      ...yyptConfig,
+      adminPortalKey:
+        deployMode === DEPLOY_MODE.PREVIEW ? `${appKey}-preview` : appKey,
+    };
   }
 
   console.log(chalk.blue.bold('Generating code by templates:'));

@@ -16,7 +16,6 @@ import {
   WebpackBuildCallBack,
   WebpackModeType,
 } from '../types/common';
-export { buildAsWebByBuildType } from '../types/common';
 import { runGenerateCore } from './generate';
 import { runHandleMaterial } from './material';
 import { runCopy } from './copy';
@@ -142,7 +141,7 @@ export async function buildWebApp(
 
     // 处理应用数据
     const mainAppData = deserialize(mainAppSerializeData);
-    const subAppDataList = subAppSerializeDataList.map((sub) =>
+    const subAppDataList = subAppSerializeDataList.map((sub: any) =>
       deserialize(sub)
     );
 
@@ -184,7 +183,10 @@ export async function buildWebApp(
     const jsAssets = assets.split(',').map((item) => (item || '')?.trim());
 
     // 复制
-    await runCopy(appBuildDir, mainAppData);
+    await runCopy(appBuildDir, mainAppData, {
+      adminPortalKey:
+        deployMode === DEPLOY_MODE.PREVIEW ? `${appKey}-preview` : appKey,
+    });
     // 素材库
     const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial';
     console.time(runHandleMaterialTag);

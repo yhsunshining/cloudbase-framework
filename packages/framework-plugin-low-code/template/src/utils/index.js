@@ -27,3 +27,29 @@ export function setter(context, path, value = undefined) {
 export function checkVisible({ _visible }) {
   return _visible !== false && _visible !== '';
 }
+
+const SCOPE_SLOT_MAP = {
+  ['tea_basis:TableMatching']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:TableExpanded']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:TabsTable']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_basis:Table']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+};
+
+export function isScopeSlot(comp, slot) {
+  const { 'x-props': xProps } = comp;
+  const sourceKey = xProps && xProps.sourceKey;
+  const map = SCOPE_SLOT_MAP[sourceKey];
+  return map && map[slot];
+}

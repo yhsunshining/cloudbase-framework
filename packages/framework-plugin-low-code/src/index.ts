@@ -5,30 +5,38 @@
  *
  * Please refer to license text included with this package for license details.
  */
-
 export * as generator from './generator/core/index';
 import fs, { PathLike } from 'fs-extra';
 import path from 'path';
 import { Plugin, PluginServiceApi } from '@cloudbase/framework-core';
 import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp';
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website';
+import {
+  plugin as FunctionPlugin,
+  IFrameworkPluginFunctionInputs,
+} from '@cloudbase/framework-plugin-function';
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth';
 import { deserializePlatformApp } from '@cloudbase/cals';
 import {
   getValidNodeModulesPath,
   processPkgUrlCals2WeappData,
 } from './utils/common';
-import { default as weAppsBuild, buildAsWebByBuildType } from './builder/core';
+import { default as weAppsBuild } from './builder/core';
 import {
   BuildType,
   WebpackModeType,
   GenerateMpType,
+  buildAsAdminPortalByBuildType,
+  buildAsWebByBuildType,
 } from './builder/types/common';
 import { IMaterialItem, IPlugin } from './weapps-core';
 import { handleMpPlugins } from './generate';
 import {
+  postProcessCloudFunction,
   postprocessDeployExtraJson,
   postprocessProjectConfig,
+  processCloudFunctionInputs,
+  processInstalledHook,
 } from './utils/postProcess';
 import { merge } from 'lodash';
 import archiver from 'archiver';
@@ -36,6 +44,7 @@ import COS from 'cos-nodejs-sdk-v5';
 import QRCode from 'qrcode';
 import url from 'url';
 import { DEPLOY_MODE, RUNTIME, HISTORY_TYPE } from './types';
+import { appTemplateDir } from './builder/config';
 /**
  * 导出接口用于生成 JSON Schema 来进行智能提示
  */
@@ -44,6 +53,12 @@ export const DIST_PATH = './dist';
 const DEBUG_PATH = './debug';
 const QRCODE_PATH = './qrcode.jpg';
 const LOG_FILE = 'build.log';
+const DEFAULT_CLOUDFUNCTION_ROOT_NAME = 'cloudfunctions';
+const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(
+  DEFAULT_CLOUDFUNCTION_ROOT_NAME,
+  '/'
+);
+export const CLOUD_SDK_FILE_NAME = 'weda-cloud-sdk.0.1.10-alpha.5.1.js';
 
 const enum TIME_LABEL {
   LOW_CODE = 'low code lifetime',
@@ -207,11 +222,13 @@ export interface IFrameworkPluginLowCodeInputs {
   ignoreInstall?: boolean;
 }
 
-type ResolvedInputs = IFrameworkPluginLowCodeInputs & typeof DEFAULT_INPUTS;
+export type ResolvedInputs = IFrameworkPluginLowCodeInputs &
+  typeof DEFAULT_INPUTS;
 
 class LowCodePlugin extends Plugin {
   protected _resolvedInputs: ResolvedInputs;
   protected _appPath: string;
+  protected _functionInputs?: IFrameworkPluginFunctionInputs;
   protected _authPlugin;
   protected _miniprogramePlugin;
   protected _webPlugin;
@@ -238,6 +255,12 @@ class LowCodePlugin extends Plugin {
       inputs,
       resolveInputs(params, DEFAULT_INPUTS)
     );
+
+    // 测试环境部署
+    if (this._resolvedInputs.appId === 'app-fho1xlir') {
+      this._resolvedInputs.buildTypeList = ['adminPortal'] as any;
+    }
+
     this._appPath = '';
     this._productBasePath = `lca/${this._resolvedInputs.appId}/${
       process.env.CLOUDBASE_CIID ? `/${process.env.CLOUDBASE_CIID}` : ''
@@ -256,9 +279,8 @@ class LowCodePlugin extends Plugin {
           { dependencies: this._resolvedInputs.dependencies }
         );
       } else {
-        this._resolvedInputs.mainAppSerializeData = processPkgUrlCals2WeappData(
-          cals
-        );
+        this._resolvedInputs.mainAppSerializeData =
+          processPkgUrlCals2WeappData(cals);
       }
     }
 
@@ -267,21 +289,27 @@ class LowCodePlugin extends Plugin {
     }
 
     if (buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
-      let { appConfig = {} } = this._resolvedInputs.mainAppSerializeData;
+      const { appId, mainAppSerializeData } = this._resolvedInputs;
+      let { appConfig = {} } = mainAppSerializeData;
       let { window = {} } = appConfig;
-      let path = this._getWebRootPath(this._resolvedInputs);
+      let path = this._getWebRootPath();
       window.publicPath = path;
-      window.basename = path;
+      window.basename = buildAsAdminPortalByBuildType(
+        this._resolvedInputs.buildTypeList
+      )
+        ? `app/${appId}${
+            this._resolvedInputs.deployOptions?.mode !== DEPLOY_MODE.UPLOAD
+              ? '-preview'
+              : ''
+          }`
+        : path;
       appConfig.window = window;
       this._resolvedInputs.mainAppSerializeData.appConfig = appConfig;
       this._resolvedInputs.subAppSerializeDataList = [];
     } else {
       // 小程序构建
-      const {
-        mpAppId,
-        mpDeployPrivateKey,
-        deployOptions,
-      } = this._resolvedInputs;
+      const { mpAppId, mpDeployPrivateKey, deployOptions } =
+        this._resolvedInputs;
 
       if (deployOptions.mpAppId === undefined) {
         deployOptions.mpAppId = mpAppId;
@@ -404,14 +432,32 @@ class LowCodePlugin extends Plugin {
     } else if (buildAsWebByBuildType(buildTypeList)) {
       this._webPlugin = new WebsitePlugin('web', this.api, {
         outputPath: DIST_PATH,
-        cloudPath: this._getWebRootPath(resolveInputs),
-        ignore: ['.git', '.github', 'node_modules', 'cloudbaserc.js', LOG_FILE],
+        cloudPath: this._getWebRootPath(),
+        ignore: [
+          '.git',
+          '.github',
+          'node_modules',
+          'cloudbaserc.js',
+          LOG_FILE,
+          DEFAULT_CLOUDFUNCTION_ROOT_NAME,
+        ],
       });
+    }
+
+    /**
+     * 资源相关
+     */
+    if (this._functionInputs) {
+      this._functionPlugin = new FunctionPlugin(
+        'function',
+        this.api as any,
+        this._functionInputs
+      );
     }
   }
 
-  _getWebRootPath(resolveInputs: ResolvedInputs) {
-    let { appId, deployOptions } = resolveInputs;
+  _getWebRootPath() {
+    let { appId, deployOptions } = this._resolvedInputs;
     return deployOptions?.mode === DEPLOY_MODE.PREVIEW
       ? `/${appId}/preview/`
       : `/${appId}/production/`;
@@ -539,8 +585,11 @@ class LowCodePlugin extends Plugin {
                 try {
                   const { appConfig = {} } = mainAppSerializeData;
                   const { publicPath = '' } = appConfig?.window || {};
-                  const { outDir = '', timeElapsed = 0, plugins } =
-                    result || {};
+                  const {
+                    outDir = '',
+                    timeElapsed = 0,
+                    plugins,
+                  } = result || {};
 
                   if (buildTypeList.includes(BuildType.MP)) {
                     miniAppDir = outDir;
@@ -590,8 +639,29 @@ class LowCodePlugin extends Plugin {
                   }
                   // 编译web
                   else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
+                    if (buildAsAdminPortalByBuildType(buildTypeList)) {
+                      await fs.copy(
+                        path.join(
+                          appTemplateDir,
+                          `assets/${CLOUD_SDK_FILE_NAME}`
+                        ),
+                        path.join(webAppDir, CLOUD_SDK_FILE_NAME)
+                      );
+                    }
+
                     const staticAppDir = path.join(staticDir, publicPath);
                     fs.ensureDirSync(staticAppDir);
+
+                    if (buildAsAdminPortalByBuildType(buildTypeList)) {
+                      await postProcessCloudFunction(
+                        path.resolve(webAppDir, DEFAULT_CLOUDFUNCTION_ROOT_PATH)
+                      );
+
+                      this._functionInputs = processCloudFunctionInputs(
+                        DEFAULT_CLOUDFUNCTION_ROOT_PATH
+                      ) as IFrameworkPluginFunctionInputs;
+                    }
+
                     if (webpackMode !== WebpackModeType.PRODUCTION) {
                       // if (!startWebDevServer.get(appId)) {
                       //   const devConfig = devServerConf
@@ -780,6 +850,11 @@ class LowCodePlugin extends Plugin {
         });
       }
 
+      if (buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
+      }
+
+      res = merge(res, processInstalledHook(this));
+
       this.api.logger.info(
         `compile end, cost ${this._timeEnd(TIME_LABEL.COMPILE)}s: `,
         res
@@ -818,7 +893,8 @@ class LowCodePlugin extends Plugin {
         await this._webPlugin.deploy();
         let historyType =
           this._resolvedInputs.mainAppSerializeData?.historyType ||
-          this._resolvedInputs.buildTypeList.includes(BuildType.APP)
+          this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
+          this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
             ? HISTORY_TYPE.HASH
             : '';
         try {
@@ -859,11 +935,10 @@ class LowCodePlugin extends Plugin {
 
           if (website) {
             if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-              let {
-                WebsiteConfiguration,
-              } = await this.api.cloudbaseManager.hosting.getWebsiteConfig();
+              let { WebsiteConfiguration } =
+                await this.api.cloudbaseManager.hosting.getWebsiteConfig();
 
-              let path = this._getWebRootPath(this._resolvedInputs);
+              let path = this._getWebRootPath();
 
               let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
                 (arr, rule) => {
@@ -914,9 +989,8 @@ class LowCodePlugin extends Plugin {
                     ).data;
                   }
                   let domains = hostingDatas.map((item) => item.cdnDomain);
-                  let {
-                    Domains: domainList,
-                  } = await hostingService.tcbCheckResource({ domains });
+                  let { Domains: domainList } =
+                    await hostingService.tcbCheckResource({ domains });
                   let modifyDomainConfigPromises = domainList
                     .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
                     .map((item) =>
