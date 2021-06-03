@@ -14,7 +14,16 @@ import chalk from 'chalk';
  * @param appConfigs app config from prop edit panel
  */
 export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
-  const appConfig = { useExtendedLib: { weui: true } };
+  const appConfig = {
+    useExtendedLib: { weui: true },
+    // plugins: {
+    //   'mini-shop-plugin': {
+    //     version: 'latest',
+    //     provider: 'wx34345ae5855f892d',
+    //   },
+    // },
+  };
+
   const projConfig: any = merge({}, defaultProjConfig, {
     projectname: 'WeDa-' + ctx.appId,
   });
