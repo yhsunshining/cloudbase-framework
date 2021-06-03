@@ -824,7 +824,7 @@ export function getEntryImportStringArr(
   materialInfoList.forEach(({ materialName, version, entry }) => {
     if (entry) {
       const componentsLibVariableName = camelcase(`${materialName}`);
-      const importComponentLibString = `import ${componentsLibVariableName} from '${path.join(
+      const importComponentLibString = `import ${componentsLibVariableName} from '${path.posix.join(
         `libraries/${materialName}@${version}`,
         entry
       )}'`;
