@@ -22,7 +22,7 @@ import { runHandleMaterial } from './material';
 import { runCopy } from './copy';
 import { createDoneCallBack, runPrepare } from './prepare';
 import { runWebpackCore } from './webpack';
-import { generateWxMp } from '../mp/index';
+import { generateWxMp, handleUsedComponents } from '../mp/index';
 import path from 'path';
 import { DEPLOY_MODE, RUNTIME } from '../../types';
 import { handleMixMode } from '../mp/mixMode';
@@ -146,9 +146,27 @@ export async function buildWebApp(
       deserialize(sub)
     );
 
+    const buildContext = {
+      projDir: appBuildDir,
+      appId: appKey,
+      isProduction: mode === WebpackModeType.PRODUCTION,
+      materialLibs: dependencies,
+      isMixMode: false,
+      mainAppData: mainAppSerializeData,
+    };
+
+    const { allAppUsedComps } = handleUsedComponents({
+      buildContext,
+      weapps: [mainAppSerializeData, ...subAppSerializeDataList],
+      materials: dependencies,
+    });
+
     // 前置操作
-    const { publicPath, basename, assets = '' } =
-      mainAppData.appConfig?.window || {};
+    const {
+      publicPath,
+      basename,
+      assets = '',
+    } = mainAppData.appConfig?.window || {};
     const projectConfig = await runPrepare(
       buildTypeList,
       appBuildDir,
@@ -170,9 +188,19 @@ export async function buildWebApp(
     // 素材库
     const runHandleMaterialTag = '======= buildWebApp-runHandleMaterial';
     console.time(runHandleMaterialTag);
+
+    // 精简只使用用到的组件库
+    const filteredDependiences = dependencies.filter((lib) => {
+      if (!allAppUsedComps[lib.name]) {
+        return false;
+      } else {
+        return true;
+      }
+    });
+
     await runHandleMaterial(
       appBuildDir,
-      dependencies,
+      filteredDependiences,
       materialsDir,
       runtime,
       ignoreInstall
@@ -184,7 +212,7 @@ export async function buildWebApp(
       appBuildDir,
       mainAppData,
       subAppDataList,
-      dependencies,
+      filteredDependiences,
       appKey,
       basename,
       buildTypeList,
@@ -200,7 +228,7 @@ export async function buildWebApp(
       mainAppData,
       subAppDataList,
       materialsDir,
-      dependencies,
+      dependencies: filteredDependiences,
       nodeModulesPath,
       publicPath,
       mode,

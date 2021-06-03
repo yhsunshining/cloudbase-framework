@@ -543,7 +543,7 @@ function getAppendableJson(obj) {
 }
 
 // 处理使用到的组件
-function handleUsedComponents({
+export function handleUsedComponents({
   buildContext,
   weapps,
   materials,

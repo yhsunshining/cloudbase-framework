@@ -24,3 +24,7 @@ export function getter(context, path, defaultValue = undefined) {
 export function setter(context, path, value = undefined) {
   return lodashSet(context, path, value);
 }
+
+export function checkVisible({ _visible }) {
+  return _visible !== false && _visible !== '';
+}
