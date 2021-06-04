@@ -30,7 +30,6 @@ initAppLifeCycle(app,{
     createStateDataSourceVar('$global',generateParamsParser({app}))
   }
 })
-console.log('%c请注意，此应用是通过wa v3构建出来，v3 与 v2 有存在不兼容的情况，请参考迁移文档：https://docs.qq.com/doc/DRmRvT3JpdFB6WGJZ 。', 'color: #f00; font-size: 18px;')
 
 <% if(!isSandbox && isBuildApp){ %>
 // app 中注册配置页面以及app的全局配置miniprogram.config，h5里分app以及web页分别处理，使用process.env.isApp 区分判断

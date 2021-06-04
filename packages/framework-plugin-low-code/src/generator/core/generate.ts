@@ -963,7 +963,7 @@ export async function generateCodeFromTpl(
     },
     'datasources/dataset-profiles.js.tpl': {
       datasetProfiles: JsonToStringWithVariableName(
-        getDatasetProfiles(appData),
+        getDatasetProfiles(appData, [appData]),
         { EOL: true }
       ),
     },

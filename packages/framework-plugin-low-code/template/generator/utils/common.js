@@ -101,7 +101,6 @@ export function resolveComponentProps(props) {
   ];
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
-  console.log(events);
 
   return {
     ...data,
