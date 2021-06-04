@@ -93,9 +93,10 @@ export function JsonToStringWithVariableName(
   options: { EOL: boolean }
 ): string {
   let variable = JSON.stringify(copyJson, null, 2)
-    .replace(/("%%%|%%%")/g, '')
-    .replace(/\\'/g, "'")
-    .replace(/\\"/g, "'");
+    .replace(/"%%%(.*?)%%%"/g, function (match, expression) {
+      return expression.replace(/\\"/g, '"');
+    })
+    .replace(/\\'/g, "'");
 
   if (options.EOL) {
     variable = variable.replace(/\\n/g, '\n').replace(/\\r/g, '\r');

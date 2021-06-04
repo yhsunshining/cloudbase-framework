@@ -163,10 +163,8 @@ export async function runGenerateCore(props: {
  * @returns
  */
 function getGenericCompFromDep(dependencies: IMaterialItem[] = []) {
-  const genericCompMap: Record<
-    string,
-    IWeAppComponentInstance['genericComp']
-  > = {};
+  const genericCompMap: Record<string, IWeAppComponentInstance['genericComp']> =
+    {};
   dependencies.forEach((compLib) => {
     if (compLib.isComposite) {
       compLib.components.forEach((component) => {
@@ -222,16 +220,14 @@ export async function generateSinglePageJsxFile(
   const genericCompMap = getGenericCompFromDep(dependencies);
 
   // originComponentList 包含了引入的组件与抽象节点绑定的组件
-  const {
-    originComponentList,
-    originActionList,
-  } = getOriginComponentAndActionList(
-    componentSchemaJson as IComponentSchemaJson,
-    dependencies,
-    [],
-    [],
-    genericCompMap
-  );
+  const { originComponentList, originActionList } =
+    getOriginComponentAndActionList(
+      componentSchemaJson as IComponentSchemaJson,
+      dependencies,
+      [],
+      [],
+      genericCompMap
+    );
 
   // @ts-ignore
   const componentInfo = await getComponentsInfo(
@@ -287,10 +283,8 @@ export function getOriginComponentAndActionList(
   if (fieldSchema.isObject()) {
     const { 'x-props': xProps } = fieldSchema;
     if (xProps) {
-      const {
-        listenerInstances,
-        sourceKey,
-      } = xProps as IComponentInstanceProps;
+      const { listenerInstances, sourceKey } =
+        xProps as IComponentInstanceProps;
 
       // 属于抽象节点属性
       if (genericCompMap[sourceKey]) {
@@ -318,7 +312,7 @@ export function getOriginComponentAndActionList(
     const filedSchemaProperties = fieldSchema.properties || {};
     Object.keys(filedSchemaProperties).forEach((key) => {
       const schema = filedSchemaProperties[key];
-      const schemaJson = (schema as unknown) as IComponentSchemaJson;
+      const schemaJson = schema as unknown as IComponentSchemaJson;
       getOriginComponentAndActionList(
         schemaJson,
         dependencies,
@@ -348,9 +342,8 @@ export function pullActionToListByInstances(
   }
   listenerInstances.map((pageListenerInstance: IListenerInstance) => {
     const { sourceKey, type } = pageListenerInstance;
-    const { materialName, name, variableName } = getMetaInfoBySourceKey(
-      sourceKey
-    );
+    const { materialName, name, variableName } =
+      getMetaInfoBySourceKey(sourceKey);
     const material = fixedDependencies.find((m) => m.name === materialName);
     const actionKey = `${materialName}_${name}`;
     const isExistAction = originActionList.find(
@@ -375,9 +368,8 @@ export function pullComponentToListByInstance(
   originComponentList: IOriginKeyInfo[],
   fixedDependencies: IMaterialItem[]
 ) {
-  const { materialName, name, variableName } = getMetaInfoBySourceKey(
-    sourceKey
-  );
+  const { materialName, name, variableName } =
+    getMetaInfoBySourceKey(sourceKey);
   const componentKey = `${materialName}_${name}`;
   const isExistComponent = originComponentList.find(
     (item: IOriginKeyInfo) => item.key === componentKey

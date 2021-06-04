@@ -5,6 +5,7 @@ import { IWebRuntimeAppData, IPageInstance } from 'src/weapps-core';
 import { DEPLOY_MODE } from '../types';
 import { PropBindType } from '@cloudbase/cals/lib/parser/expression';
 import { generateDataBind } from '../builder/mp/util';
+import { REPLACE_SIGN } from '../builder/config';
 
 export const CLOUD_FUNCTION_TYPE = 'cloud-function';
 export const EXTERNAL_FUNCTION_TYPE = 'http';
@@ -138,12 +139,14 @@ function _generateDynamicDataset(dataset) {
             let bind = params[paramKey];
             if (!bind.type || bind.type === PropBindType.static) {
               let value = bind.value;
-              processed[paramKey] = `%%%(app, $page) => (${
+              processed[paramKey] = `${REPLACE_SIGN}(app, $page) => (${
                 typeof value === 'string' ? `'${value}'` : value
-              })%%%`;
+              })${REPLACE_SIGN}`;
             } else {
               let jsExp = generateDataBind(bind);
-              processed[paramKey] = `%%%(app, $page) =>  (${jsExp})%%%`;
+              processed[
+                paramKey
+              ] = `${REPLACE_SIGN}(app, $page) =>  (${jsExp})${REPLACE_SIGN}`;
             }
           }
           config.initMethod.params = processed;
@@ -174,9 +177,8 @@ export function getDatasetProfiles(
     app.pageInstanceList?.forEach((pageInstance) => {
       let p = pageInstance as IPageInstance;
       if (p.dataset) {
-        result[
-          app.rootPath ? `${app.rootPath}/${p.id}` : p.id
-        ] = _generateDynamicDataset(p.dataset);
+        result[app.rootPath ? `${app.rootPath}/${p.id}` : p.id] =
+          _generateDynamicDataset(p.dataset);
       }
     });
   });

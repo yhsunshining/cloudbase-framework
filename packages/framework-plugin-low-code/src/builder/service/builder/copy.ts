@@ -109,6 +109,7 @@ export async function genCompositeComponentLibraries(
       version?: string;
       entry?: string;
       schemaVersion?: string;
+      isPlainProps?: boolean;
     };
   } = {},
   componentsInfoMap: IComponentsInfoMap
@@ -133,16 +134,13 @@ export async function genCompositeComponentLibraries(
             // @ts-ignore
             properties: readCmpInstances(compItem.componentInstances),
           };
-          const {
-            widgets,
-            dataBinds,
-            componentSchema,
-          } = getComponentSchemaString(
-            componentSchemaJson,
-            true,
-            componentsInfoMap,
-            wrapperClass
-          );
+          const { widgets, dataBinds, componentSchema } =
+            getComponentSchemaString(
+              componentSchemaJson,
+              true,
+              componentsInfoMap,
+              wrapperClass
+            );
           const templateData = {
             // @ts-ignore
             id: compItem.id,
@@ -171,19 +169,33 @@ export async function genCompositeComponentLibraries(
                 moduleNameVar: string;
                 version: string;
                 entry?: string;
+                isPlainProps?: boolean;
               }[] = [];
               // @ts-ignore
               JSON.stringify(compItem.componentInstances, (key, value) => {
                 if (key === 'xComponent') {
                   const { moduleName, name } = value;
+
+                  const compLib = materialGroupInfoMap[moduleName];
+                  let isPlainProps = false;
+                  if (compLib) {
+                    const { schemaVersion = '' } = compLib;
+                    try {
+                      if (Number(schemaVersion.split('.')?.[0]) >= 3) {
+                        isPlainProps = true;
+                      }
+                    } catch (e) {}
+                  }
+
                   list.push({
                     moduleName,
                     name,
                     key: `${moduleName}:${name}`,
-                    var: _.camelCase(`${moduleName}:${name}`),
+                    var: _.upperFirst(_.camelCase(`${moduleName}:${name}`)),
                     moduleNameVar: _.camelCase(moduleName),
-                    version: materialGroupInfoMap[moduleName]?.version || '',
-                    entry: materialGroupInfoMap[moduleName]?.entry,
+                    version: compLib?.version || '',
+                    entry: compLib?.entry,
+                    isPlainProps: isPlainProps,
                   });
                 }
                 return value;

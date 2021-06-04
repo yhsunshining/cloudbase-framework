@@ -4,7 +4,7 @@ import { observable } from "mobx";
 
 import { AppRender } from "handlers/render";
 import { createComputed } from "../../../../utils";
-import { createWidgets, retryDataBinds, WidgetsContext } from 'handlers/utils'
+import { createWidgets, retryDataBinds, WidgetsContext, resolveComponentProps } from 'handlers/utils'
 import { get } from 'lodash'
 import getStateFn from "./lowcode/state.js";
 import computed from "./lowcode/computed.js";
@@ -49,7 +49,7 @@ class CompositeCompWrapper extends React.Component {
     this.compConfig = <%= JSON.stringify(compConfig, null, 2) %>
     this.virtualFields = Object.assign({}, props.pageVirtualFields || {}, {
     <% useComponents.forEach(compItem => {%>
-      "<%= compItem.key %>": <%= compItem.var %>,
+      "<%= compItem.key %>": <% if(compItem.isPlainProps) {%> (props) => <<%= compItem.var %> {...resolveComponentProps(props)} /> <% } else {%> <%= compItem.var %> <% }%>,
     <%}) %>
     });
     this.events = (<%= emitEvents %>).reduce((obj, trigger) => {

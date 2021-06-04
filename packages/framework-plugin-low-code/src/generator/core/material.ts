@@ -15,6 +15,7 @@ import jsonSchemaDefaults from 'json-schema-defaults';
 import tpl from 'lodash.template';
 import uniqBy from 'lodash.uniqby';
 import { processLess } from '../util/style';
+import { upperFirst } from 'lodash';
 
 export async function runHandleMaterial(
   appBuildDir: string,
@@ -234,16 +235,13 @@ export async function genCompositeComponentLibraries(
             properties: readCmpInstances(compItem.componentInstances),
           };
 
-          const {
-            widgets,
-            dataBinds,
-            componentSchema,
-          } = getComponentSchemaString(
-            componentSchemaJson,
-            true,
-            componentsInfoMap,
-            wrapperClass
-          );
+          const { widgets, dataBinds, componentSchema } =
+            getComponentSchemaString(
+              componentSchemaJson,
+              true,
+              componentsInfoMap,
+              wrapperClass
+            );
 
           const templateData = {
             // @ts-ignore
@@ -286,7 +284,7 @@ export async function genCompositeComponentLibraries(
                     moduleName,
                     name,
                     key: `${moduleName}:${name}`,
-                    var: camelcase(`${moduleName}:${name}`),
+                    var: upperFirst(camelcase(`${moduleName}:${name}`)),
                     moduleNameVar: camelcase(moduleName),
                     version: compLib?.version,
                     isComposite: compLib?.isComposite,

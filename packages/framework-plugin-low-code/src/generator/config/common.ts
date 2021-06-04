@@ -1,7 +1,6 @@
-export const REPLACE_SIGN = '%%%'
-export const REPLACE_SIGN_REGX = /("%%%|%%%")/g
+export const REPLACE_SIGN = '%%%';
 
-export const MP_CONFIG_MODULE_NAME = 'mp_config'
+export const MP_CONFIG_MODULE_NAME = 'mp_config';
 
 export const KBONE_PAGE_KEYS = [
   'loadingText',
@@ -11,4 +10,4 @@ export const KBONE_PAGE_KEYS = [
   'reachBottom',
   'reachBottomDistance',
   'pullDownRefresh',
-]
+];

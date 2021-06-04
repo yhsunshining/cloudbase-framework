@@ -16,7 +16,8 @@
     "react": "^16.12.0",
     "react-dom": "^16.8.6",
     "react-router-dom": "^5.1.2",
-    "regenerator-runtime": "^0.13.5"
+    "regenerator-runtime": "^0.13.5",
+    "lodash": "^4.17.19"
   },
   "devDependencies": {
     "@types/react": "^16.9.49",
@@ -44,7 +45,6 @@
     "mini-css-extract-plugin": "^0.8.0",
     "hard-source-webpack-plugin": "^0.13.1",
     "html-webpack-plugin": "^3.2.0",
-    "lodash": "^4.17.19",
     "webpack": "^4.41.4",
     "webpack-cli": "^4.2.0",
     "webpack-dev-server": "^3.11.0"

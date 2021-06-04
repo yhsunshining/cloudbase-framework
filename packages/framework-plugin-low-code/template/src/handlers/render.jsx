@@ -1,17 +1,16 @@
-import * as React from 'react'
-import { useRef } from 'react'
-import * as _ from 'lodash'
-import { createFormActions } from '@formily/react-schema-renderer'
-import { CompRenderer } from './FieldMiddleware/renderer'
+import * as React from 'react';
+import { useRef } from 'react';
+import * as _ from 'lodash';
+import { CompRenderer } from './FieldMiddleware/renderer';
 
 function getComponentChildren(component) {
-  const { properties } = component
+  const { properties } = component;
   if (!properties) {
-    return []
+    return [];
   }
   return Object.values(properties).sort(
     (a, b) => (a['x-index'] || 0) - (b['x-index'] || 0)
-  )
+  );
 }
 
 export function AppRender(props) {
@@ -22,55 +21,55 @@ export function AppRender(props) {
     renderSlot,
     rootNode = true,
     codeContext,
-  } = props
+  } = props;
 
-  const { 'x-props': xProps, properties = {} } = componentSchema
+  const { 'x-props': xProps, properties = {} } = componentSchema;
 
   // 判断是否为 slot
-  const isSlot = !xProps
+  const isSlot = !xProps;
   if (isSlot && !(renderSlot || rootNode)) {
-    return null
+    return null;
   }
 
-  const preClassName = useRef()
+  const preClassName = useRef();
 
   // wrapperClass
-  const containerEl = Object.values(properties)[0]
+  const containerEl = Object.values(properties)[0];
   if (containerEl && containerEl['x-props'] && className) {
-    let { classNameList = [] } = containerEl['x-props']
+    let { classNameList = [] } = containerEl['x-props'];
 
     // 先替换掉先前计算出来的className部分
     if (preClassName.current) {
       if (preClassName.current !== className) {
         classNameList = classNameList.filter(
           (clsName) => clsName !== preClassName.current
-        )
-        preClassName.current = className
+        );
+        preClassName.current = className;
       }
     } else {
-      preClassName.current = className
+      preClassName.current = className;
     }
 
-    containerEl['x-props'].classNameList = [className, ...classNameList]
+    containerEl['x-props'].classNameList = [className, ...classNameList];
   }
 
   if (xProps && xProps.sourceKey) {
-    const { sourceKey } = xProps
-    const Field = virtualFields[sourceKey]
+    const { sourceKey } = xProps;
+    const Field = virtualFields[sourceKey];
     if (!Field) {
       return (
         <div style={{ color: 'red' }}>
           组件<em>{sourceKey}</em>未找到
         </div>
-      )
+      );
     }
   }
 
-  const children = getComponentChildren(componentSchema)
-  const slots = {}
+  const children = getComponentChildren(componentSchema);
+  const slots = {};
   // eslint-disable-next-line guard-for-in
   for (const key in properties) {
-    const child = properties[key]
+    const child = properties[key];
     if (!child['x-props']) {
       slots[key] = (
         <AppRender
@@ -80,7 +79,7 @@ export function AppRender(props) {
           virtualFields={virtualFields}
           codeContext={codeContext}
         />
-      )
+      );
     }
   }
 
@@ -104,5 +103,5 @@ export function AppRender(props) {
         />
       ))}
     </CompRenderer>
-  )
+  );
 }

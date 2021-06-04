@@ -62,7 +62,11 @@ export function getSelfPackageJson(): IPackageJson | undefined {
 }
 
 export function JsonToStringWithVariableName(copyJson: any): string {
-  return JSON.stringify(copyJson, null, 2).replace(/("%%%|%%%"|\\n)/g, '');
+  return JSON.stringify(copyJson, null, 2)
+    .replace(/"%%%(.*?)%%%"/g, function (match, expression) {
+      return expression.replace(/\\"/g, '"');
+    })
+    .replace(/\\n/g, '');
 }
 
 export function requireUncached(module) {
@@ -233,9 +237,7 @@ export async function writeLibCommonRes2file(
   );
 }
 
-export function readComponentLibMata(
-  libDir
-): {
+export function readComponentLibMata(libDir): {
   version?: string;
   schemaVersion?: string;
   styles?: IMaterialItem['styles'];

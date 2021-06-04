@@ -2,8 +2,7 @@ import * as React from 'react';
 import { useContext, useCallback, createContext } from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent, translateStyleToRem, checkVisible } from '../utils';
-import get from 'lodash.get';
-import set from 'lodash.set';
+import { get, set } from 'lodash';
 import { getDom } from '../utils/widgets';
 
 export const ForContext = createContext({});
@@ -143,9 +142,8 @@ export const CompRenderer = observer(function (props) {
   }
 
   // 单节点渲染
-  const { fieldData, finalClassNameList, finalStyle } = getBindData(
-    parentForItems
-  );
+  const { fieldData, finalClassNameList, finalStyle } =
+    getBindData(parentForItems);
   const emitWithFiedle = (trigger, eventData, domEvent) =>
     emit(trigger, eventData, parentForItems, domEvent);
 

@@ -1,5 +1,4 @@
-import * as lodashGet from 'lodash.get';
-import * as lodashSet from 'lodash.set';
+import { get as lodashGet, set as lodashSet } from 'lodash';
 
 export function createComputed(funcs, bindContext = null) {
   const obj = {};
