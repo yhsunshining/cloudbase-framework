@@ -77,7 +77,7 @@ export function AppRender(props) {
   // eslint-disable-next-line guard-for-in
   for (const key in properties) {
     const child = properties[key];
-    if (!child['x-props']) {
+    if (!child['x-props'] && child.properties) {
       slots[key] = isScopeSlot(componentSchema, key) ? (
         (props) => {
           let clonedScopeContext = cloneDeep(scopeContext);
