@@ -15,6 +15,7 @@ import { notice, log } from '../util/console';
 import { appTemplateDir } from '../config';
 import chalk from 'chalk';
 import { DEPLOY_MODE, RUNTIME } from '../../types';
+import tpl from 'lodash.template';
 
 let lastDeps: Object | null = null;
 
@@ -79,14 +80,25 @@ export async function runGenerateCore(
         rootPath ? `${rootPath}` : ''
       );
       await copy(
-        [
-          'app/global-api.js',
-          'app/mountMpApis.js',
-          'app/mountAppApis.js',
-          'datasources',
-        ],
+        ['app/mountMpApis.js', 'app/mountAppApis.js', 'datasources'],
         dstDir
       );
+
+      const tplStr = await fs.readFile(
+        path.join(appTemplateDir, 'src/app/global-api.js'),
+        {
+          encoding: 'utf8',
+        }
+      );
+      const globalApiContent = tpl(tplStr)({
+        appId: appKey,
+        subPackageName: rootPath,
+      });
+      await fs.writeFile(
+        path.join(dstDir, 'app/global-api.js'),
+        globalApiContent
+      );
+
       await generateAllPageJsxFile(
         pageInstanceList,
         dstDir,

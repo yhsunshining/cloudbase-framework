@@ -936,6 +936,7 @@ export async function generateCodeFromTpl(
   // # all templates to be generated
   const templatesData = {
     'app/global-api.js': {
+      appId: appKey,
       subPackageName: rootPath,
     },
     'app/handlers.js': {

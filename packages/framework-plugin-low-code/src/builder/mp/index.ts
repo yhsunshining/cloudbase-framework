@@ -449,6 +449,7 @@ async function generateFramework(
         ...fileData,
         'app/app-global.js': {},
         'app/weapps-api.js': {
+          appId: ctx.appId,
           subLevelPath: '',
           subPackageName: '',
           isBare: true,
@@ -474,6 +475,7 @@ async function generateFramework(
         ...fileData,
         'app/app-global.js': {},
         'app/weapps-api.js': {
+          appId: ctx.appId,
           subLevelPath: appData.rootPath
             ? path.relative(`${appData.rootPath}`, '') + '/'
             : '',

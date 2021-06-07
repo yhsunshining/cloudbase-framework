@@ -6,6 +6,7 @@ export const app = createGlboalApi();
 mountAPIs(sdk);
 function createGlboalApi() {
   const globalAPI = {
+    id: '<%= appId %>',
     platform: 'WEB',
 
     formActions: {},
