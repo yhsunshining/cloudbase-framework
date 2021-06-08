@@ -61,11 +61,15 @@ export function pageLifeCycleMount(
 ) {
   // 预览区调试栏可调试
   window.$page = pageCodeContext;
-  const _onPageLoad = async function (query) {
-    (await beforePageCustomLaunch) && beforePageCustomLaunch(query);
-    return typeof onPageLoad === 'function' ? onPageLoad(query) : () => {};
-  };
-  _onPageLoad.call(pageCodeContext, getCurrentPageQuery());
+  // royhyang 此处个人认为应该走调用一次的方案
+  useEffect(() => {
+    const _onPageLoad = async function (query) {
+      (await beforePageCustomLaunch) && beforePageCustomLaunch(query);
+      return typeof onPageLoad === 'function' ? onPageLoad(query) : () => {};
+    };
+    _onPageLoad.call(pageCodeContext, getCurrentPageQuery());
+  }, []);
+
   useEffect(() => {
     typeof onPageReady === 'function' && onPageReady.call(pageCodeContext);
     typeof onPageShow === 'function' && onPageShow.call(pageCodeContext);
