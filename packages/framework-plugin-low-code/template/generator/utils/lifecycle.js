@@ -64,7 +64,7 @@ export function pageLifeCycleMount(
   // royhyang 此处个人认为应该走调用一次的方案
   useEffect(() => {
     const _onPageLoad = async function (query) {
-      (await beforePageCustomLaunch) && beforePageCustomLaunch(query);
+      await (beforePageCustomLaunch && beforePageCustomLaunch(query));
       return typeof onPageLoad === 'function' ? onPageLoad(query) : () => {};
     };
     _onPageLoad.call(pageCodeContext, getCurrentPageQuery());
