@@ -654,6 +654,10 @@ function cleanMaterils(materialsDir: string, usedComps: IUsedComps) {
           fs.existsSync(path.join(libDir, 'meta.json')) ||
           fs.existsSync(path.join(libDir, 'mergeMeta.json'))
         ) {
+          try {
+            removeFile(path.join(libDir, 'meta.json'));
+            removeFile(path.join(libDir, 'mergeMeta.json'));
+          } catch (e) {}
           // Skip none-composited materials
           return;
         }
