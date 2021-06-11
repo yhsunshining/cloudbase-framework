@@ -688,7 +688,9 @@ export async function downloadAndInstallDependencies(
       await installDependencies(targetDir, {
         ...installOptions,
         ignoreInstall:
-          name === 'gsd-h5-react' ? !!installOptions.ignoreInstall : false,
+          name === 'gsd-h5-react' && version == '0.0.61'
+            ? !!installOptions.ignoreInstall
+            : false,
       });
       dependenciesMap.set(targetDir, true);
     })
