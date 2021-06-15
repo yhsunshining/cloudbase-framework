@@ -6,6 +6,7 @@ import { IBuildContext } from './BuildContext';
 import { MP_CONFIG_MODULE_NAME } from '../config';
 import { downloadFile } from '../util/net';
 import chalk from 'chalk';
+import { fixProcessCwd } from '../service/builder';
 
 /**
  * generate app.json & page.json for mp
@@ -16,12 +17,6 @@ import chalk from 'chalk';
 export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   const appConfig = {
     useExtendedLib: { weui: true },
-    // plugins: {
-    //   'mini-shop-plugin': {
-    //     version: 'latest',
-    //     provider: 'wx34345ae5855f892d',
-    //   },
-    // },
   };
 
   const projConfig: any = merge({}, defaultProjConfig, {
@@ -78,12 +73,32 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
     // merge(pageConfigs, pagesConfigJson)
   }
 
+  const { tradingCapability, ...mainAppConfig } = weapps[0].appConfig || {};
+
   // keep main app config only, ignore subapp config
-  merge(
-    appConfig,
-    weapps[0].appConfig || {},
-    extractPages(weapps, pageConfigs)
-  );
+  merge(appConfig, mainAppConfig, extractPages(weapps, pageConfigs));
+
+  if (tradingCapability) {
+    const tradePluginKey = `weda-mini-shop-plugin`;
+    const pluginMeta = {
+      version: 'latest',
+      provider: 'wx34345ae5855f892d',
+    };
+    let { plugins = {} } = appConfig as any;
+    let find = false;
+    for (let key in plugins) {
+      let value = plugins[key];
+      if (key === tradePluginKey || value.provider === pluginMeta.provider) {
+        find = true;
+        break;
+      }
+    }
+    if (!find) {
+      plugins[tradePluginKey] = pluginMeta;
+    }
+    (appConfig as any).plugins = plugins;
+  }
+
   // merge(pageConfigs, extractAllPagesConfig())
   return { appConfig, projConfig, pageConfigs };
 }
