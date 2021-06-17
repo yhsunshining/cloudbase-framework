@@ -213,7 +213,7 @@ module.exports = function (options) {
       ],
     },
     plugins,
-    optimization: true
+    optimization: isDevelopment
       ? {
           minimize: false,
           removeAvailableModules: false,

@@ -12,11 +12,12 @@
     <meta name="description" content="<%= meta.desc %>" />
     <title><%= meta.title %></title>
     <% if(delevopment){ %>
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>
       eruda.init();
-    </script>
-    <% }%> <% Array.isArray(meta.jsApis) &&
+    </script> -->
+    <% }%>
+    <% Array.isArray(meta.jsApis) &&
     meta.jsApis.filter(function(item){return !!item}).forEach(function(jsApi){%>
     <script src="<%=jsApi %>"></script>
     <% })%>

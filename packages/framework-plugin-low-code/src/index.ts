@@ -524,7 +524,10 @@ class LowCodePlugin extends Plugin {
       calsVersion,
     } = this._resolvedInputs;
 
-    const webpackMode = WebpackModeType.PRODUCTION;
+    const webpackMode =
+      this._resolvedInputs.deployOptions?.mode === DEPLOY_MODE.UPLOAD
+        ? WebpackModeType.PRODUCTION
+        : WebpackModeType.NONE;
 
     subAppSerializeDataList = subAppSerializeDataList?.map((item) => {
       if (this._checkIsVersion(calsVersion)) {
