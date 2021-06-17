@@ -529,6 +529,8 @@ class LowCodePlugin extends Plugin {
         ? WebpackModeType.PRODUCTION
         : WebpackModeType.NONE;
 
+    // const webpackMode = WebpackModeType.PRODUCTION;
+
     subAppSerializeDataList = subAppSerializeDataList?.map((item) => {
       if (this._checkIsVersion(calsVersion)) {
         return item.mpPkgUrl

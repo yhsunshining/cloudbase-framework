@@ -80,7 +80,7 @@ module.exports = function (options) {
     cache: {
       type: 'memory',
     },
-    devtool: isDevelopment ? 'eval-source-map' : false,
+    devtool: isDevelopment ? 'eval' : false,
     resolve: {
       extensions: ['.js', '.jsx', '.tsx', '.json', '.scss', '.css'],
       modules: [...resolveModules],
@@ -213,67 +213,68 @@ module.exports = function (options) {
       ],
     },
     plugins,
-    optimization: isDevelopment
-      ? {
-          minimize: false,
-          removeAvailableModules: false,
-          removeEmptyChunks: false,
-          splitChunks: false,
-        }
-      : {
-          minimizer: [
-            new TerserPlugin({
-              test: /\.js(\?.*)?$/i,
-              cache: true,
-              parallel: true,
-              sourceMap: true,
-              terserOptions: {
-                compress: {
-                  // eslint-disable-next-line @typescript-eslint/camelcase
-                  drop_console: false,
-                },
-              },
-            }),
-          ],
-          splitChunks: {
-            cacheGroups: {
-              base: {
-                test: /(react|react-dom|react-router|react-router-dom|mobx|mobx-react-lite|@cloudbase\/js-sdk)/,
-                chunks: 'all',
-                priority: 100, //优先级
-              },
-              utils: {
-                test: /(lodash|dayjs|axios|kbone-api|fastclick)/,
-                chunks: 'all',
-                priority: 100, //优先级
-              },
-              'async-commons': {
-                chunks: 'async',
-                minChunks: 2,
-                priority: 20,
-              },
-              commons: {
-                chunks: 'all',
-                minChunks: 2,
-                priority: 20,
-              },
-
-              // commons: {
-              //   test: /[\\/]node_modules[\\/]/,
-              //   // cacheGroupKey here is `commons` as the key of the cacheGroup
-              //   name(module, chunks, cacheGroupKey) {
-              //     const { name: moduleFileName } = path
-              //       .parse(module.identifier())
-              //       .reduceRight((item) => item);
-              //     const allChunksNames = chunks
-              //       .map((item) => item.name)
-              //       .join('~');
-              //     return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
-              //   },
-              //   chunks: 'all',
-              // },
-            },
+    optimization: {
+      splitChunks: {
+        cacheGroups: {
+          base: {
+            test: /(react|react-dom|react-router|react-router-dom|mobx|mobx-react-lite|@cloudbase\/js-sdk)/,
+            chunks: 'all',
+            priority: 100, //优先级
           },
+          utils: {
+            test: /(lodash|dayjs|axios|kbone-api|fastclick)/,
+            chunks: 'all',
+            priority: 100, //优先级
+          },
+          'async-commons': {
+            chunks: 'async',
+            minChunks: 2,
+            priority: 20,
+          },
+          commons: {
+            chunks: 'all',
+            minChunks: 2,
+            priority: 20,
+          },
+
+          // commons: {
+          //   test: /[\\/]node_modules[\\/]/,
+          //   // cacheGroupKey here is `commons` as the key of the cacheGroup
+          //   name(module, chunks, cacheGroupKey) {
+          //     const { name: moduleFileName } = path
+          //       .parse(module.identifier())
+          //       .reduceRight((item) => item);
+          //     const allChunksNames = chunks
+          //       .map((item) => item.name)
+          //       .join('~');
+          //     return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
+          //   },
+          //   chunks: 'all',
+          // },
         },
+      },
+      ...(isDevelopment
+        ? {
+            minimize: false,
+            removeAvailableModules: false,
+            removeEmptyChunks: true,
+          }
+        : {
+            minimizer: [
+              new TerserPlugin({
+                test: /\.js(\?.*)?$/i,
+                cache: true,
+                parallel: true,
+                sourceMap: true,
+                terserOptions: {
+                  compress: {
+                    // eslint-disable-next-line @typescript-eslint/camelcase
+                    drop_console: false,
+                  },
+                },
+              }),
+            ],
+          }),
+    },
   };
 };
