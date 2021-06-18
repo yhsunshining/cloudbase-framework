@@ -257,7 +257,11 @@ class LowCodePlugin extends Plugin {
     );
 
     // 测试环境部署
-    if (this._resolvedInputs.appId === 'app-fho1xlir') {
+    if (
+      (this._resolvedInputs.appId === 'app-fho1xlir' ||
+        this._resolvedInputs.appId === 'app-64tleig4') &&
+      this._resolvedInputs.buildTypeList?.[0] === 'pc'
+    ) {
       this._resolvedInputs.buildTypeList = ['adminPortal'] as any;
     }
 
