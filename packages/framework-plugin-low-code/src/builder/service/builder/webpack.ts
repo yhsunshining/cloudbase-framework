@@ -557,14 +557,11 @@ export function getWebpackWebBuildParams(
       cloudSDKFileName: CLOUD_SDK_FILE_NAME,
       isAdminPortal: buildTypeList.includes(BuildType.ADMIN_PORTAL),
     },
-    externals:
-      mode !== 'production'
-        ? {}
-        : {
-            mobx: 'window.mobx',
-            '@cloudbase/js-sdk': 'window.cloudbase',
-            '@cloudbase/weda-cloud-sdk/dist/h5': 'window.CloudSDK',
-          },
+    externals: {
+      mobx: 'window.mobx',
+      '@cloudbase/js-sdk': 'window.cloudbase',
+      '@cloudbase/weda-cloud-sdk/dist/h5': 'window.CloudSDK',
+    },
     resolveModules: [
       path.resolve(appBuildDir, 'node_modules'),
       path.resolve(appBuildDir, 'src'),
