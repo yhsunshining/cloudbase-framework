@@ -16,8 +16,7 @@
     <script>
       eruda.init();
     </script> -->
-    <% }%>
-    <% Array.isArray(meta.jsApis) &&
+    <% }%> <% Array.isArray(meta.jsApis) &&
     meta.jsApis.filter(function(item){return !!item}).forEach(function(jsApi){%>
     <script src="<%=jsApi %>"></script>
     <% })%>
@@ -352,7 +351,7 @@
     </style>
   </head>
 
-  <body>
+  <body data-weui-theme="light">
     <div id="react-body" class="main-wrap"></div>
     <% if(!isAdminPortal){ %>
     <script src="//imgcache.qq.com/qcloud/cloudbase-js-sdk/1.5.3-alpha.0/cloudbase.full.js"></script>
