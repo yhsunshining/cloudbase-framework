@@ -370,7 +370,7 @@ async function generatePkg(
           page.componentInstances,
           `Page ${rootPath ? path.join(rootPath, 'pages') : ''}/${page.id}`,
           wxmlDataPrefix,
-          { ...ctx, rootPath },
+          { ...ctx, rootPath, isPage: true },
           usingComponents
         );
 

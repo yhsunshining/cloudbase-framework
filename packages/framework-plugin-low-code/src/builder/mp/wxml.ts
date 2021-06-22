@@ -1,13 +1,13 @@
-import { transformSync } from '@babel/core'
-import * as prettier from 'prettier'
-import chalk from 'chalk'
+import { transformSync } from '@babel/core';
+import * as prettier from 'prettier';
+import chalk from 'chalk';
 import {
   IDynamicValue,
   IWeAppComponentInstance,
   PropBindType,
   IEventModifiers,
-} from '../../weapps-core'
-import { js2xml } from 'xml-js'
+} from '../../weapps-core';
+import { js2xml } from 'xml-js';
 import {
   textContentPropName,
   getClassAttrName,
@@ -15,13 +15,13 @@ import {
   builtinMpEvents,
   builtinMpTags,
   nativeCompWhiteList,
-} from '../config/mp'
-import { IBuildContext } from './BuildContext'
-import { getWxmlTag } from './materials'
-import { walkThroughWidgets } from '../util/weapp'
-import NameMangler from '../util/name-mangler'
+} from '../config/mp';
+import { IBuildContext } from './BuildContext';
+import { getWxmlTag } from './materials';
+import { walkThroughWidgets } from '../util/weapp';
+import NameMangler from '../util/name-mangler';
 
-const error = chalk.redBright
+const error = chalk.redBright;
 
 // export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
 //   if (bind.value == null) {
@@ -63,42 +63,46 @@ const error = chalk.redBright
 // }
 
 interface INode {
-  type: string
-  name: string
+  type: string;
+  name: string;
   attributes: {
-    [key: string]: any
-  }
-  elements: INode[]
-  _order: number
-  _parent: INode | null
+    [key: string]: any;
+  };
+  elements: INode[];
+  _order: number;
+  _parent: INode | null;
 }
 
 export function generateWxml(
   widgets: { [key: string]: IWeAppComponentInstance },
   docTag: string,
   wxmlDataPrefix,
-  ctx: IBuildContext,
+  ctx: IBuildContext & { isPage: boolean },
   usingComponents,
   nodeTransform?: (cmp: IWeAppComponentInstance, node) => void
 ) {
   const nameMangler = ctx.isProduction
     ? new NameMangler({ blackList: builtinMpTags })
-    : undefined
-  const xmlJson = { elements: createXml(widgets) }
+    : undefined;
+  const xmlJson = { elements: createXml(widgets) };
 
   function createXml(
     widgets: { [key: string]: IWeAppComponentInstance },
     parent: null | INode = null,
     parentForNodes: string[] = []
   ) {
-    const elements: INode[] = []
+    const elements: INode[] = [];
     for (const id in widgets) {
-      const { xComponent, xProps, properties, xIndex } = widgets[id]
-      const { data: data0 = {}, listeners = [], directives = {} } = xProps || {}
+      const { xComponent, xProps, properties, xIndex } = widgets[id];
+      const {
+        data: data0 = {},
+        listeners = [],
+        directives = {},
+      } = xProps || {};
 
-      const data = { ...data0 }
+      const data = { ...data0 };
       if (directives.waIf && directives.waIf.value === false) {
-        continue
+        continue;
       }
       if (!xComponent) {
         // slot prop
@@ -106,42 +110,42 @@ export function generateWxml(
           properties as Required<IWeAppComponentInstance>['properties'],
           parent,
           parentForNodes
-        )
+        );
         slotNodes.forEach((node) => {
-          node.attributes.slot = id
-          parent?.elements?.push(node)
-        })
+          node.attributes.slot = id;
+          parent?.elements?.push(node);
+        });
         if (parent) {
-          delete parent.attributes[id]
+          delete parent.attributes[id];
         }
-        continue
+        continue;
       }
-      const componentKey = xComponent.moduleName + ':' + xComponent.name
-      const helpMsg = `Please check component(${id}) in component tree of ${docTag}.`
+      const componentKey = xComponent.moduleName + ':' + xComponent.name;
+      const helpMsg = `Please check component(${id}) in component tree of ${docTag}.`;
 
       const materialLib = ctx.materialLibs.find(
         (lib) => lib.name === xComponent.moduleName
-      )
+      );
       if (!materialLib) {
         console.error(
           error(`Component lib(${xComponent.moduleName}) not found. ${helpMsg}`)
-        )
-        continue
+        );
+        continue;
       }
       const componentProto = materialLib.components.find(
         (comp) => comp.name === xComponent.name
-      )
+      );
       if (!componentProto) {
         console.error(
           error(
             `Component(${xComponent.name}) not found in lib(${xComponent.moduleName}). ${helpMsg}`
           )
-        )
-        continue
+        );
+        continue;
       }
-      const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler)
+      const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler);
       if (path) {
-        usingComponents[tagName] = path
+        usingComponents[tagName] = path;
       }
 
       if (tagName === 'slot') {
@@ -152,17 +156,17 @@ export function generateWxml(
           elements: [],
           _order: xIndex || 0,
           _parent: null,
-        })
-        continue
+        });
+        continue;
       }
-      let curForNodes = parentForNodes
+      let curForNodes = parentForNodes;
       if (directives.waFor && directives.waFor.value) {
-        curForNodes = [...curForNodes, id]
+        curForNodes = [...curForNodes, id];
       }
 
       const attrPrefix = `${wxmlDataPrefix.widgetProp}${id}${curForNodes
         .map((forNodeId) => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
-        .join('')}.`
+        .join('')}.`;
 
       const idAttr =
         curForNodes.length < 1
@@ -171,7 +175,7 @@ export function generateWxml(
               .map(
                 (forNodeId) => `+ '-' + ${wxmlDataPrefix.forIndex}${forNodeId}`
               )
-              .join('')}}}`
+              .join('')}}}`;
 
       const node: INode = {
         type: 'element',
@@ -184,17 +188,17 @@ export function generateWxml(
         elements: [],
         _order: xIndex || 0,
         _parent: parent,
-      }
-      const { mustEmptyStyle } = componentProto.meta || {}
+      };
+      const { mustEmptyStyle } = componentProto.meta || {};
       if (mustEmptyStyle) {
-        delete node.attributes.style
+        delete node.attributes.style;
       }
 
       if (directives.waIf && directives.waIf.value) {
         node.attributes['wx:if'] = getAttrBind(
           directives.waIf,
           `${attrPrefix}_waIf`
-        )
+        );
       }
 
       if (directives.waFor && directives.waFor.value) {
@@ -203,33 +207,33 @@ export function generateWxml(
           `${wxmlDataPrefix.widgetProp}${id}${parentForNodes
             .map((forNodeId) => `[${wxmlDataPrefix.forIndex}${forNodeId}]`)
             .join('')}`
-        )
-        node.attributes['wx:for-index'] = wxmlDataPrefix.forIndex + id
-        node.attributes['wx:key'] = 'id'
+        );
+        node.attributes['wx:for-index'] = wxmlDataPrefix.forIndex + id;
+        node.attributes['wx:key'] = 'id';
       }
-      const compSchema = componentProto.dataForm
+      const compSchema = componentProto.dataForm;
       for (const prop in data) {
         if (compSchema) {
-          const fieldDef = compSchema[prop]
+          const fieldDef = compSchema[prop];
           if (!fieldDef) {
             console.log(
               error(
                 `Prop(${prop}) does not exist on ${componentKey}. ${helpMsg}`
               )
-            )
-            continue
+            );
+            continue;
           }
           if (fieldDef.readOnly) {
             if (fieldDef.hasOwnProperty('default')) {
-              node.attributes[prop] = fieldDef.default
+              node.attributes[prop] = fieldDef.default;
             } else {
               console.error(
                 error(
                   `Readonly property(${prop}) of ${componentKey} must have a default value. ${helpMsg}`
                 )
-              )
+              );
             }
-            continue
+            continue;
           }
         }
         xmlJsonSetCustomAttr(
@@ -237,39 +241,38 @@ export function generateWxml(
           prop,
           getAttrBind(data[prop], `${attrPrefix}${prop}`),
           xComponent
-        )
+        );
       }
 
       // Event binding
-      const { inputProps, syncProps } = componentProto.meta || {}
-      const syncConfigs = syncProps || inputProps || {}
+      const { inputProps, syncProps } = componentProto.meta || {};
+      const syncConfigs = syncProps || inputProps || {};
       Object.entries(syncConfigs).map(([prop, config]) => {
-        const configs = Array.isArray(config) ? config : [config]
+        const configs = Array.isArray(config) ? config : [config];
         configs.forEach(({ changeEvent: evtName }) => {
           // 兼容微信 7.0.13 安卓版本 textarea 组件的 bindinput 事件，bind:input 写法，事件会失效
-          const sep = getEventBindSep(tagName)
+          const sep = getEventBindSep(tagName);
           node.attributes[`bind${sep}${evtName}`] = getMpEventHanlderName(
             id,
             evtName
-          )
-        })
-      })
+          );
+        });
+      });
       listeners.forEach((l) => {
-        const evtName = getMpEventName(l.trigger)
-        const modifiers = l
-        node.attributes[
-          getMpEventAttr(evtName, modifiers, tagName)
-        ] = getMpEventHanlderName(id, evtName, modifiers)
-      })
+        const evtName = getMpEventName(l.trigger);
+        const modifiers = l;
+        node.attributes[getMpEventAttr(evtName, modifiers, tagName)] =
+          getMpEventHanlderName(id, evtName, modifiers);
+      });
 
       // 扩展组件配置
-      const compConfig = componentProto.compConfig
+      const compConfig = componentProto.compConfig;
       if (compConfig && compConfig.pluginConfig) {
         if (compConfig.pluginConfig.attributes) {
-          Object.assign(node.attributes, compConfig.pluginConfig.attributes)
+          Object.assign(node.attributes, compConfig.pluginConfig.attributes);
         }
         if (compConfig.pluginConfig.componentPath) {
-          usingComponents[tagName] = compConfig.pluginConfig.componentPath
+          usingComponents[tagName] = compConfig.pluginConfig.componentPath;
         }
       }
       // find ancestor nodes with for lists to mount data-for-indexes
@@ -293,17 +296,21 @@ export function generateWxml(
           node,
           curForNodes
         )
-      )
+      );
 
       // 特殊处理 swiper，对swiper 子节点包裹议程 swiperItem
-      if (tagName === 'swiper') {
+      if (
+        tagName === 'swiper' ||
+        componentKey === 'weda:Swiper' ||
+        componentKey === 'gsd-h5-react:Swiper'
+      ) {
         node.elements = node.elements.map((item, index) => {
           let {
             ['wx:for']: wxFor,
             ['wx:for-index']: wxForIndex,
             ['wx:key']: wxKey,
             ...itemRestKey
-          } = item.attributes || {}
+          } = item.attributes || {};
 
           if (item.name !== 'swiper-item') {
             let SwiperItem: INode = {
@@ -320,7 +327,7 @@ export function generateWxml(
               elements: [],
               _order: index || 0,
               _parent: node,
-            }
+            };
             SwiperItem.elements = [
               {
                 ...item,
@@ -329,17 +336,24 @@ export function generateWxml(
                 },
                 _parent: SwiperItem,
               },
-            ]
-            return SwiperItem
+            ];
+            return SwiperItem;
           } else {
-            return item
+            return item;
           }
-        })
+        });
       }
-      nodeTransform && nodeTransform(widgets[id], node)
-      elements.push(node)
+      nodeTransform && nodeTransform(widgets[id], node);
+      elements.push(node);
     }
-    return elements.sort((a, b) => a._order - b._order)
+    return elements.sort((a, b) => a._order - b._order);
+  }
+
+  if (ctx.isPage && xmlJson.elements?.length) {
+    if (!xmlJson.elements[0]?.attributes) {
+      xmlJson.elements[0].attributes = {};
+    }
+    xmlJson.elements[0].attributes['data-weui-theme'] = 'light';
   }
 
   return js2xml(xmlJson, {
@@ -350,7 +364,7 @@ export function generateWxml(
         .replace(/&lt;/g, '<')
         .replace(/&amp;/g, '&')
     }, */
-  })
+  });
 }
 
 function xmlJsonSetCustomAttr(node, prop: string, value: string, comp) {
@@ -358,14 +372,14 @@ function xmlJsonSetCustomAttr(node, prop: string, value: string, comp) {
     console.error(
       error('Builtin prop(' + prop + ') is not allowed for custom component'),
       comp
-    )
-    return
+    );
+    return;
   }
-  node.attributes[prop] = value
+  node.attributes[prop] = value;
 
   // FIXME Attention, handling innerText
   if (prop === textContentPropName) {
-    node.elements.push({ type: 'text', text: value })
+    node.elements.push({ type: 'text', text: value });
   }
 }
 
@@ -373,27 +387,27 @@ function transpileJsExpr(expr: string) {
   let result = transformSync(expr, {
     cwd: __dirname, // help to resolve babel plugin
     plugins: [['@babel/plugin-transform-template-literals', { loose: true }]],
-  })
+  });
 
-  let code = result?.code || ''
+  let code = result?.code || '';
 
   code = prettier.format(code, {
     semi: false,
     singleQuote: true,
     parser: 'babel',
     printWidth: Number.MAX_SAFE_INTEGER,
-  })
-  return code.substr(0, code.length - 1)
+  });
+  return code.substr(0, code.length - 1);
 }
 
 const evtNameMap = {
   // eslint-disable-next-line @typescript-eslint/camelcase
   __weapps_action_trigger_click: 'tap',
-}
+};
 
 function getMpEventName(originalName: string) {
   // 模板中也有部分依赖保持相同的连字符(_)，更改时注意同步修改
-  return evtNameMap[originalName] || originalName.replace(/\./g, '_')
+  return evtNameMap[originalName] || originalName.replace(/\./g, '_');
 }
 
 export function getMpEventHanlderName(
@@ -403,11 +417,11 @@ export function getMpEventHanlderName(
 ) {
   // Only builtin events have will bubble
   if (builtinMpEvents.indexOf(evtName) === -1) {
-    modifier = {}
+    modifier = {};
   }
   return `on${widgetId}$${getMpEventName(evtName)}${
     modifier.isCapturePhase ? '$cap' : ''
-  }${modifier.noPropagation ? '$cat' : ''}`
+  }${modifier.noPropagation ? '$cat' : ''}`;
 }
 
 /* onid3click,  */
@@ -418,17 +432,17 @@ function getMpEventAttr(
 ) {
   // Only builtin events have will bubble
   if (builtinMpEvents.indexOf(evtName) === -1) {
-    modifier = {}
+    modifier = {};
   }
-  let prefix = modifier.isCapturePhase ? 'capture-' : ''
-  prefix += modifier.noPropagation ? 'catch' : 'bind'
-  const sep = getEventBindSep(tagName)
-  return prefix + sep + evtName
+  let prefix = modifier.isCapturePhase ? 'capture-' : '';
+  prefix += modifier.noPropagation ? 'catch' : 'bind';
+  const sep = getEventBindSep(tagName);
+  return prefix + sep + evtName;
 }
 
 function getEventBindSep(tagName: string) {
   // bind:input => bindinput 兼容微信 7.0.13 安卓版本 textarea 组件，bind:input 写法会导致事件失效
-  return nativeCompWhiteList.includes(tagName.toLowerCase()) ? '' : ':'
+  return nativeCompWhiteList.includes(tagName.toLowerCase()) ? '' : ':';
 }
 
 export function getUsedComponents(
@@ -436,19 +450,19 @@ export function getUsedComponents(
   usedCmps: { [libName: string]: Set<string> } = {}
 ) {
   walkThroughWidgets(widgets, (id, widget) => {
-    const { xComponent } = widget
-    if (!xComponent) return
-    const { moduleName, name } = xComponent
+    const { xComponent } = widget;
+    if (!xComponent) return;
+    const { moduleName, name } = xComponent;
     if (!usedCmps[moduleName]) {
-      usedCmps[moduleName] = new Set()
+      usedCmps[moduleName] = new Set();
     }
-    usedCmps[moduleName].add(name)
-  })
-  return usedCmps
+    usedCmps[moduleName].add(name);
+  });
+  return usedCmps;
 }
 
 function getAttrBind(dVale: IDynamicValue, widgetBind: string) {
-  const { type, value } = dVale
-  const attrVal = type === PropBindType.prop ? value : widgetBind
-  return `{{${attrVal}}}`
+  const { type, value } = dVale;
+  const attrVal = type === PropBindType.prop ? value : widgetBind;
+  return `{{${attrVal}}}`;
 }
