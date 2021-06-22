@@ -27,7 +27,7 @@ exports.main = async (event, context) => {
   const params = {
     ID: id,
     Name: name,
-    EvnId: envId,
+    EnvId: envId,
     DeployUrl: deployUrl || `https://${path.join(CdnDomain, deployPath)}`,
     Pages: pages.map((page) => ({
       ID: page.id,
