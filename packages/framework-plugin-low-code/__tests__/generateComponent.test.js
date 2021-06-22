@@ -50,9 +50,9 @@ async function test() {
   let fileMap = await generateCompLibs(
     options.dependencies
       .map((item) => {
-        if (!item.isComposite) {
-          return null;
-        }
+        // if (!item.isComposite) {
+        //   return null;
+        // }
         return {
           ...item,
           compLibCommonResource: getCompLibCommonResource(
