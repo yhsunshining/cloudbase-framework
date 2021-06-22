@@ -2,7 +2,7 @@ import * as React from "react";
 import { observer } from "mobx-react-lite";
 import { observable, autorun, reaction, runInAction } from "mobx";
 import { AppRender } from "/src/handlers/RenderWrapper";
-import { createWidgets, retryDataBinds, WidgetsContext, bindFuncObj, createComputed } from '/src/utils/index'
+import { createWidgets, retryDataBinds, WidgetsContext, bindFuncObj, createComputed, resolveComponentProps} from '/src/utils/index'
 import getStateFn from "./lowcode/state.js";
 import computed from "./lowcode/computed.js";
 import lifecycle from "./lowcode/lifecycle.js";
