@@ -1,5 +1,7 @@
 import sdk from '@govcloud/weapps-sdk/lib/app-h5-sdk';
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
+import { formatDate } from '../utils/date';
+import { getter, setter } from '../utils';
 
 export const subPackageName = '<%= subPackageName %>';
 export const app = createGlboalApi();
@@ -16,6 +18,11 @@ function createGlboalApi() {
     common: {},
     // i18n,
     dataSources: DS_SDK,
+    utils: {
+      formatDate,
+      get: getter,
+      set: setter,
+    },
   };
 
   const dataset = createDataset('$global');
