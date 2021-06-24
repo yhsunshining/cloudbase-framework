@@ -116,7 +116,6 @@ export function toCssStyle(
     setStyleValue(style, 'textAlign', text.textAlign);
     setStyleValue(style, 'fontWeight', text.weight);
     if (text.opacity) {
-      console.log('-----------------------')
       setStyleValue(style, 'opacity', text.opacity / 100);
     }
   }
@@ -233,15 +232,8 @@ export function toCssStyle(
   }
 
   if (background) {
-    const {
-      bgType,
-      color,
-      image,
-      size,
-      repeat,
-      position,
-      positionObj,
-    } = background;
+    const { bgType, color, image, size, repeat, position, positionObj } =
+      background;
     if (bgType === 'color') {
       setStyleValue(style, 'background', color);
     } else if (bgType === 'image') {

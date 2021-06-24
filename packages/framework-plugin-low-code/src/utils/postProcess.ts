@@ -71,7 +71,6 @@ export function processInstalledHook(plugin) {
   if (buildAsAdminPortalByBuildType(buildTypeList)) {
     const isPreview = deployOptions?.mode === DEPLOY_MODE.PREVIEW;
     const id = isPreview ? `${appId}-preview` : appId;
-    console.log('-------------------------', mainAppSerializeData);
     let name = mainAppSerializeData?.label || appId;
     name = isPreview ? `${name}-预览` : name;
 
