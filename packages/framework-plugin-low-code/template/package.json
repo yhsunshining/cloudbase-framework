@@ -7,8 +7,8 @@
   "dependencies": {
     "@cloudbase/js-sdk": "1.5.3-alpha.0",
     "@cloudbase/weda-cloud-sdk": "stable",
-    "@govcloud/weapps-core": "2.2.6",
-    "@govcloud/weapps-sdk": "1.2.9",
+    "@tcwd/weapps-core": "2.2.6",
+    "@tcwd/weapps-sdk": "1.2.9",
     "mobx": "^5.15.4",
     "mobx-react-lite": "^2.0.7",
     "fastclick": "^1.0.6",

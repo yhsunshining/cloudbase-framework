@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useContext, useCallback, createContext, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent } from '../actionHandler/utils';
-import { translateStyleToRem } from '@govcloud/weapps-core';
+import { translateStyleToRem } from '@tcwd/weapps-core';
 import { get, set } from 'lodash';
 import { $page } from '../../app/global-api';
 import { getDom } from '../utils/widgets';

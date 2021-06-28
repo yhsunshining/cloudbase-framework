@@ -1,4 +1,4 @@
-import * as sdk from '@govcloud/weapps-sdk';
+import * as sdk from '@tcwd/weapps-sdk';
 import { createComputed } from 'utils';
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
 import store, { subPackageName } from '../store';
@@ -19,7 +19,7 @@ export function setCurrentPage(pageCtx) {
 
 function createGlboalApi() {
   const globalAPI = {
-    id: "<%= appId %>",
+    id: '<%= appId %>',
     platform: 'WEB',
     formActions: {},
     pages: {},
