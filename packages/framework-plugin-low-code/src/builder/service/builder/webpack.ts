@@ -684,6 +684,7 @@ export async function downloadAndInstallDependencies(
       await downloadDependencies(targetDir, srcZipUrl);
       await installDependencies(targetDir, {
         ...installOptions,
+        isDependence: true,
         ignoreInstall:
           name === 'gsd-h5-react' && version == '0.0.61'
             ? !!installOptions.ignoreInstall
@@ -728,6 +729,7 @@ export interface IInstallOpts {
   latest?: boolean;
   runtime?: RUNTIME;
   ignoreInstall?: boolean;
+  isDependence?: boolean;
 }
 // TODO use yarn if installed
 export async function installDependencies(
@@ -757,11 +759,10 @@ export async function installDependencies(
     '--progress=false',
     registry,
   ];
-  fs.writeFileSync(
-    path.join(targetDir, '.npmrc'),
-    '@govcloud:registry=https://r.gnpm.govcloud.qq.com',
-    'utf8'
-  );
+
+  if (options?.isDependence) {
+    npmOptions.push('--production');
+  }
 
   let installProcess;
   // 云端构建, 选用 npm
