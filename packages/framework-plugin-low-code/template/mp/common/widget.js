@@ -202,7 +202,9 @@ function setUpWidateDataBinds(w, dataBinds, forItems, failedBinds) {
             w[prop] = false
             console.warn(`Error computing data bind ${w.id}.${prop}`, e)
           }else {
-            firstRunError = e
+            // 吞错误，因为部分异步的属性刚开始没有，
+            // 要求用户自己容错又要求太高，因此直接吞掉错误，只打印，不阻塞
+            // firstRunError = e
             console.error(`Error computing data bind ${w.id}.${prop}`, e)
           }
         }

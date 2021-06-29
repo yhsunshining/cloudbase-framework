@@ -11,14 +11,9 @@ export function getMetaInfoBySourceKey(sourceKey) {
   };
 }
 
-export async function emitEvent(
-  trigger,
-  listeners = [],
-  args,
-  scopeContext = {}
-) {
+export function emitEvent(trigger, listeners = [], args, scopeContext = {}) {
   const targetListeners = listeners.filter((l) => l.trigger === trigger);
-  for (const listener of targetListeners) {
+  targetListeners.forEach(async (listener) => {
     // 当前非捕获Event，再判断冒泡行为
     if (
       !args?.customEventData?.detail?.isCapturePhase &&
@@ -77,7 +72,7 @@ export async function emitEvent(
         // throw e
       }
     }
-  }
+  });
 }
 
 async function invokeListener(

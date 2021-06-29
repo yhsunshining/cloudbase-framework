@@ -1,6 +1,7 @@
 import { createComponent } from '../../../common/weapp-component'
 import { mpCompToWidget } from '../../../common/widget'
 import { concatClassList, px2rpx } from '../../../common/style'
+import app from '../../../common/weapp-sdk'
 import index from './lowcode/index'
 import lifeCycle from './lowcode/lifecycle'
 import stateFn from './lowcode/state'
@@ -17,6 +18,7 @@ const widgetProps = <%= stringifyObj(widgetProps, {depth: null}) %>
 const evtListeners = {<% Object.entries(eventHandlers).map(([handlerName, listeners])=>{%>
   <%= handlerName%>: [
     <%listeners.map(l=> { %>{
+      key: '<%= l.key %>',
       handler: <% if (l.type == 'rematch') {%> _handler<%= l.handler %> <%} else {%> <%= l.handler %> <%} %>,
       data: <%= stringifyObj(l.data, {depth: null}) %>,
       boundData: {<% Object.entries(l.boundData).map(([prop, expr])=>{%>'<%= prop %>':(lists, forItems, event) => (<%= expr %>),
