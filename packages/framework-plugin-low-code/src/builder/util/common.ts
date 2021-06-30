@@ -250,16 +250,13 @@ export function readComponentLibMata(libDir): {
   };
 } | null {
   let metaPath = path.join(libDir, 'meta.json');
-  let mergeMetaPath = path.join(libDir, 'mergeMeta.json');
   let isExistsMeta = fs.existsSync(metaPath);
 
-  if (!isExistsMeta && !fs.existsSync(mergeMetaPath)) {
+  if (!isExistsMeta) {
     return null;
   }
 
-  let meta = isExistsMeta
-    ? fs.readJSONSync(metaPath)
-    : fs.readJsonSync(mergeMetaPath);
+  let meta = fs.readJSONSync(metaPath);
 
   let [major] = meta?.schemaVersion?.split('.') || [];
   const originComponentMetaMap = meta.components;

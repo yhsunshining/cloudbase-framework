@@ -266,11 +266,7 @@ export function extractUsedCompsRecursively(
 }
 
 async function downloadMaterial(zipUrl: string, dstFolder: string) {
-  if (
-    fs.existsSync(path.join(dstFolder, 'meta.json')) ||
-    fs.existsSync(path.join(dstFolder, 'mergeMeta.json'))
-  )
-    return;
+  if (fs.existsSync(path.join(dstFolder, 'meta.json'))) return;
   await downloadZip(zipUrl, dstFolder);
 }
 

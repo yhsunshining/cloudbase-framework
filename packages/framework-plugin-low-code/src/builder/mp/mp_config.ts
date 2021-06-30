@@ -54,10 +54,6 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
       .filter((lib) => !lib.isComposite)
       .reduce((arr, lib) => {
         arr.push({ type: 'file', value: `materials/${lib.name}/meta.json` });
-        arr.push({
-          type: 'file',
-          value: `materials/${lib.name}/mergeMeta.json`,
-        });
         return arr;
       }, [] as any[]);
 
