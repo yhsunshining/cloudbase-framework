@@ -1,4 +1,4 @@
-import sdk from '@govcloud/weapps-sdk/lib/app-h5-sdk';
+import sdk from '@tcwd/weapps-sdk/lib/app-h5-sdk';
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
 import { formatDate } from '../utils/date';
 import { getter, setter } from '../utils';

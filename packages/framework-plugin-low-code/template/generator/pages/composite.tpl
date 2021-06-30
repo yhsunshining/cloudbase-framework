@@ -6,7 +6,7 @@ import { createWidgets, retryDataBinds, WidgetsContext, bindFuncObj, createCompu
 import getStateFn from "./lowcode/state.js";
 import computed from "./lowcode/computed.js";
 import lifecycle from "./lowcode/lifecycle.js";
-// import i18n from '@govcloud/weapps-sdk/lib/i18n'
+// import i18n from '@tcwd/weapps-sdk/lib/i18n'
 <% if(isSandbox) { %>
 import { ErrorBoundary } from 'react-error-boundary'
 import { createErrorFallback } from '/src/utils/error'

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { BrowserRouter, Router, Route, Redirect, Switch, HashRouter } from 'react-router-dom';
 import { history, generateBrowserHistory, createHistory } from '../utils/index';
-import { wx } from '@govcloud/weapps-sdk'
+import { wx } from '@tcwd/weapps-sdk'
 
 <%= mountApis %>
 <%= routerImports %>
