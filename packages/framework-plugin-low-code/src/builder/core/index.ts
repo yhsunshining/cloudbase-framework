@@ -220,8 +220,7 @@ export async function buildWebApp(
       buildTypeList,
       deployMode,
       runtime,
-      false, // 应用强制安装依赖
-      // ignoreInstall,
+      ignoreInstall,
       extraData
     );
 
