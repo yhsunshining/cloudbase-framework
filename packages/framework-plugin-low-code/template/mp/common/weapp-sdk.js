@@ -2,10 +2,15 @@ import { urlJoinParams } from './url'
 import { promisifyAll } from 'miniprogram-api-promise'
 
 function createNavigatorFn(fnName) {
-  return function ({ pageId, packageName, params, events, success, fail, complete }) {
-    const url = packageName
+  return function ({ pageId, packageName, params, mode='', events, success, fail, complete }) {
+    let url;
+    if(mode == 'plugin'){
+      url = `plugin://${packageName}/${pageId}`
+    } else {
+      url = packageName
       ? `/${packageName}/pages/${pageId}/index`
-      : `/pages/${pageId}/index`
+        : `/pages/${pageId}/index`
+    }
     wx[fnName]({
       url: urlJoinParams(url, params),
       events,

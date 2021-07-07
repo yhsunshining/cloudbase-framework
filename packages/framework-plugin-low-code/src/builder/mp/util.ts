@@ -152,13 +152,13 @@ export function createEventHanlders(
       (plugin) => plugin.name === xComponent.moduleName
     );
 
-    if (!materialLib || !miniprogramPlugin) {
+    if (!materialLib && !miniprogramPlugin) {
       console.error('Component lib not found', xComponent);
       return;
     }
     const compProto = materialLib
       ? materialLib.components.find((comp) => comp.name === xComponent.name)
-      : miniprogramPlugin.componentConfigs?.find(
+      : miniprogramPlugin?.componentConfigs?.find(
           (comp) => comp.name === xComponent.name
         );
 

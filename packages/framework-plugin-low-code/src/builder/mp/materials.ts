@@ -410,32 +410,59 @@ export function getWxmlTag(
   nameMangler?: NameMangler
 ) {
   const { moduleName, name } = cmp;
-  const cmpMeta = ctx.materialLibs
-    .find((lib) => lib.name === moduleName)
-    ?.components?.find((comp) => comp.name === name)?.meta || {
-    platforms: undefined,
-  };
 
-  if (!cmpMeta?.platforms) {
-    return { tagName: name.toLocaleLowerCase() };
+  const materialLib = ctx.materialLibs.find((lib) => lib.name === moduleName);
+  const miniprogramPlugin = ctx.miniprogramPlugins?.find(
+    (plugin) => plugin.name === moduleName
+  );
+
+  let tagName = name.toLocaleUpperCase();
+  let compPath;
+
+  const components =
+    materialLib?.components || miniprogramPlugin?.componentConfigs;
+
+  const findComponent = components?.find((comp) => comp.name === name);
+
+  if (!findComponent) {
+    return { tagName };
   }
-  let { tagName, path: compPath } = cmpMeta?.platforms?.mp || {};
-  if (compPath) {
-    // 小程序混合模式时，组件库会存在子包内
-    // 组件库永远都在根目录下，这样才能减少冗余 - royhyang
-    const rootPath = ctx.rootPath || '';
-    compPath = compPath.startsWith('/')
-      ? compPath
-      : `${/*ctx.isMixMode ? '/' + rootPath : */ ''}/${materialsDirName}/${
-          cmp.moduleName
-        }/${compPath}`;
-    tagName = moduleName + '-' + name;
+
+  if (materialLib) {
+    let cmpMeta = findComponent?.meta || { platforms: undefined };
+    if (!cmpMeta.platforms) {
+      return { tagName };
+    }
+
+    compPath = cmpMeta?.platforms?.mp?.path;
+    if (cmpMeta?.platforms?.mp?.tagName) {
+      tagName = cmpMeta?.platforms?.mp.tagName;
+    }
+
+    if (compPath) {
+      // 小程序混合模式时，组件库会存在子包内
+      // 组件库永远都在根目录下，这样才能减少冗余 - royhyang
+      const rootPath = ctx.rootPath || '';
+      compPath = compPath.startsWith('/')
+        ? compPath
+        : `${/*ctx.isMixMode ? '/' + rootPath : */ ''}/${materialsDirName}/${
+            cmp.moduleName
+          }/${compPath}`;
+      tagName = `${moduleName}-${name}`;
+      if (nameMangler) {
+        tagName = nameMangler.mangle(tagName);
+      }
+    }
+  } else {
+    compPath = `plugin://${miniprogramPlugin?.name}/${name}`;
+
+    tagName = `${moduleName}-${name}`;
     if (nameMangler) {
       tagName = nameMangler.mangle(tagName);
     }
   }
+
   if (!tagName) {
-    // console.error('No wml tagName provided for ', cmp.moduleName, cmp.name)
     tagName = name.toLocaleUpperCase();
   }
   return {

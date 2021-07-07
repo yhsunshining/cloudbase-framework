@@ -126,15 +126,23 @@ export function generateWxml(
       const materialLib = ctx.materialLibs.find(
         (lib) => lib.name === xComponent.moduleName
       );
-      if (!materialLib) {
+
+      const miniprogramPlugin = ctx.miniprogramPlugins?.find(
+        (plugin) => plugin.name === xComponent.moduleName
+      );
+
+      if (!materialLib && !miniprogramPlugin) {
         console.error(
           error(`Component lib(${xComponent.moduleName}) not found. ${helpMsg}`)
         );
         continue;
       }
-      const componentProto = materialLib.components.find(
-        (comp) => comp.name === xComponent.name
-      );
+      const componentProto = materialLib
+        ? materialLib.components.find((comp) => comp.name === xComponent.name)
+        : miniprogramPlugin?.componentConfigs.find(
+            (comp) => comp.name === xComponent.name
+          );
+
       if (!componentProto) {
         console.error(
           error(
@@ -144,6 +152,7 @@ export function generateWxml(
         continue;
       }
       const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler);
+
       if (path) {
         usingComponents[tagName] = path;
       }
