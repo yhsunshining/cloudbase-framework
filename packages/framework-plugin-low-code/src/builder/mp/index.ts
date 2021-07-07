@@ -49,21 +49,32 @@ const templateDir = appTemplateDir + '/mp/';
 const em = chalk.blue.bold;
 const error = chalk.redBright;
 
-export async function generateWxMp(
-  weapps: IWeAppData[],
-  projDir: string,
-  appId: string, // 应用appId
-  materials: IMaterialItem[],
-  plugins: IPlugin[],
-  isProduction: boolean,
-  deployMode: DEPLOY_MODE,
-  extraData: any,
-  isMixMode: boolean,
+export async function generateWxMp({
+  weapps,
+  projDir,
+  appId,
+  materials,
+  plugins,
+  isProduction,
+  deployMode,
+  extraData,
+  isMixMode,
+  options,
+}: {
+  weapps: IWeAppData[];
+  projDir: string;
+  appId: string; // 应用appId
+  materials: IMaterialItem[];
+  plugins: IPlugin[];
+  isProduction: boolean;
+  deployMode: DEPLOY_MODE;
+  extraData: any;
+  isMixMode: boolean;
   options: {
     resourceAppid?: string;
     isCrossAccount: boolean;
-  }
-): Promise<{ miniprogramRoot: string }> {
+  };
+}): Promise<{ miniprogramRoot: string }> {
   const operationLabel = em('Wexin MiniProgram Generated');
   console.time(operationLabel);
   console.log('Generating ' + em('Wexin MiniProgram') + ' to ' + projDir);
@@ -85,6 +96,10 @@ export async function generateWxMp(
     weapps,
     materials,
   });
+
+  buildContext['miniprogramPlugins'] = (
+    mainAppData.miniprogramPlugins || []
+  ).filter((plugin) => allAppUsedComps[plugin.name]);
 
   // 安装依赖库，生成 materials 目录
   await installMaterials(projDir, allAppUsedComps, weapps, buildContext);

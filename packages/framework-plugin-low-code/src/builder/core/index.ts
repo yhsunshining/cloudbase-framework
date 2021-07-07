@@ -100,18 +100,18 @@ export async function buildWebApp(
 
     const apps = [mainAppSerializeData, ...subAppSerializeDataList];
     try {
-      const result = await generateWxMp(
-        apps,
-        appBuildDir,
-        appKey,
-        dependencies,
+      const result = await generateWxMp({
+        weapps: apps,
+        projDir: appBuildDir,
+        appId: appKey,
+        materials: dependencies,
         plugins,
-        mode === WebpackModeType.PRODUCTION,
+        isProduction: mode === WebpackModeType.PRODUCTION,
         deployMode,
         extraData,
         isMixMode,
-        { isCrossAccount: !!isCrossAccount, resourceAppid }
-      );
+        options: { isCrossAccount: !!isCrossAccount, resourceAppid },
+      });
       // 如果是混合模式，则将特定的目录复制到工程下
       // 针对 app.json / package.json 则采用 merge 的操作
       if (isMixMode) {

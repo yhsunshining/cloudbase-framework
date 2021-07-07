@@ -1,4 +1,8 @@
-import { IMaterialItem, IWeAppData } from '../../weapps-core';
+import {
+  IMaterialItem,
+  IWeAppData,
+  IMiniprogramPlugin,
+} from '../../weapps-core';
 
 /**
  * All build parameters and intermediate data to be share across processes
@@ -12,4 +16,5 @@ export interface IBuildContext {
   mainAppData: IWeAppData;
   isMixMode: boolean;
   rootPath?: string;
+  miniprogramPlugins?: IMiniprogramPlugin[];
 }

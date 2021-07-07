@@ -23,6 +23,10 @@ export interface IMaterialItem {
   actions: { name: string }[];
   components: ICompositedComponent[];
   isComposite?: boolean;
+  /**
+   * 是否来源于小程序插件
+   */
+  isMiniProgramPlugins?: boolean;
   // ToDo more props
   // props specified in {materials-proj}/src/mp/meta.json
   styles?: string[]; // styles to import in the app.wxss

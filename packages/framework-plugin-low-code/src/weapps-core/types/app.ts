@@ -1,7 +1,7 @@
 import { CSSProperties, ICommonStyle } from './style';
 import { ActionType } from './action';
 import { IWeAppCode } from './lowcode';
-import { IPlugin } from '../types/plugins';
+import { IMiniprogramPlugin, IPlugin } from '../types/plugins';
 import { HISTORY_TYPE } from '../../types';
 
 export interface IAppAndPageVar {
@@ -37,6 +37,7 @@ export interface IWeAppData {
   datasources: any[]; // cals 把 dataSources 转成小写了，应该统一
   dataset?: IAppAndPageVar['dataset'];
   vars: IAppAndPageVar['vars'];
+  miniprogramPlugins: IMiniprogramPlugin[];
 }
 
 export interface IWeAppPage {

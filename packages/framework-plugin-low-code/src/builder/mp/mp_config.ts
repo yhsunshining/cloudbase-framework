@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { merge, get } from 'lodash';
+import { merge, get, set } from 'lodash';
 import { defaultProjConfig } from '../config/mp';
 import { IWeAppData, IWeAppPage, loopDealWithFn } from '../../weapps-core';
 import { IBuildContext } from './BuildContext';
@@ -18,6 +18,8 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
   const appConfig = {
     useExtendedLib: { weui: true },
   };
+
+  const { miniprogramPlugins = [] } = ctx;
 
   const projConfig: any = merge({}, defaultProjConfig, {
     projectname: 'WeDa-' + ctx.appId,
@@ -92,8 +94,18 @@ export function generateMpConfig(weapps: IWeAppData[], ctx: IBuildContext) {
     if (!find) {
       plugins[tradePluginKey] = pluginMeta;
     }
+
     (appConfig as any).plugins = plugins;
   }
+
+  miniprogramPlugins.forEach((plugin) => {
+    if (!(appConfig as any)?.plugins?.[plugin.name]) {
+      set(appConfig, `plugins.${plugin.name}`, {
+        version: plugin.version,
+        provider: plugin.pluginAppId,
+      });
+    }
+  });
 
   // merge(pageConfigs, extractAllPagesConfig())
   return { appConfig, projConfig, pageConfigs };

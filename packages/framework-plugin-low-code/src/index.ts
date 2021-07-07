@@ -282,6 +282,11 @@ class LowCodePlugin extends Plugin {
           cals,
           { dependencies: this._resolvedInputs.dependencies }
         );
+
+        if (cals.extra?.miniprogramPlugins) {
+          this._resolvedInputs.mainAppSerializeData.miniprogramPlugins =
+            cals.extra.miniprogramPlugins;
+        }
       } else {
         this._resolvedInputs.mainAppSerializeData =
           processPkgUrlCals2WeappData(cals);
@@ -310,6 +315,10 @@ class LowCodePlugin extends Plugin {
       appConfig.window = window;
       this._resolvedInputs.mainAppSerializeData.appConfig = appConfig;
       this._resolvedInputs.subAppSerializeDataList = [];
+      // web 构建不处理小程序插件
+      if (this._resolvedInputs.mainAppSerializeData.miniprogramPlugins) {
+        this._resolvedInputs.mainAppSerializeData.miniprogramPlugins = [];
+      }
     } else {
       // 小程序构建
       const { mpAppId, mpDeployPrivateKey, deployOptions } =
@@ -326,6 +335,17 @@ class LowCodePlugin extends Plugin {
       if (deployOptions.targetMpAppId === undefined) {
         deployOptions.targetMpAppId = deployOptions.mpAppId;
       }
+
+      // if (this._resolvedInputs.mainAppSerializeData.miniprogramPlugins) {
+      //   this._resolvedInputs.dependencies.concat(
+      //     this._resolvedInputs.mainAppSerializeData.miniprogramPlugins.map(
+      //       (plugin) => {
+      //         const { name, version,pluginAppId };
+      //         return {};
+      //       }
+      //     )
+      //   );
+      // }
     }
 
     this._initDir();

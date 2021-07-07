@@ -124,6 +124,22 @@ export function resolveComponentProps(props) {
 }
 
 const SCOPE_SLOT_MAP = {
+  ['tea_shop:TableMatching']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_shop:TableExpanded']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_shop:TabsTable']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
+  ['tea_shop:Table']: {
+    headerSlot: true,
+    recordSlot: true,
+  },
   ['tea_basis:TableMatching']: {
     headerSlot: true,
     recordSlot: true,

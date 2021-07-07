@@ -114,7 +114,11 @@ export function createWidgetProps(
     const materialLib = ctx.materialLibs.find(
       (lib) => lib.name === xComponent.moduleName
     );
-    if (!materialLib) {
+    const miniprogramPlugin = ctx.miniprogramPlugins?.find(
+      (plugin) => plugin.name === xComponent.moduleName
+    );
+
+    if (!materialLib && !miniprogramPlugin) {
       console.error('Component lib not found', xComponent);
       return;
     }
@@ -144,13 +148,20 @@ export function createEventHanlders(
     const materialLib = ctx.materialLibs.find(
       (lib) => lib.name === xComponent.moduleName
     );
-    if (!materialLib) {
+    const miniprogramPlugin = ctx.miniprogramPlugins?.find(
+      (plugin) => plugin.name === xComponent.moduleName
+    );
+
+    if (!materialLib || !miniprogramPlugin) {
       console.error('Component lib not found', xComponent);
       return;
     }
-    const compProto = materialLib.components.find(
-      (comp) => comp.name === xComponent.name
-    );
+    const compProto = materialLib
+      ? materialLib.components.find((comp) => comp.name === xComponent.name)
+      : miniprogramPlugin.componentConfigs?.find(
+          (comp) => comp.name === xComponent.name
+        );
+
     if (!compProto) {
       return;
     }
@@ -226,7 +237,12 @@ export function createDataBinds(
     const materialLib = ctx.materialLibs.find(
       (lib) => lib.name === xComponent.moduleName
     );
-    if (!materialLib) {
+
+    const miniprogramPlugin = ctx.miniprogramPlugins?.find(
+      (plugin) => plugin.name === xComponent.moduleName
+    );
+
+    if (!materialLib && !miniprogramPlugin) {
       console.error('Component lib not found', xComponent);
       return;
     }
