@@ -28,40 +28,26 @@ export function checkVisible({ _visible }) {
   return _visible !== false && _visible !== '';
 }
 
-const SCOPE_SLOT_MAP = {
-  ['tea_shop:TableMatching']: {
+const SCOPE_SLOT_COMPONENT_LIB = ['tea_basis', 'tea_shop', 'crm_basis'];
+
+const SCOPE_SLOT_MAP = SCOPE_SLOT_COMPONENT_LIB.reduce((map, lib) => {
+  map[`${lib}:TableMatching`] = {
     headerSlot: true,
     recordSlot: true,
-  },
-  ['tea_shop:TableExpanded']: {
+  };
+
+  map[`${lib}:TableExpanded`] = {
     headerSlot: true,
     recordSlot: true,
-  },
-  ['tea_shop:TabsTable']: {
+  };
+
+  map[`${lib}:TabsTable`] = {
     headerSlot: true,
     recordSlot: true,
-  },
-  ['tea_shop:Table']: {
-    headerSlot: true,
-    recordSlot: true,
-  },
-  ['tea_basis:TableMatching']: {
-    headerSlot: true,
-    recordSlot: true,
-  },
-  ['tea_basis:TableExpanded']: {
-    headerSlot: true,
-    recordSlot: true,
-  },
-  ['tea_basis:TabsTable']: {
-    headerSlot: true,
-    recordSlot: true,
-  },
-  ['tea_basis:Table']: {
-    headerSlot: true,
-    recordSlot: true,
-  },
-};
+  };
+
+  return map;
+}, {});
 
 export function isScopeSlot(comp, slot) {
   const { 'x-props': xProps } = comp;
