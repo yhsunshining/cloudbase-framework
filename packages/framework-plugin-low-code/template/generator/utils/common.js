@@ -141,6 +141,11 @@ const SCOPE_SLOT_MAP = SCOPE_SLOT_COMPONENT_LIB.reduce((map, lib) => {
     recordSlot: true,
   };
 
+  map[`${lib}:Table`] = {
+    headerSlot: true,
+    recordSlot: true,
+  };
+
   return map;
 }, {});
 
