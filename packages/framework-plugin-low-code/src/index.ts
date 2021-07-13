@@ -285,7 +285,42 @@ class LowCodePlugin extends Plugin {
 
         if (cals.extra?.miniprogramPlugins) {
           this._resolvedInputs.mainAppSerializeData.miniprogramPlugins =
-            cals.extra.miniprogramPlugins;
+            cals.extra.miniprogramPlugins.map((plugin) => {
+              return {
+                ...plugin,
+                componentConfigs:
+                  plugin.componentConfigs?.map((component) => {
+                    const {
+                      data,
+                      events,
+                      meta = {},
+                      ...restComponent
+                    } = component;
+
+                    const processedCompoennt = {
+                      ...restComponent,
+                      meta: {
+                        desc: meta?.desc || meta?.description,
+                      },
+                    };
+
+                    if (data) {
+                      processedCompoennt['dataForm'] = data.properties;
+                    }
+
+                    if (events) {
+                      processedCompoennt['emitEvents'] = events?.map(
+                        (event) => ({
+                          eventName: event.name,
+                          name: event.title,
+                        })
+                      );
+                    }
+
+                    return processedCompoennt;
+                  }) || [],
+              };
+            });
         }
       } else {
         this._resolvedInputs.mainAppSerializeData =
