@@ -12,7 +12,7 @@ import computed from '../../lowcode/<%= pageName %>/computed'
 import { $$_<%= pageName %> as handler } from '../../app/handlers'
 import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
-import { createWidgets, retryDataBinds, resolveComponentProps } from 'handlers/utils'
+import { createWidgets, retryDataBinds, resolveComponentProps, checkAuth } from 'handlers/utils'
 import { useScrollTop } from 'handlers/hooks'
 import './index.less'
 
@@ -61,7 +61,16 @@ initLifeCycle({
 
 // Init
 export default function App() {
-  useScrollTop()
+  // 检查权限
+  const [weDaHasLogin, setWeDaHasLogin] = React.useState(false);
+  React.useEffect(() => {
+    (async function checkAuthInner() {
+      const checkAuthResult = await checkAuth(app, app.id, '<%= pageName %>');
+      setWeDaHasLogin(checkAuthResult);
+    })();
+  }, []);
+
+  useScrollTop();
 
   Object.assign($page, {
     id:'<%= pageName %>',
@@ -91,11 +100,11 @@ export default function App() {
 
   return (
     <div className="weapps-page">
-      <AppRender
-        pageListenerInstances={pageListenerInstances}
-        virtualFields={virtualFields}
-        componentSchema={componentSchema}
-      />
+    {weDaHasLogin && (
+    <AppRender pageListenerInstances={pageListenerInstances}
+               virtualFields={virtualFields}
+               componentSchema={componentSchema}
+          />)}
     </div>
   );
 }

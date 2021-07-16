@@ -1,8 +1,11 @@
 import {
+  CLOUD_SDK,
   setConfig,
   initTcb,
-} from '@cloudbase/weda-cloud-sdk/dist/h5'
-export { 
+} from '@cloudbase/weda-cloud-sdk/dist/h5';
+import config from './config';
+
+export {
   createDataset,
   createStateDataSourceVar,
   generateParamsParser,
@@ -10,9 +13,8 @@ export {
   CLOUD_SDK,
   DS_API,
   DS_SDK,
-} from '@cloudbase/weda-cloud-sdk/dist/h5'
+} from '@cloudbase/weda-cloud-sdk/dist/h5';
 
-import config from './config'
-
-setConfig(config)
-initTcb()
+CLOUD_SDK.setConfig({ wedaTarget: 'pre' });
+setConfig(config);
+initTcb();

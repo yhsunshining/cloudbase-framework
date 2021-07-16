@@ -369,10 +369,6 @@
       integrity="sha512-eVSAFJAkqn7381lHvfGgHKrZWDr75+Do7qZdD0kfFz/4Eq5hntLp/IS66l85BGClN1oYxLwd4G/bxrgIIvedag=="
       crossorigin="anonymous"
     ></script>
-    <% if(isAdminPortal){ %>
-    <script src="<%= cloudSDKFileName %>"></script>
-    <% } else { %>
-    <script src="//cdn.jsdelivr.net/npm/@cloudbase/weda-cloud-sdk@0.1.10-alpha.5.1/dist/h5.browser.js"></script>
-    <% } %>
+    <script src="//unpkg.com/@cloudbase/weda-cloud-sdk@alpha/dist/h5.browser.js"></script>
   </body>
 </html>

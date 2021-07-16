@@ -1,6 +1,6 @@
 {
   "name": "@cloudbase/framework-plugin-low-code",
-  "version": "0.4.20",
+  "version": "0.4.22-alpha.11",
   "description": "云开发 Tencent CloudBase Framework Low Code Plugin，将低码配置生成完整项目并一键部署云开发资源。",
   "author": "yhsunshining@gmail.com",
   "homepage": "https://github.com/TencentCloudBase/cloudbase-framework#readme",
@@ -26,7 +26,7 @@
     "template": "node ./scripts/generateTemplate.js",
     "watch:template": "npm run template --watch",
     "dev": "tsc -w",
-    "prebuild": "rm -rf ./lib && rm ./tsconfig.tsbuildinfo && npm run template",
+    "prebuild": "rm -rf ./lib && rm -rf ./tsconfig.tsbuildinfo && npm run template",
     "build": "tsc",
     "test": "jest"
   },
