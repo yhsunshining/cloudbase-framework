@@ -43,7 +43,11 @@ function createGlboalApi() {
   const dataset = createDataset('$global');
   globalAPI.dataset = dataset;
   globalAPI.state.dataset = dataset;
-
+  globalAPI.setState = (userSetState) => {
+    Object.keys(userSetState).forEach((keyPath) => {
+      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+    });
+  };
   if (subPackageName) {
     // is sub app
     globalAPI.mainApp = appGlobal[mainAppKey];
