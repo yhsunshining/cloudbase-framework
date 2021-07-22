@@ -46,7 +46,11 @@ function createGlboalApi() {
   let dataset = createDataset('$global')
   globalAPI.dataset = dataset
   globalAPI.state.dataset = dataset
-
+  globalAPI.setState = (userSetState) => {
+    Object.keys(userSetState).forEach((keyPath) => {
+      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+    });
+  };
 
   // mount wx apis
   Object.assign(globalAPI, weappApis)

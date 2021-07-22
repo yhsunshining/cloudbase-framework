@@ -72,6 +72,11 @@ export default function App() {
   let dataset = createDataset('<%= pageName %>', {app, $page})
   $page.dataset = dataset
   $page.state.dataset = dataset
+  $page.setState = (userSetState) => {
+    Object.keys(userSetState).forEach((keyPath) => {
+      app.utils.set($page.dataset.state, keyPath, userSetState[keyPath]);
+    });
+  };
 
   $page.widgets = createWidgets(widgetsContext, dataBinds, {})
   // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds

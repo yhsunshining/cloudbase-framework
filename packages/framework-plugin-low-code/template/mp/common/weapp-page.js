@@ -19,7 +19,11 @@ export function createPage(
   $page.dataset = dataset
   $page.state.dataset = dataset
   $page.computed = createComputed(pageComputed)
-
+  $page.setState = (userSetState) => {
+    Object.keys(userSetState).forEach((keyPath) => {
+      app.utils.set(app.dataset.state, keyPath, userSetState[keyPath]);
+    });
+  };
   const evtHandlers = createEventHandlers(evtListeners)
 
   function extractLifecyles() {

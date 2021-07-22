@@ -28,6 +28,11 @@ function createGlboalApi() {
   const dataset = createDataset('$global');
   globalAPI.dataset = dataset;
   globalAPI.state.dataset = dataset;
+  globalAPI.setState = (userSetState) => {
+    Object.keys(userSetState).forEach((keyPath) => {
+      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+    });
+  };
 
   // 给全局挂上 mainApp/subApp
   // The global api exposed to lowcode
