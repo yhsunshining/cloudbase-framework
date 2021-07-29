@@ -155,3 +155,25 @@ export function isScopeSlot(comp, slot) {
   const map = SCOPE_SLOT_MAP[sourceKey];
   return map && map[slot];
 }
+
+
+/**
+ * 检查页面权限
+ **/
+export async function checkAuth(app, appId, pageId) {
+  app.showNavigationBarLoading();
+  const checkAuthResult = await app.cloud.checkAuth({ type: 'app', extResourceId: `${appId}-${pageId}` });
+  let isLogin = false;
+  if (Array.isArray(checkAuthResult) && checkAuthResult.length > 0) {
+    isLogin = checkAuthResult[0]?.IsAccess ?? false;
+  }
+  app.hideNavigationBarLoading();
+
+  if (!isLogin) {
+    app.showToast({
+      title: '页面无访问权限',
+      icon: 'error',
+    });
+  }
+  return isLogin;
+}

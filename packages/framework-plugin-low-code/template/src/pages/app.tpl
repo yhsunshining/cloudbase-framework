@@ -63,33 +63,34 @@ initLifeCycle({
 export default function App() {
   // 检查权限
   const [weDaHasLogin, setWeDaHasLogin] = React.useState(false);
+
   React.useEffect(() => {
-    (async function checkAuthInner() {
-      const checkAuthResult = await checkAuth(app, app.id, '<%= pageName %>');
-      setWeDaHasLogin(checkAuthResult);
-    })();
+    checkAuth(app, app.id, '<%= pageName %>').then((checkAuthResult) =>
+      setWeDaHasLogin(checkAuthResult)
+    );
+
+    Object.assign($page, {
+      id: '<%= pageName %>',
+      state: observable(initPageState),
+      computed: createComputed(computed),
+      handler,
+    });
+
+    let dataset = createDataset('<%= pageName %>', { app, $page });
+    $page.dataset = dataset;
+    $page.state.dataset = dataset;
+    $page.setState = (userSetState) => {
+      Object.keys(userSetState).forEach((keyPath) => {
+        app.utils.set($page.dataset.state, keyPath, userSetState[keyPath]);
+      });
+    };
+
+    $page.widgets = createWidgets(widgetsContext, dataBinds, {});
+    // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
+    retryDataBinds();
   }, []);
 
-  useScrollTop();
 
-  Object.assign($page, {
-    id:'<%= pageName %>',
-    state: observable(initPageState),
-    computed: createComputed(computed),
-    handler
-  })
-  let dataset = createDataset('<%= pageName %>', {app, $page})
-  $page.dataset = dataset
-  $page.state.dataset = dataset
-  $page.setState = (userSetState) => {
-    Object.keys(userSetState).forEach((keyPath) => {
-      app.utils.set($page.dataset.state, keyPath, userSetState[keyPath]);
-    });
-  };
-
-  $page.widgets = createWidgets(widgetsContext, dataBinds, {})
-  // widgets 内的 dataBinds 可能需要关联 widgets，需要重新执行 dataBinds
-  retryDataBinds()
   // Web 环境页面级别生命周期
   if (!process.env.isMiniprogram) {
     React.useEffect(() => {
@@ -97,6 +98,8 @@ export default function App() {
     }, [])
     pageLifeCycleMount(React.useEffect, PageLifeCycle, app)
   }
+
+  useScrollTop();
 
   return (
     <div className="weapps-page">

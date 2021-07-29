@@ -1,4 +1,4 @@
-import {transformSync} from '@babel/core';
+import { transformSync } from '@babel/core';
 import * as prettier from 'prettier';
 import chalk from 'chalk';
 import {
@@ -7,7 +7,7 @@ import {
   PropBindType,
   IEventModifiers,
 } from '../../weapps-core';
-import {js2xml} from 'xml-js';
+import { js2xml } from 'xml-js';
 import {
   textContentPropName,
   getClassAttrName,
@@ -16,9 +16,9 @@ import {
   builtinMpTags,
   nativeCompWhiteList,
 } from '../config/mp';
-import {IBuildContext} from './BuildContext';
-import {getWxmlTag} from './materials';
-import {walkThroughWidgets} from '../util/weapp';
+import { IBuildContext } from './BuildContext';
+import { getWxmlTag } from './materials';
+import { walkThroughWidgets } from '../util/weapp';
 import NameMangler from '../util/name-mangler';
 
 const error = chalk.redBright;
@@ -82,20 +82,31 @@ export function generateWxml(
   nodeTransform?: (cmp: IWeAppComponentInstance, node) => void
 ) {
   const nameMangler = ctx.isProduction
-    ? new NameMangler({blackList: builtinMpTags})
+    ? new NameMangler({ blackList: builtinMpTags })
     : undefined;
-  const xmlJson = {elements: createXml(widgets)};
-  // 登录校验: 向其最外层包裹一层block
-  xmlJson.elements = [{
-    type: 'element',
-    name: 'block',
-    attributes: {
-      ['wx:if']: '{{weDaHasLogin}}',
-    },
-    elements: xmlJson.elements,
-    _order: -1,
-    _parent: null,
-  }];
+  const xmlJson = { elements: createXml(widgets) };
+  if (ctx.isPage) {
+    const originElements = xmlJson.elements;
+    if (originElements?.length) {
+      if (!originElements[0]?.attributes) {
+        originElements[0].attributes = {};
+      }
+      originElements[0].attributes['data-weui-theme'] = 'light';
+    }
+    // 登录校验: 向其最外层包裹一层block
+    xmlJson.elements = [
+      {
+        type: 'element',
+        name: 'block',
+        attributes: {
+          ['wx:if']: '{{weDaHasLogin}}',
+        },
+        elements: originElements,
+        _order: -1,
+        _parent: null,
+      },
+    ];
+  }
 
   function createXml(
     widgets: { [key: string]: IWeAppComponentInstance },
@@ -104,14 +115,14 @@ export function generateWxml(
   ) {
     const elements: INode[] = [];
     for (const id in widgets) {
-      const {xComponent, xProps, properties, xIndex} = widgets[id];
+      const { xComponent, xProps, properties, xIndex } = widgets[id];
       const {
         data: data0 = {},
         listeners = [],
         directives = {},
       } = xProps || {};
 
-      const data = {...data0};
+      const data = { ...data0 };
       if (directives.waIf && directives.waIf.value === false) {
         continue;
       }
@@ -151,8 +162,8 @@ export function generateWxml(
       const componentProto = materialLib
         ? materialLib.components.find((comp) => comp.name === xComponent.name)
         : miniprogramPlugin?.componentConfigs.find(
-          (comp) => comp.name === xComponent.name
-        );
+            (comp) => comp.name === xComponent.name
+          );
 
       if (!componentProto) {
         console.error(
@@ -162,7 +173,7 @@ export function generateWxml(
         );
         continue;
       }
-      const {tagName, path} = getWxmlTag(xComponent, ctx, nameMangler);
+      const { tagName, path } = getWxmlTag(xComponent, ctx, nameMangler);
 
       if (path) {
         usingComponents[tagName] = path;
@@ -172,7 +183,7 @@ export function generateWxml(
         elements.push({
           type: 'element',
           name: tagName,
-          attributes: {name: data0.name.value},
+          attributes: { name: data0.name.value },
           elements: [],
           _order: xIndex || 0,
           _parent: null,
@@ -192,10 +203,10 @@ export function generateWxml(
         curForNodes.length < 1
           ? id
           : `{{'${id}'${curForNodes
-            .map(
-              (forNodeId) => `+ '-' + ${wxmlDataPrefix.forIndex}${forNodeId}`
-            )
-            .join('')}}}`;
+              .map(
+                (forNodeId) => `+ '-' + ${wxmlDataPrefix.forIndex}${forNodeId}`
+              )
+              .join('')}}}`;
 
       const node: INode = {
         type: 'element',
@@ -209,7 +220,7 @@ export function generateWxml(
         _order: xIndex || 0,
         _parent: parent,
       };
-      const {mustEmptyStyle} = componentProto.meta || {};
+      const { mustEmptyStyle } = componentProto.meta || {};
       if (mustEmptyStyle) {
         delete node.attributes.style;
       }
@@ -265,11 +276,11 @@ export function generateWxml(
       }
 
       // Event binding
-      const {inputProps, syncProps} = componentProto.meta || {};
+      const { inputProps, syncProps } = componentProto.meta || {};
       const syncConfigs = syncProps || inputProps || {};
       Object.entries(syncConfigs).map(([prop, config]) => {
         const configs = Array.isArray(config) ? config : [config];
-        configs.forEach(({changeEvent: evtName}) => {
+        configs.forEach(({ changeEvent: evtName }) => {
           // 兼容微信 7.0.13 安卓版本 textarea 组件的 bindinput 事件，bind:input 写法，事件会失效
           const sep = getEventBindSep(tagName);
           node.attributes[`bind${sep}${evtName}`] = getMpEventHanlderName(
@@ -369,13 +380,6 @@ export function generateWxml(
     return elements.sort((a, b) => a._order - b._order);
   }
 
-  if (ctx.isPage && xmlJson.elements?.length) {
-    if (!xmlJson.elements[0]?.attributes) {
-      xmlJson.elements[0].attributes = {};
-    }
-    xmlJson.elements[0].attributes['data-weui-theme'] = 'light';
-  }
-
   return js2xml(xmlJson, {
     spaces: '\t',
     /* textFn: text => {
@@ -399,14 +403,14 @@ function xmlJsonSetCustomAttr(node, prop: string, value: string, comp) {
 
   // FIXME Attention, handling innerText
   if (prop === textContentPropName) {
-    node.elements.push({type: 'text', text: value});
+    node.elements.push({ type: 'text', text: value });
   }
 }
 
 function transpileJsExpr(expr: string) {
   let result = transformSync(expr, {
     cwd: __dirname, // help to resolve babel plugin
-    plugins: [['@babel/plugin-transform-template-literals', {loose: true}]],
+    plugins: [['@babel/plugin-transform-template-literals', { loose: true }]],
   });
 
   let code = result?.code || '';
@@ -470,9 +474,9 @@ export function getUsedComponents(
   usedCmps: { [libName: string]: Set<string> } = {}
 ) {
   walkThroughWidgets(widgets, (id, widget) => {
-    const {xComponent} = widget;
+    const { xComponent } = widget;
     if (!xComponent) return;
-    const {moduleName, name} = xComponent;
+    const { moduleName, name } = xComponent;
     if (!usedCmps[moduleName]) {
       usedCmps[moduleName] = new Set();
     }
@@ -482,7 +486,7 @@ export function getUsedComponents(
 }
 
 function getAttrBind(dVale: IDynamicValue, widgetBind: string) {
-  const {type, value} = dVale;
+  const { type, value } = dVale;
   const attrVal = type === PropBindType.prop ? value : widgetBind;
   return `{{${attrVal}}}`;
 }
