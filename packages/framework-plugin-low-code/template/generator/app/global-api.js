@@ -91,8 +91,7 @@ function mountAPIs(sdks) {
     }
 
     if (item === 'showModal') {
-      const OFFICIAL_COMPONENT_LIB = 'weda';
-      const LIB_KEY = `@weapps-materials-main-${OFFICIAL_COMPONENT_LIB}`;
+      const LIB_KEY = `@weapps-materials-main-gsd-h5-react`;
       const showModal =
         window[LIB_KEY] &&
         window[LIB_KEY].actions &&
