@@ -5,7 +5,8 @@ import store, { subPackageName } from '../store';
 import computed from '../store/computed';
 import common from './common';
 import { formatDate } from '../utils/date';
-import { getter, setter } from '../utils';
+import { getter, setter, _isMobile } from '../utils';
+import actionMap from './material-actions';
 
 const mainAppKey = '__weappsMainApp';
 const appGlobal = process.env.isMiniprogram ? getApp() : window;
@@ -45,7 +46,11 @@ function createGlboalApi() {
   globalAPI.state.dataset = dataset;
   globalAPI.setState = (userSetState) => {
     Object.keys(userSetState).forEach((keyPath) => {
-      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+      globalAPI.utils.set(
+        globalAPI.dataset.state,
+        keyPath,
+        userSetState[keyPath]
+      );
     });
   };
   if (subPackageName) {
@@ -99,6 +104,19 @@ export const mountAPIs = (sdks) => {
         return sdks[item](obj);
       };
     }
+
+    if (item === 'showModal') {
+      const OFFICIAL_COMPONENT_LIB = 'weda';
+      const showModal =
+        actionMap[OFFICIAL_COMPONENT_LIB] &&
+        actionMap[OFFICIAL_COMPONENT_LIB].showModal;
+      if (!_isMobile() && showModal) {
+        action = function (params) {
+          return showModal({ data: params });
+        };
+      }
+    }
+
     app[item] = action;
   });
   return app;

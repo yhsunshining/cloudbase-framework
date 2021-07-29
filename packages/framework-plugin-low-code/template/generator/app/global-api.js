@@ -1,7 +1,7 @@
 import sdk from '@tcwd/weapps-sdk/lib/app-h5-sdk';
 import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
 import { formatDate } from '../utils/date';
-import { getter, setter } from '../utils';
+import { getter, setter, _isMobile } from '../utils';
 
 export const subPackageName = '<%= subPackageName %>';
 export const app = createGlboalApi();
@@ -30,7 +30,11 @@ function createGlboalApi() {
   globalAPI.state.dataset = dataset;
   globalAPI.setState = (userSetState) => {
     Object.keys(userSetState).forEach((keyPath) => {
-      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+      globalAPI.utils.set(
+        globalAPI.dataset.state,
+        keyPath,
+        userSetState[keyPath]
+      );
     });
   };
 
@@ -85,6 +89,22 @@ function mountAPIs(sdks) {
         return sdks[item](obj);
       };
     }
+
+    if (item === 'showModal') {
+      const OFFICIAL_COMPONENT_LIB = 'weda';
+      const LIB_KEY = `@weapps-materials-main-${OFFICIAL_COMPONENT_LIB}`;
+      const showModal =
+        window[LIB_KEY] &&
+        window[LIB_KEY].actions &&
+        window[LIB_KEY].actions.showModal;
+
+      if (!_isMobile() && showModal) {
+        action = function (params) {
+          return showModal({ data: params });
+        };
+      }
+    }
+
     app[item] = action;
   });
   return app;
