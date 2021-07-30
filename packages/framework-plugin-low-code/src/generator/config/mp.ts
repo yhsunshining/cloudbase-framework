@@ -63,7 +63,7 @@ export const defaultProjConfig = {
     codeProtect: false,
   },
   compileType: 'miniprogram',
-  libVersion: '2.11.2',
+  libVersion: '2.13.2',
   appid: 'touristappid',
   debugOptions: {},
   isGameTourist: false,
