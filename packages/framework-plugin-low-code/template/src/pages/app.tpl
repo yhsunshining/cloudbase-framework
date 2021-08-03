@@ -14,6 +14,7 @@ import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
 import { createWidgets, retryDataBinds, resolveComponentProps, checkAuth } from 'handlers/utils'
 import { useScrollTop } from 'handlers/hooks'
+import { get } from "lodash";
 import './index.less'
 
 let ReactDOMServer;
