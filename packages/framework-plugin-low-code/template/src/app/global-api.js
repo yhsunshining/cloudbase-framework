@@ -7,6 +7,7 @@ import common from './common';
 import { formatDate } from '../utils/date';
 import { getter, setter, _isMobile } from '../utils';
 import actionMap from './material-actions';
+import { scanCodeApi } from '../utils/scan-code-action';
 
 const mainAppKey = '__weappsMainApp';
 const appGlobal = process.env.isMiniprogram ? getApp() : window;
@@ -49,7 +50,7 @@ function createGlboalApi() {
       globalAPI.utils.set(
         globalAPI.dataset.state,
         keyPath,
-        userSetState[keyPath]
+        userSetState[keyPath],
       );
     });
   };
@@ -58,7 +59,7 @@ function createGlboalApi() {
     globalAPI.mainApp = appGlobal[mainAppKey];
   } else {
     // is mainApp
-    appGlobal['app'] = globalAPI;
+    appGlobal.app = globalAPI;
     appGlobal[mainAppKey] = globalAPI;
   }
 
@@ -72,9 +73,9 @@ function createGlboalApi() {
   });
   // 避免被wx.cloud 覆盖
   globalAPI.cloud = CLOUD_SDK;
+
   return globalAPI;
 }
-
 function createPageApi() {
   const $page = {
     state: {},
@@ -129,12 +130,48 @@ export const mountAPIs = (sdks) => {
               ? obj.pageId.replace(/^(\.)?\//, '')
               : obj.pageId,
           });
+        }
+        return sdks[item](obj);
+      };
+    }
+
+    if (item === 'showModal') {
+      const OFFICIAL_COMPONENT_LIB = 'weda';
+      const showModal =        actionMap[OFFICIAL_COMPONENT_LIB]
+        && actionMap[OFFICIAL_COMPONENT_LIB].showModal;
+      if (!_isMobile() && showModal) {
+        action = function (params) {
+          return showModal({ data: params });
         };
-        break;
       }
     }
 
     app[item] = action;
   });
+  app.scanCode = (options) => {
+    if (!options || (!options.success && !options.fail && !options.complete)) {
+      return new Promise((resolve, reject) => {
+        scanCodeApi({
+          ...options,
+          success: resolve,
+          fail: reject,
+        });
+      });
+    }
+    scanCodeApi(options);
+  };
+  const { navigateTo } = app;
+  app.navigateTo = (options) => {
+    if (options.url && process.env.isMiniprogram) {
+      console.warn('navigateTo url can only be used in h5 build');
+    }
+    const { url, ...restOpts } = options;
+    if (!process.env.isMiniprogram && url) {
+      window.open(url);
+    } else {
+      navigateTo(restOpts);
+    }
+  };
   return app;
 };
+
