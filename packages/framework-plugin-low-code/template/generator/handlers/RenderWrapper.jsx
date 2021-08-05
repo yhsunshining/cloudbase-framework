@@ -31,14 +31,13 @@ export function AppRender(props) {
     properties = {},
     genericComp = {},
   } = componentSchema;
-
   // 判断是否为 slot
   const isSlot = !xProps;
   if (isSlot && !(renderSlot || rootNode)) {
     return null;
   }
 
-  const preClassName = useRef();
+  const preClassName = useRef(); 
 
   // wrapperClass
   const containerEl = Object.values(properties)[0];
@@ -79,7 +78,7 @@ export function AppRender(props) {
     const child = properties[key];
     if (!child['x-props'] && child.properties) {
       slots[key] = isScopeSlot(componentSchema, key) ? (
-        (props) => {
+        (props) => { 
           let clonedScopeContext = cloneDeep(scopeContext);
           lodashSet(
             clonedScopeContext,

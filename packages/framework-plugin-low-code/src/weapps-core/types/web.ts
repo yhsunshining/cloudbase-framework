@@ -114,6 +114,7 @@ export interface ICommonInstanceProps extends IDataAndBindInstanceProps {
   classNameList?: string[];
   listenerInstances: IListenerInstance[];
   customDataForm?: Record<string, any>;
+  staticResourceAttribute?: string[];
 }
 
 export interface IComponentInstanceProps extends ICommonInstanceProps {

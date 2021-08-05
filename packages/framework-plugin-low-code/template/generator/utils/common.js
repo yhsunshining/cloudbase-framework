@@ -82,7 +82,6 @@ export function isPlainObject(src) {
 export function resolveComponentProps(props) {
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
-
   const builtinProps = [
     // react 保留字
     'ref',
@@ -112,6 +111,14 @@ export function resolveComponentProps(props) {
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
 
+  // const { staticResourceAttribute = [] } = restProps;
+  // staticResourceAttribute.map(
+  //   // getStaticResourceAttribute(data[prop]);
+  //   (prop) => (data[prop] = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg'),
+  // );
+  data.src = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
+
+  data.src.value = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
   return {
     ...data,
     ...restProps,

@@ -86,6 +86,7 @@ export interface IWeAppComponentInstance {
     commonStyle: ICommonStyle;
     styleBindPath?: string;
     customDataForm: Record<string, any>;
+    staticResourceAttribute: string[];
   };
   xIndex?: number; // ordering
   properties?: { [key: string]: IWeAppComponentInstance };
