@@ -1074,9 +1074,13 @@ class LowCodePlugin extends Plugin {
               });
             }
 
-            const link = `https://${
-              website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
-            }`;
+            const link = buildAsAdminPortalByBuildType(
+              this._resolvedInputs.buildTypeList
+            )
+              ? `https://${website.cdnDomain}/adminportal/`
+              : `https://${
+                  website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
+                }`;
             const qrcodeOutputPath = path.resolve(
               this.api.projectPath,
               QRCODE_PATH
