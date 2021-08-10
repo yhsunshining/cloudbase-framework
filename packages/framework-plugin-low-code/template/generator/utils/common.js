@@ -115,11 +115,18 @@ export function resolveComponentProps(props) {
   return {
     ...data,
     ...restProps,
-    events: events.reduce((events, item) => {
-      const propName = item;
-      events[propName] = (e) => restProps.emit(propName, e);
-      return events;
-    }, {}),
+    events: new Proxy(
+      events.reduce((events, item) => {
+        const propName = item;
+        events[propName] = (e) => restProps.emit(propName, e);
+        return events;
+      }, {}),
+      {
+        get(obj, prop) {
+          return prop in obj ? obj[prop] : (e) => restProps.emit(prop, e);
+        },
+      }
+    ),
   };
 }
 
@@ -156,13 +163,15 @@ export function isScopeSlot(comp, slot) {
   return map && map[slot];
 }
 
-
 /**
  * 检查页面权限
  **/
 export async function checkAuth(app, appId, pageId) {
   app.showNavigationBarLoading();
-  const checkAuthResult = await app.cloud.checkAuth({ type: 'app', extResourceId: `${appId}-${pageId}` });
+  const checkAuthResult = await app.cloud.checkAuth({
+    type: 'app',
+    extResourceId: `${appId}-${pageId}`,
+  });
   let isLogin = false;
   if (Array.isArray(checkAuthResult) && checkAuthResult.length > 0) {
     isLogin = checkAuthResult[0]?.IsAccess ?? false;
