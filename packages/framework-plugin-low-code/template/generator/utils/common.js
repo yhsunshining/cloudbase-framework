@@ -3,6 +3,7 @@
  * @param {*} dataBinds
  * @param {*} forItems
  */
+import { app } from '../app/global-api'
 export function resolveDataBinds(
   dataBinds,
   forItems,
@@ -79,7 +80,21 @@ export function isPlainObject(src) {
 /**
  * 用于处理自定义组件props传参结构，对系统变量进行保留
  */
-export function resolveComponentProps(props) {
+export function resolveComponentProps(props, isPlainProps) {
+  const { staticResourceAttribute } = props;
+  debugger
+  console.log('props', props);
+  if (isPlainProps === 1) {
+    const { data = {}, ...restProps } = props;
+    staticResourceAttribute && staticResourceAttribute.map(
+      (property) => (data[property] = getStaticResourceAttribute(data[property])),
+    );
+    return {
+      ...data,
+      ...restProps,
+      ...props
+      }
+  };
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
@@ -110,15 +125,9 @@ export function resolveComponentProps(props) {
   ];
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
-
-  // const { staticResourceAttribute = [] } = restProps;
-  // staticResourceAttribute.map(
-  //   // getStaticResourceAttribute(data[prop]);
-  //   (prop) => (data[prop] = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg'),
-  // );
-  data.src = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
-
-  data.src.value = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
+  staticResourceAttribute && staticResourceAttribute.map((prop) => (data[prop] && (data[prop] = getStaticResourceAttribute(data[prop]))));
+  console.log('data', data);
+  console.log('restProps', restProps);
   return {
     ...data,
     ...restProps,
@@ -127,6 +136,7 @@ export function resolveComponentProps(props) {
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
     }, {}),
+    ...props
   };
 }
 
@@ -161,4 +171,13 @@ export function isScopeSlot(comp, slot) {
   const sourceKey = xProps && xProps.sourceKey;
   const map = SCOPE_SLOT_MAP[sourceKey];
   return map && map[slot];
+}
+
+export function getStaticResourceAttribute(staticUrl){
+  let { domain = '' } = app;
+  if (staticUrl && staticUrl.indexOf('/') !== 0) {
+    return staticUrl;
+  }
+  const url = `${domain}${staticUrl}`;
+  return url;
 }

@@ -85,6 +85,8 @@ export async function buildWebApp(
     console.error('无效的应用配置');
     return;
   }
+  debugger
+  console.log('mainAppSerializeData', mainAppSerializeData);
   console.log('domain', domain);
   console.log('应用名', appKey);
   console.log('生成模式', generateMpType);
@@ -157,6 +159,7 @@ export async function buildWebApp(
       mainAppData: mainAppSerializeData,
     };
 
+    console.log('buildContext', buildContext);
     const { allAppUsedComps } = handleUsedComponents({
       buildContext,
       weapps: [mainAppSerializeData, ...subAppSerializeDataList],
@@ -212,6 +215,7 @@ export async function buildWebApp(
     );
     console.timeEnd(runHandleMaterialTag);
 
+    console.log('runGenerateCoremainAppData', mainAppData);
     // 安装依赖
     await runGenerateCore(
       appBuildDir,

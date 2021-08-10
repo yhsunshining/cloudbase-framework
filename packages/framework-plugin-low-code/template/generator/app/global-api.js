@@ -9,6 +9,7 @@ mountAPIs(sdk);
 function createGlboalApi() {
   const globalAPI = {
     id: '<%= appId %>',
+    domain: '<%= domain %>',
     platform: 'WEB',
 
     formActions: {},

@@ -298,6 +298,7 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
     vars: weAppData.vars || { data: [] },
     dataset: weAppData.dataset,
     envId: weAppData.envId || '',
+    extra: weAppData.extra || {},
   };
   handlePageInstanceList(
     weAppData.pageInstanceList,
@@ -348,7 +349,7 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
       collection.push(page);
     });
   }
-
+  console.log('webRuntimeAppData', webRuntimeAppData);
   return webRuntimeAppData;
 }
 /* tslint:disable */

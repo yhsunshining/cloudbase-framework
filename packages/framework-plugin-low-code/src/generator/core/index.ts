@@ -53,7 +53,6 @@ export async function generateCode(props: BuildAppProps) {
     deployMode = DEPLOY_MODE.PREVIEW,
     runtime = RUNTIME.NONE,
   } = props;
-
   // 处理应用数据
   const fileCodeMap: IFileCodeMap = {};
   const appBuildDir = '/';

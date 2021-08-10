@@ -64,14 +64,11 @@ export function getDeep(target, key) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   
+  const { staticResourceAttribute } = props;
   if (isPlainProps === 1) {
-    const { staticResourceAttribute } = props;
-
     staticResourceAttribute && staticResourceAttribute.map(
-      // getStaticResourceAttribute(data[prop]);
       (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
     );
-    // staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
     return {
       ...props
       }
@@ -119,6 +116,9 @@ export function resolveComponentProps(props, isPlainProps) {
 
 
 export function getStaticResourceAttribute(staticUrl){
+  if (staticUrl && staticUrl.indexOf('/') !== 0) {
+    return staticUrl;
+  }
   const { domain = '' } = app;
   const url = `https://${domain}/${staticUrl}`;
   return url;

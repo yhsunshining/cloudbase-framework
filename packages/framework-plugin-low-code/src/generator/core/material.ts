@@ -234,7 +234,6 @@ export async function genCompositeComponentLibraries(
             // @ts-ignore
             properties: readCmpInstances(compItem.componentInstances),
           };
-
           const { widgets, dataBinds, componentSchema } =
             getComponentSchemaString(
               componentSchemaJson,
