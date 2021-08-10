@@ -11,6 +11,7 @@ export function scanCodeApi(opts) {
     success: () => {},
     fail: () => {},
     complete: () => {},
+    enableDefaultBehavior: true,
     ...opts,
   };
   if (typeof options.scanType === 'string') {

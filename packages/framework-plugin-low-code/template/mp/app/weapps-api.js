@@ -51,6 +51,9 @@ function createGlboalApi() {
       globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
     });
   };
+  globalAPI.MP = () => {
+    console.log('MP')
+  }
 
   // mount wx apis
   Object.assign(globalAPI, weappApis)
@@ -73,5 +76,25 @@ function createGlboalApi() {
   sdkModsIncluded.forEach(key => {
     globalAPI[key] = sdk[key]
   }) */
+  const {scanCode} = globalAPI;
+  globalAPI.scanCode = (options) => {
+    const {enableDefaultBehavior, ...restOptions} = options;
+    const shouldReturnPromise = (!restOptions.success && !restOptions.complete && !restOptions.fail);
+    if(shouldReturnPromise) {
+      return new Promise((resolve, reject) => {
+        scanCode(restOptions).then((res) => {
+          if(enableDefaultBehavior) {
+            globalAPI.showModal({
+              title: '扫描到以下内容',
+              content: res.result,
+              showCancel: false,
+            })
+          }
+          resolve(res)
+        })
+        .catch(reject)
+      })
+    }
+  }
   return globalAPI
 }

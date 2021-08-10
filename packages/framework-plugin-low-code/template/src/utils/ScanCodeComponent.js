@@ -1,7 +1,8 @@
-import React, { useRef, useEffect, useImperativeHandle, useState } from 'react';
+import React, { useRef, useEffect, useImperativeHandle, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 
 import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library';
+import { app } from '../app/global-api';
 
 
 export const FORMAT = {
@@ -25,20 +26,6 @@ export const FORMAT = {
 };
 
 const hints = new Map();
-const formats = [
-  BarcodeFormat.QR_CODE,
-  BarcodeFormat.UPC_A,
-  BarcodeFormat.UPC_E,
-  BarcodeFormat.EAN_8,
-  BarcodeFormat.EAN_13,
-  BarcodeFormat.CODE_39,
-  BarcodeFormat.CODE_93,
-  BarcodeFormat.CODE_128,
-  BarcodeFormat.DATA_MATRIX,
-  BarcodeFormat.PDF_417,
-];
-hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
-
 const Codescanner = React.forwardRef(({ events = {}, closeScanCode, scanType, onInit }, fref) => {
   const ref = useRef();
   const {
@@ -133,15 +120,32 @@ export default function ScanCode({ root, options }) {
   const {
     onlyFromCamera,
     scanType,
-    success,
+    success: successCallback,
     fail,
     complete,
+    enableDefaultBehavior,
   } = options;
   const ref = useRef();
   const closeScanCode = () => {
     ref.current.stop();
     ReactDOM.render(null, root);
   };
+  const success = useCallback((res) => {
+    const {result} = res;
+    if (enableDefaultBehavior) {
+      if (/^https?:\/\//.test(result)) {
+        window.open(result);
+      } else {
+        app.showModal({
+          title: '扫描到以下内容',
+          content: result,
+          showCancel: false,
+          confirmColor: '#006eff',
+        });
+      }
+    }
+    successCallback(res);
+  });
   const [isCameraInit, setIscameraInit] = useState(false);
   const onInitCamera = () => {
     setIscameraInit(true);
