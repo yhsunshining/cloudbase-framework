@@ -130,8 +130,8 @@ export const mountAPIs = (sdks) => {
               ? obj.pageId.replace(/^(\.)?\//, '')
               : obj.pageId,
           });
-        }
-        return sdks[item](obj);
+        };
+        break;
       };
     }
 
@@ -146,32 +146,41 @@ export const mountAPIs = (sdks) => {
       }
     }
 
+    if (item === 'scanCode') {
+      action = (options) => {
+        if (!options || (!options.success && !options.fail && !options.complete)) {
+          return new Promise((resolve, reject) => {
+            scanCodeApi({
+              ...options,
+              success: resolve,
+              fail: reject,
+            });
+          });
+        }
+        scanCodeApi(options);
+      };
+    }
+    if (item === 'navigateTo' || item === 'redirectTo') {
+      const origin = action;
+      action = (options) => {
+        if (options.mode === 'web' && process.env.isMiniprogram) {
+          console.warn('url navigation can only be used in h5 build');
+          return;
+        }
+        const { url, ...restOpts } = options;
+        if (!process.env.isMiniprogram && url) {
+          if (item === 'navigateTo') {
+            window.open(url);
+          } else {
+            window.location.href = url;
+          }
+        } else {
+          return origin(restOpts);
+        }
+      };
+    }
     app[item] = action;
   });
-  app.scanCode = (options) => {
-    if (!options || (!options.success && !options.fail && !options.complete)) {
-      return new Promise((resolve, reject) => {
-        scanCodeApi({
-          ...options,
-          success: resolve,
-          fail: reject,
-        });
-      });
-    }
-    scanCodeApi(options);
-  };
-  const { navigateTo } = app;
-  app.navigateTo = (options) => {
-    if (options.url && process.env.isMiniprogram) {
-      console.warn('navigateTo url can only be used in h5 build');
-    }
-    const { url, ...restOpts } = options;
-    if (!process.env.isMiniprogram && url) {
-      window.open(url);
-    } else {
-      navigateTo(restOpts);
-    }
-  };
   return app;
 };
 

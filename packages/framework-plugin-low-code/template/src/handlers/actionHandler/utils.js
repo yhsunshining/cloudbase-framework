@@ -84,7 +84,7 @@ async function invokeListener(
   const action = instanceFunction;
   let maxTimeout = DEFAULT_MAX_TIMEOUT;
   // eslint-disable-next-line no-underscore-dangle
-  if (data._maxTimeout) maxTimeout = data._maxTimeout;
+  if (data._maxTimeout === 'Infinity') maxTimeout = data._maxTimeout;
   const resolvedData = {
     ...data,
   };
