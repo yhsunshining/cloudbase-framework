@@ -123,6 +123,7 @@ function mountAPIs(sdks) {
           }
           scanCodeApi(options);
         };
+        break;
       }
       case 'navigateTo':
       case 'reLaunch':
@@ -146,25 +147,6 @@ function mountAPIs(sdks) {
         };
         break;
       }
-    }
-    if (item === 'navigateTo' || item === 'redirectTo') {
-      const origin = action;
-      action = (options) => {
-        if (options.mode === 'web' && process.env.isMiniprogram) {
-          console.warn('navigation url can only be used in h5 build');
-          return;
-        }
-        const { url, ...restOpts } = options;
-        if (!process.env.isMiniprogram && url) {
-          if (item === 'navigateTo') {
-            window.open(url);
-          } else {
-            window.location.href = url;
-          }
-        } else {
-          return origin(restOpts);
-        }
-      };
     }
     app[item] = action;
   });
