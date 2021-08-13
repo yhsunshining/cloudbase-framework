@@ -50,7 +50,7 @@ function createGlboalApi() {
       globalAPI.utils.set(
         globalAPI.dataset.state,
         keyPath,
-        userSetState[keyPath],
+        userSetState[keyPath]
       );
     });
   };
@@ -120,67 +120,53 @@ export const mountAPIs = (sdks) => {
         }
         break;
       }
+      case 'scanCode': {
+        action = (options) => {
+          if (
+            !options ||
+            (!options.success && !options.fail && !options.complete)
+          ) {
+            return new Promise((resolve, reject) => {
+              scanCodeApi({
+                ...options,
+                success: resolve,
+                fail: reject,
+              });
+            });
+          }
+          scanCodeApi(options);
+        };
+        break;
+      }
       case 'navigateTo':
       case 'reLaunch':
       case 'redirectTo': {
         action = function (obj) {
-          return sdks[item]({
-            ...obj,
-            pageId: obj.pageId
-              ? obj.pageId.replace(/^(\.)?\//, '')
-              : obj.pageId,
-          });
+          if (obj.mode === 'web' && process.env.isMiniprogram) {
+            console.warn('url navigation can only be used in h5 build');
+            return;
+          }
+          const { url, ...restOpts } = obj;
+          if (obj.mode === 'web') {
+            if (item === 'navigateTo') {
+              window.open(url);
+            } else {
+              window.location.href = url;
+            }
+          } else {
+            return sdks[item]({
+              ...restOpts,
+              pageId: restOpts.pageId
+                ? restOpts.pageId.replace(/^(\.)?\//, '')
+                : restOpts.pageId,
+            });
+          }
         };
         break;
-      };
-    }
-
-    if (item === 'showModal') {
-      const OFFICIAL_COMPONENT_LIB = 'weda';
-      const showModal =        actionMap[OFFICIAL_COMPONENT_LIB]
-        && actionMap[OFFICIAL_COMPONENT_LIB].showModal;
-      if (!_isMobile() && showModal) {
-        action = function (params) {
-          return showModal({ data: params });
-        };
       }
     }
 
-    if (item === 'scanCode') {
-      action = (options) => {
-        if (!options || (!options.success && !options.fail && !options.complete)) {
-          return new Promise((resolve, reject) => {
-            scanCodeApi({
-              ...options,
-              success: resolve,
-              fail: reject,
-            });
-          });
-        }
-        scanCodeApi(options);
-      };
-    }
-    if (item === 'navigateTo' || item === 'redirectTo') {
-      const origin = action;
-      action = (options) => {
-        if (options.mode === 'web' && process.env.isMiniprogram) {
-          console.warn('url navigation can only be used in h5 build');
-          return;
-        }
-        const { url, ...restOpts } = options;
-        if (!process.env.isMiniprogram && url) {
-          if (item === 'navigateTo') {
-            window.open(url);
-          } else {
-            window.location.href = url;
-          }
-        } else {
-          return origin(restOpts);
-        }
-      };
-    }
     app[item] = action;
   });
   return app;
 };
-

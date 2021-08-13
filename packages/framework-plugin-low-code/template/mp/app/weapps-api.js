@@ -73,7 +73,6 @@ function createGlboalApi() {
   sdkModsIncluded.forEach(key => {
     globalAPI[key] = sdk[key]
   }) */
-  const {scanCode, navigateTo, redirectTo} = globalAPI;
   globalAPI.scanCode = (options) => {
     const {enableDefaultBehavior, ...restOptions} = options;
     const shouldReturnPromise = (!restOptions.success && !restOptions.complete && !restOptions.fail);
@@ -93,19 +92,5 @@ function createGlboalApi() {
       })
     }
   }
-  globalAPI.navigateTo = (options) => {
-    if (options.mode === 'web' && process.env.isMiniprogram) {
-      console.warn('navigateTo url can only be used in h5 build');
-      return;
-    }
-    return navigateTo(restOpts);
-  };
-  globalAPI.redirectTo = (options) => {
-    if (options.mode === 'web' && process.env.isMiniprogram) {
-      console.warn('redirectTo url can only be used in h5 build');
-      return;
-    }
-    return redirectTo(restOpts);
-  };
   return globalAPI
 }
