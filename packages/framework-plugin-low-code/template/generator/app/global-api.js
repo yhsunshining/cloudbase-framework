@@ -111,7 +111,7 @@ function mountAPIs(sdks) {
       case 'reLaunch':
       case 'redirectTo': {
         action = function (obj) {
-          return sdk[item]({
+          return sdks[item]({
             ...obj,
             pageId: obj.pageId
               ? obj.pageId.replace(/^(\.)?\//, '')
