@@ -1,5 +1,4 @@
-
-import { kebabCase, camelcase, isEmptyObj } from './common'
+import { kebabCase, camelcase, isEmptyObj } from './common';
 
 const PERCENTAGE_KEY_LIST = [
   'opacity',
@@ -10,73 +9,73 @@ const PERCENTAGE_KEY_LIST = [
   'zIndex',
   'fontWeight',
   'borderImage',
-]
+];
 
 export function translateStyleToRem(style) {
-  return translateStyleByHandler(style, toREM)
+  return translateStyleByHandler(style, toREM);
 }
 
 export function translateStyleByHandler(style, handler) {
   return Object.keys(style).reduce((result, key) => {
-    const value = style[key]
+    const value = style[key];
     if (PERCENTAGE_KEY_LIST.includes(key)) {
-      setStyleValue(result, key, value)
+      setStyleValue(result, key, value);
     } else if (value !== undefined && value !== null) {
-      setStyleValue(result, key, handler(value))
+      setStyleValue(result, key, handler(value));
     }
-    return result
-  }, {})
+    return result;
+  }, {});
 }
 
 function setStyleValue(object, key, value) {
   if (value === undefined || value === null || value === '') {
-    return
+    return;
   }
   // 特殊样式移除
   if (key === 'open') {
-    return
+    return;
   }
 
   if (isEmptyObj(value)) {
-    return
+    return;
   }
 
-  object[camelcase(key)] = value
+  object[camelcase(key)] = value;
 }
 
 function calPxToREM(px) {
-  if (Number.isNaN(px / 28)) return px.toString()
+  if (Number.isNaN(px / 28)) return px.toString();
   if (+px === 0) {
-    return '0'
+    return '0';
   }
-  return (px / 28).toFixed(4) + 'rem'
+  return (px / 28).toFixed(4) + 'rem';
 }
 
 export function toREM(cssLen) {
   if (typeof cssLen === 'string') {
-    const cssLenArr = cssLen.split(' ')
+    const cssLenArr = cssLen.split(' ');
     return cssLenArr
-      .map(attr => {
-        const matchResult = attr.match(/^(-?\d+)(px)?$/)
+      .map((attr) => {
+        const matchResult = attr.match(/^(-?\d+)(px)?$/);
         if (matchResult && matchResult[1]) {
-          return calPxToREM(+matchResult[1])
+          return calPxToREM(+matchResult[1]);
         }
-        return attr
+        return attr;
       })
-      .join(' ')
+      .join(' ');
   }
 
   if (typeof cssLen === 'number') {
-    return calPxToREM(cssLen)
+    return calPxToREM(cssLen);
   }
 }
 
 export function toCssText(style, className = '.some-class-name') {
   const attrText = Object.keys(style)
-    .map(key => {
-      const value = style[key]
-      return `${kebabCase(key)}: ${value};`
+    .map((key) => {
+      const value = style[key];
+      return `${kebabCase(key)}: ${value};`;
     })
-    .join('\n')
-  return `${className} { ${attrText} }\n`
+    .join('\n');
+  return `${className} { ${attrText} }\n`;
 }

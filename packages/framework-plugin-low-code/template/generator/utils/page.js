@@ -5,6 +5,6 @@ export function createPageApi() {
     handler: {},
     props: {},
     widgets: {},
-  }
-  return $page
+  };
+  return $page;
 }

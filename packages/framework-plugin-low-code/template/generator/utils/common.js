@@ -131,12 +131,27 @@ export function resolveComponentProps(props, isPlainProps) {
   return {
     ...data,
     ...restProps,
+<<<<<<< HEAD
     events: events.reduce((events, item) => {
       const propName = item;
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
     }, {}),
     ...props
+=======
+    events: new Proxy(
+      events.reduce((events, item) => {
+        const propName = item;
+        events[propName] = (e) => restProps.emit(propName, e);
+        return events;
+      }, {}),
+      {
+        get(obj, prop) {
+          return prop in obj ? obj[prop] : (e) => restProps.emit(prop, e);
+        },
+      }
+    ),
+>>>>>>> release/cals_v2
   };
 }
 
@@ -173,6 +188,7 @@ export function isScopeSlot(comp, slot) {
   return map && map[slot];
 }
 
+<<<<<<< HEAD
 export function getStaticResourceAttribute(staticUrl){
   let { domain = '' } = app;
   if (staticUrl && staticUrl.indexOf('/') !== 0) {
@@ -181,3 +197,28 @@ export function getStaticResourceAttribute(staticUrl){
   const url = `${domain}${staticUrl}`;
   return url;
 }
+=======
+/**
+ * 检查页面权限
+ **/
+export async function checkAuth(app, appId, pageId) {
+  app.showNavigationBarLoading();
+  const checkAuthResult = await app.cloud.checkAuth({
+    type: 'app',
+    extResourceId: `${appId}-${pageId}`,
+  });
+  let isLogin = false;
+  if (Array.isArray(checkAuthResult) && checkAuthResult.length > 0) {
+    isLogin = checkAuthResult[0]?.IsAccess ?? false;
+  }
+  app.hideNavigationBarLoading();
+
+  if (!isLogin) {
+    app.showToast({
+      title: '页面无访问权限',
+      icon: 'error',
+    });
+  }
+  return isLogin;
+}
+>>>>>>> release/cals_v2
