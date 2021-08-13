@@ -82,7 +82,9 @@ async function invokeListener(
 ) {
   // ToDo resolve databinds
   const action = instanceFunction;
-  const maxTimeout = DEFAULT_MAX_TIMEOUT;
+  let maxTimeout = DEFAULT_MAX_TIMEOUT;
+  // eslint-disable-next-line no-underscore-dangle
+  if (data._maxTimeout === 'Infinity') maxTimeout = data._maxTimeout;
   const resolvedData = {
     ...data,
   };
@@ -121,24 +123,25 @@ async function invokeListener(
 
   try {
     if (maxTimeout === 'Infinity') {
-      await action(params);
-    } else {
-      const p = action(params);
-      if (p instanceof Promise) {
-        let timeout = null;
-        await Promise.race([
-          new Promise((resolve, reject) => {
-            timeout = setTimeout(() => {
-              reject(new Error(`timeout in ${maxTimeout}ms`));
-            }, maxTimeout);
-          }),
-          p,
-        ]);
-        if (timeout) {
-          clearTimeout(timeout);
-        }
-      }
+      return await action(params);
     }
+    const p = action(params);
+    if (p instanceof Promise) {
+      let timeout = null;
+      const r = await Promise.race([
+        new Promise((resolve, reject) => {
+          timeout = setTimeout(() => {
+            reject(new Error(`timeout in ${maxTimeout}ms`));
+          }, maxTimeout);
+        }),
+        p,
+      ]);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+      return r;
+    }
+    return p;
   } catch (e) {
     console.error('Action error: ', e);
     throw e;

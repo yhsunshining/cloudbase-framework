@@ -561,6 +561,7 @@ export function getWebpackWebBuildParams(
       mobx: 'window.mobx',
       '@cloudbase/js-sdk': 'window.cloudbase',
       '@cloudbase/weda-cloud-sdk/dist/h5': 'window.CloudSDK',
+      '@zxing/library': 'window.ZXing'
     },
     resolveModules: [
       path.resolve(appBuildDir, 'node_modules'),
