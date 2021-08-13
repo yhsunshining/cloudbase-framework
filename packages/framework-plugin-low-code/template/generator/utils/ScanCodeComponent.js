@@ -60,6 +60,7 @@ const Codescanner = React.forwardRef(({ events = {}, closeScanCode, scanType, on
     const devices = await codeReader.listVideoInputDevices();
 
     if (devices.length) {
+      HTMLVideoElement = Object.getPrototypeOf(ref.current ?? document.createElement('video')).constructor;
       await codeReader.decodeFromConstraints(
         { video: { facingMode: 'environment' } },
         ref.current,
