@@ -73,6 +73,7 @@ function createGlboalApi() {
   sdkModsIncluded.forEach(key => {
     globalAPI[key] = sdk[key]
   }) */
+  const { scanCode } = globalAPI
   globalAPI.scanCode = (options) => {
     const {enableDefaultBehavior, ...restOptions} = options;
     const shouldReturnPromise = (!restOptions.success && !restOptions.complete && !restOptions.fail);
