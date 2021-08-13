@@ -456,7 +456,6 @@ class LowCodePlugin extends Plugin {
         minify: true,
         codeProtect: false,
       };
-
       this._miniprogramePlugin = new MiniProgramsPlugin(
         'miniprograme',
         this.api,
@@ -930,10 +929,10 @@ class LowCodePlugin extends Plugin {
           TIME_LABEL.BUILD
         )}s: ${this._appPath}`
       );
-
+      console.log('=============this._resolvedInputs', this._resolvedInputs);
       // 子插件构建
       this._subPluginConstructor(this._resolvedInputs);
-
+      console.log('=============this._domain', this._domain);
       if (this._miniprogramePlugin) {
         this._time(TIME_LABEL.MP_BUILD);
         await this._miniprogramePlugin.init();

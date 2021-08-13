@@ -53,6 +53,7 @@ export async function generateWxMp({
   weapps,
   projDir,
   appId,
+  domain,
   materials,
   plugins,
   isProduction,
@@ -64,6 +65,7 @@ export async function generateWxMp({
   weapps: IWeAppData[];
   projDir: string;
   appId: string; // 应用appId
+  domain: string;
   materials: IMaterialItem[];
   plugins: IPlugin[];
   isProduction: boolean;
@@ -79,6 +81,7 @@ export async function generateWxMp({
   console.time(operationLabel);
   console.log('Generating ' + em('Wexin MiniProgram') + ' to ' + projDir);
 
+  console.log(em('domain') + domain);
   let mainAppData = weapps[0];
 
   const buildContext: IBuildContext = {
@@ -88,6 +91,7 @@ export async function generateWxMp({
     materialLibs: materials,
     isMixMode,
     mainAppData,
+    domain
   };
 
   const yyptConfig = await getYyptConfigInfo(extraData);
@@ -467,6 +471,7 @@ async function generateFramework(
           subLevelPath: '',
           subPackageName: '',
           isBare: true,
+          domain: ctx.domain
         },
       };
     }
@@ -490,6 +495,7 @@ async function generateFramework(
         'app/app-global.js': {},
         'app/weapps-api.js': {
           appId: ctx.appId,
+          domain: ctx.domain,
           subLevelPath: appData.rootPath
             ? path.relative(`${appData.rootPath}`, '') + '/'
             : '',

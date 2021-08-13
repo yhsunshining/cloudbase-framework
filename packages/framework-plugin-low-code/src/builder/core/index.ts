@@ -85,7 +85,6 @@ export async function buildWebApp(
     console.error('无效的应用配置');
     return;
   }
-  debugger
   console.log('mainAppSerializeData', mainAppSerializeData);
   console.log('domain', domain);
   console.log('应用名', appKey);
@@ -98,6 +97,7 @@ export async function buildWebApp(
     runtime === RUNTIME.CI ? getCompileDirs('app') : getCompileDirs(appKey);
 
   const startTime = Date.now();
+  console.log('==============buildTypeList', buildTypeList);
   if (buildTypeList.includes(BuildType.MP)) {
     appBuildDir = path.join(appBuildDir, 'mp');
 
@@ -109,6 +109,7 @@ export async function buildWebApp(
         weapps: apps,
         projDir: appBuildDir,
         appId: appKey,
+        domain: domain,
         materials: dependencies,
         plugins,
         isProduction: mode === WebpackModeType.PRODUCTION,
