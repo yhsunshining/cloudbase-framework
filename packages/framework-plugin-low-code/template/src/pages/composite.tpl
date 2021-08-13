@@ -1,11 +1,11 @@
 import * as React from "react";
 import { observer } from "mobx-react-lite";
 import { observable } from "mobx";
+import { get } from 'lodash'
 
 import { AppRender } from "handlers/render";
 import { createComputed } from "../../../../utils";
 import { createWidgets, retryDataBinds, WidgetsContext, resolveComponentProps } from 'handlers/utils'
-import { get } from 'lodash'
 import getStateFn from "./lowcode/state.js";
 import computed from "./lowcode/computed.js";
 import lifecycle from "./lowcode/lifecycle.js";

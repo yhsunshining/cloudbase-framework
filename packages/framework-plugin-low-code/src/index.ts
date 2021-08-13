@@ -58,7 +58,7 @@ const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(
   DEFAULT_CLOUDFUNCTION_ROOT_NAME,
   '/'
 );
-export const CLOUD_SDK_FILE_NAME = 'weda-cloud-sdk.0.1.10-alpha.5.1.js';
+export const CLOUD_SDK_FILE_NAME = 'weda-cloud-sdk.0.2.1-alpha.5.js';
 
 const enum TIME_LABEL {
   LOW_CODE = 'low code lifetime',
@@ -1190,10 +1190,15 @@ class LowCodePlugin extends Plugin {
                 indexDocument: 'index.html',
                 routingRules: this._rules,
               });
-            // }
-            const link = `https://${
-              this._website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
-            }`;
+            
+
+            const link = buildAsAdminPortalByBuildType(
+              this._resolvedInputs.buildTypeList
+            )
+              ? `https://${this._website.cdnDomain}/adminportal/`
+              : `https://${
+                this._website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
+                }`;
             const qrcodeOutputPath = path.resolve(
               this.api.projectPath,
               QRCODE_PATH

@@ -84,11 +84,13 @@ export function processInstalledHook(plugin) {
               name,
               deployPath: plugin._getWebRootPath(),
               pages: JSON.stringify(
-                (mainAppSerializeData?.pageInstanceList || []).map((page) => ({
-                  id: page.id,
-                  title: page.data?.title?.value || page.id,
-                  path: `/${page.id}`,
-                }))
+                (mainAppSerializeData?.pageInstanceList || [])
+                  .filter((page) => !page.hideAdminPortalMenu)
+                  .map((page) => ({
+                    id: page.id,
+                    title: page.data?.title?.value || page.id,
+                    path: `/${page.id}`,
+                  }))
               ),
             },
           },

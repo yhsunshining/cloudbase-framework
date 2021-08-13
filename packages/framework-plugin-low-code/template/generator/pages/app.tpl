@@ -46,6 +46,9 @@ const virtualFields = {
 
 // Init
 export default function App() {
+  // 检查权限
+  // const [weDaHasLogin, setWeDaHasLogin] = React.useState(false);
+
   // 兼容 this.state / $page.state 两种模式
   const pageCodeContext = createPageApi()
   const $page = pageCodeContext
@@ -82,6 +85,9 @@ export default function App() {
   React.useEffect(() => {
     document.title = "<%= title %>";
     initWatchMethods(pageCodeContext)
+    /*checkAuth(app, app.id, '<%= pageName %>').then((checkAuthResult) =>
+      setWeDaHasLogin(checkAuthResult)
+    );*/
   }, [])
 
   pageLifeCycleMount(

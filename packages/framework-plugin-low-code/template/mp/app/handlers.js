@@ -9,7 +9,7 @@
   <% pageModules.forEach(({id: pageId, lowCodes}) => { %>
     export const <%=pageId %> = {
       <% lowCodes.filter(mod => mod.type === 'handler-fn' && mod.name !== '____index____').forEach(mod => {%>
-        <%= mod.name%>: <%= pageId%>_<%= mod.name%>,
+        ['<%= mod.name%>']: <%= pageId%>_<%= mod.name%>,
       <% }) %>
     }
     <% }) %>

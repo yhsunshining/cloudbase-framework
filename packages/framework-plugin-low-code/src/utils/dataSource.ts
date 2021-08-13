@@ -69,42 +69,81 @@ function getDependencies(pkg) {
 }
 
 /**
+ * 将对象的key的首字母转换为小写
+ * { UserName: 'xxx', Id: 'xxxx'} => { userName: 'xxx', id: 'xxx' }
+ * 默认只处理最外层, 若 deep 为 true, 则递归处理
+ */
+export function lowercaseKey(obj: any, deep?: boolean): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(item => lowercaseKey(item, deep));
+  const result: Record<string, any> = {};
+  return Object.keys(obj).reduce((acc, key) => {
+    const smallCase = key.charAt(0).toLowerCase() + key.slice(1);
+    const val = obj[key];
+    acc[smallCase] = deep ? lowercaseKey(val, deep) : val;
+    return acc;
+  }, result);
+}
+
+/**
+ * 标准化从云API获取的数据源结构
+ *  1. 将大写转换为小写
+ *  2. 将 methods 和 methods 从字符串转换为对象
+ */
+export function standardizeDataSource(ds: any) {
+  const transformed = lowercaseKey(ds, true);
+  try {
+    const { schema } = ds;
+    if (typeof transformed.schema === 'string') {
+      transformed.schema = JSON.parse(transformed.schema);
+    }
+    if (!transformed.schema || typeof transformed.schema !== 'object') {
+      console.warn('[standardizeDataSource]invalid schema', schema, 'in datasource', transformed);
+      transformed.schema = {};
+    }
+  } catch (error) {
+    console.warn('[standardizeDataSource] unable to transform schema', transformed.schema);
+    transformed.schema = {};
+  }
+  try {
+    const { methods } = ds;
+    if (typeof transformed.methods === 'string') {
+      transformed.methods = JSON.parse(transformed.methods);
+    }
+    if (!Array.isArray(transformed.methods)) {
+      console.warn('[standardizeDataSource]invalid methods', methods, 'in datasource', transformed);
+      transformed.methods = [];
+    }
+  } catch (error) {
+    console.warn('[standardizeDataSource]unable to transform methods', transformed.methods);
+    transformed.methods = [];
+  }
+  return transformed;
+}
+
+/**
  * 简化数据源描述信息数组, 以供低码运行时使用
  *  该数组内容应当输出到 template/src/datasources/datasource-profiles.js.tpl 中
  * @param datasources 完整的数据源描述信息数组
  */
 export function getDatasourceProfiles(datasources) {
   return (
-    datasources?.map((ds) => {
-      const formated: {
-        id: string;
-        name: string;
-        type: string;
-        config?: any;
-        methods?: any;
-      } = {
+    datasources?.map((item) => {
+      const ds = standardizeDataSource(item);
+      return {
         id: ds.id,
+        title: ds.title,
         name: ds.name,
         type: ds.type,
-      };
-
-      if (ds.config) {
-        formated.config = {
-          kind: ds.config.kind,
-          methods: ds.config.methods || ds.config.defaultMethods,
-        };
-      }
-
-      if (ds.methods) {
-        formated.methods = ds.methods.map((method) => {
+        childDataSourceNames: ds.childDataSourceNames,
+        schema: ds.schema,
+        methods: ds.methods && ds.methods.map((method) => {
           return {
             name: method.name,
             type: method.type,
           };
-        });
+        })
       }
-
-      return formated;
     }) || []
   );
 }

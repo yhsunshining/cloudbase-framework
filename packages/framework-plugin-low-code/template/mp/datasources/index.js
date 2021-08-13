@@ -1,8 +1,9 @@
 import {
   setConfig,
   initTcb,
+  CLOUD_SDK
 } from '@cloudbase/weda-cloud-sdk'
-export { 
+export {
   createDataset,
   createStateDataSourceVar,
   generateParamsParser,

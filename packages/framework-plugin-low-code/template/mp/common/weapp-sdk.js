@@ -7,6 +7,7 @@ function createNavigatorFn(fnName) {
     if(mode == 'plugin'){
       url = `plugin://${packageName}/${pageId}`
     } else {
+      pageId = pageId ? pageId.replace(/^(\.)?\//,'') : pageId;
       url = packageName
       ? `/${packageName}/pages/${pageId}/index`
         : `/pages/${pageId}/index`

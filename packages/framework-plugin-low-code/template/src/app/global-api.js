@@ -5,7 +5,8 @@ import store, { subPackageName } from '../store';
 import computed from '../store/computed';
 import common from './common';
 import { formatDate } from '../utils/date';
-import { getter, setter } from '../utils';
+import { getter, setter, _isMobile } from '../utils';
+import actionMap from './material-actions';
 
 const mainAppKey = '__weappsMainApp';
 const appGlobal = process.env.isMiniprogram ? getApp() : window;
@@ -46,7 +47,11 @@ function createGlboalApi() {
   globalAPI.state.dataset = dataset;
   globalAPI.setState = (userSetState) => {
     Object.keys(userSetState).forEach((keyPath) => {
-      globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
+      globalAPI.utils.set(
+        globalAPI.dataset.state,
+        keyPath,
+        userSetState[keyPath]
+      );
     });
   };
   if (subPackageName) {
@@ -88,18 +93,48 @@ function createPageApi() {
 export const mountAPIs = (sdks) => {
   Object.keys(sdks).forEach((item) => {
     let action = sdks[item];
-    if (item === 'showToast') {
-      action = function (obj) {
-        if (obj.icon === 'error' && !obj.image) {
+
+    switch (item) {
+      case 'showToast': {
+        action = function (obj) {
+          if (obj.icon === 'error' && !obj.image) {
+            return sdks[item]({
+              ...obj,
+              image:
+                'data:image/svg+xml,%3Csvg%20width%3D%22120%22%20height%3D%22120%22%20viewBox%3D%220,0,24,24%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M12%2010.586l5.657-5.657%201.414%201.414L13.414%2012l5.657%205.657-1.414%201.414L12%2013.414l-5.657%205.657-1.414-1.414L10.586%2012%204.929%206.343%206.343%204.93%2012%2010.586z%22%20fill-rule%3D%22evenodd%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E',
+            });
+          }
+          return sdks[item](obj);
+        };
+        break;
+      }
+      case 'showModal': {
+        const OFFICIAL_COMPONENT_LIB = 'weda';
+        const showModal =
+          actionMap[OFFICIAL_COMPONENT_LIB] &&
+          actionMap[OFFICIAL_COMPONENT_LIB].showModal;
+        if (!_isMobile() && showModal) {
+          action = function (params) {
+            return showModal({ data: params });
+          };
+        }
+        break;
+      }
+      case 'navigateTo':
+      case 'reLaunch':
+      case 'redirectTo': {
+        action = function (obj) {
           return sdks[item]({
             ...obj,
-            image:
-              'data:image/svg+xml,%3Csvg%20width%3D%22120%22%20height%3D%22120%22%20viewBox%3D%220,0,24,24%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M12%2010.586l5.657-5.657%201.414%201.414L13.414%2012l5.657%205.657-1.414%201.414L12%2013.414l-5.657%205.657-1.414-1.414L10.586%2012%204.929%206.343%206.343%204.93%2012%2010.586z%22%20fill-rule%3D%22evenodd%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E',
+            pageId: obj.pageId
+              ? obj.pageId.replace(/^(\.)?\//, '')
+              : obj.pageId,
           });
-        }
-        return sdks[item](obj);
-      };
+        };
+        break;
+      }
     }
+
     app[item] = action;
   });
   return app;

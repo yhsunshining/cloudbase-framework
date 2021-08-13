@@ -1052,6 +1052,14 @@ export async function generateCodeFromTpl(
 
   const yyptConfig = await getYyptConfigInfo(extraData);
 
+  console.log(
+    '===',
+    dependencies.map((item) => {
+      let { components, ...restItem } = item;
+      return restItem;
+    })
+  );
+
   // # all templates to be generated
   const templatesData = {
     'store/index.js': {

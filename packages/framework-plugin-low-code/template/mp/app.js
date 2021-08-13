@@ -2,7 +2,6 @@ import { setConfig } from '@cloudbase/weda-cloud-sdk'
 import lifeCycle from './lowcode/lifecycle'
 import { app } from './app/weapps-api'
 import WxReportV2 from './common/wx_yypt_report_v2'
-
 // 引入数据源管理器并进行初始化
 import { EXTRA_API, createStateDataSourceVar, generateParamsParser } from './datasources/index'
 

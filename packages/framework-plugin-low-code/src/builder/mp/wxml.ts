@@ -85,6 +85,28 @@ export function generateWxml(
     ? new NameMangler({ blackList: builtinMpTags })
     : undefined;
   const xmlJson = { elements: createXml(widgets) };
+  if (ctx.isPage) {
+    const originElements = xmlJson.elements;
+    if (originElements?.length) {
+      if (!originElements[0]?.attributes) {
+        originElements[0].attributes = {};
+      }
+      originElements[0].attributes['data-weui-theme'] = 'light';
+    }
+    // 登录校验: 向其最外层包裹一层block
+    xmlJson.elements = [
+      {
+        type: 'element',
+        name: 'block',
+        attributes: {
+          ['wx:if']: '{{weDaHasLogin}}',
+        },
+        elements: originElements,
+        _order: -1,
+        _parent: null,
+      },
+    ];
+  }
 
   function createXml(
     widgets: { [key: string]: IWeAppComponentInstance },
@@ -356,13 +378,6 @@ export function generateWxml(
       elements.push(node);
     }
     return elements.sort((a, b) => a._order - b._order);
-  }
-
-  if (ctx.isPage && xmlJson.elements?.length) {
-    if (!xmlJson.elements[0]?.attributes) {
-      xmlJson.elements[0].attributes = {};
-    }
-    xmlJson.elements[0].attributes['data-weui-theme'] = 'light';
   }
 
   return js2xml(xmlJson, {
