@@ -71,7 +71,7 @@ export async function buildWebApp(
     },
     isCrossAccount = false,
     resourceAppid = undefined,
-    domain = ''
+    domain = '',
   }: BuildAppProps & {
     deployMode: DEPLOY_MODE;
     runtime: RUNTIME;
@@ -85,7 +85,6 @@ export async function buildWebApp(
     console.error('无效的应用配置');
     return;
   }
-  console.log('mainAppSerializeData', mainAppSerializeData);
   console.log('domain', domain);
   console.log('应用名', appKey);
   console.log('生成模式', generateMpType);
@@ -157,6 +156,7 @@ export async function buildWebApp(
       isProduction: mode === WebpackModeType.PRODUCTION,
       materialLibs: dependencies,
       isMixMode: false,
+      domain,
       mainAppData: mainAppSerializeData,
     };
 
@@ -252,7 +252,7 @@ export async function buildWebApp(
       generateMpPath,
       plugins,
       assets: jsAssets,
-      domain
+      domain,
     });
 
     return appBuildDir;

@@ -1,0 +1,11 @@
+function getStaticResourceAttribute(staticUrl) {
+  var domain = '<%=domain%>'
+  if (staticUrl && staticUrl.indexOf('/') !== 0) {
+    return staticUrl;
+  }
+  return 'https://' + domain + staticUrl;
+}
+
+module.exports = {
+  _getStaticResourceAttribute: getStaticResourceAttribute
+}

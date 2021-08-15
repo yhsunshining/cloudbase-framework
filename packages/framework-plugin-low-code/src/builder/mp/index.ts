@@ -91,7 +91,7 @@ export async function generateWxMp({
     materialLibs: materials,
     isMixMode,
     mainAppData,
-    domain
+    domain,
   };
 
   const yyptConfig = await getYyptConfigInfo(extraData);
@@ -149,6 +149,9 @@ export async function generateWxMp({
   // #3 生成主包根路径文件
   let appFileData: Record<string, object> = {
     'common/style.js': {},
+    'common/utils.wxs': {
+      domain: domain,
+    },
     'common/util.js': {},
     'common/widget.js': {},
     'common/url.js': {},
@@ -471,7 +474,7 @@ async function generateFramework(
           subLevelPath: '',
           subPackageName: '',
           isBare: true,
-          domain: ctx.domain
+          domain: ctx.domain || '',
         },
       };
     }
@@ -495,7 +498,7 @@ async function generateFramework(
         'app/app-global.js': {},
         'app/weapps-api.js': {
           appId: ctx.appId,
-          domain: ctx.domain,
+          domain: ctx.domain || '',
           subLevelPath: appData.rootPath
             ? path.relative(`${appData.rootPath}`, '') + '/'
             : '',

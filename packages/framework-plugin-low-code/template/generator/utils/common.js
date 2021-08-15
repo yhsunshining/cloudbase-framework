@@ -3,7 +3,7 @@
  * @param {*} dataBinds
  * @param {*} forItems
  */
-import { app } from '../app/global-api'
+import { app } from '../app/global-api';
 export function resolveDataBinds(
   dataBinds,
   forItems,
@@ -82,19 +82,21 @@ export function isPlainObject(src) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
-  debugger
+  debugger;
   console.log('props', props);
   if (isPlainProps === 1) {
     const { data = {}, ...restProps } = props;
-    staticResourceAttribute && staticResourceAttribute.map(
-      (property) => (data[property] = getStaticResourceAttribute(data[property])),
-    );
+    staticResourceAttribute &&
+      staticResourceAttribute.map(
+        (property) =>
+          (data[property] = getStaticResourceAttribute(data[property]))
+      );
     return {
       ...data,
       ...restProps,
-      ...props
-      }
-  };
+      ...props,
+    };
+  }
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
@@ -125,20 +127,16 @@ export function resolveComponentProps(props, isPlainProps) {
   ];
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
-  staticResourceAttribute && staticResourceAttribute.map((prop) => (data[prop] && (data[prop] = getStaticResourceAttribute(data[prop]))));
+  staticResourceAttribute &&
+    staticResourceAttribute.map(
+      (prop) =>
+        data[prop] && (data[prop] = getStaticResourceAttribute(data[prop]))
+    );
   console.log('data', data);
   console.log('restProps', restProps);
   return {
     ...data,
     ...restProps,
-<<<<<<< HEAD
-    events: events.reduce((events, item) => {
-      const propName = item;
-      events[propName] = (e) => restProps.emit(propName, e);
-      return events;
-    }, {}),
-    ...props
-=======
     events: new Proxy(
       events.reduce((events, item) => {
         const propName = item;
@@ -151,7 +149,6 @@ export function resolveComponentProps(props, isPlainProps) {
         },
       }
     ),
->>>>>>> release/cals_v2
   };
 }
 
@@ -188,16 +185,14 @@ export function isScopeSlot(comp, slot) {
   return map && map[slot];
 }
 
-<<<<<<< HEAD
-export function getStaticResourceAttribute(staticUrl){
-  let { domain = '' } = app;
+export function getStaticResourceAttribute(staticUrl) {
+  const { domain = '' } = app;
   if (staticUrl && staticUrl.indexOf('/') !== 0) {
     return staticUrl;
   }
   const url = `${domain}${staticUrl}`;
   return url;
 }
-=======
 /**
  * 检查页面权限
  **/
@@ -221,4 +216,3 @@ export async function checkAuth(app, appId, pageId) {
   }
   return isLogin;
 }
->>>>>>> release/cals_v2

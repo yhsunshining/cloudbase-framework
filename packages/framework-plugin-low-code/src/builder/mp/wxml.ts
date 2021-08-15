@@ -84,7 +84,21 @@ export function generateWxml(
   const nameMangler = ctx.isProduction
     ? new NameMangler({ blackList: builtinMpTags })
     : undefined;
-  const xmlJson = { elements: createXml(widgets) };
+  const xmlJson = {
+    elements: [
+      {
+        type: 'element',
+        name: 'wxs',
+        attributes: {
+          src: '/common/utils.wxs',
+          module: 'wxsUtils',
+        },
+        elements: [],
+        _order: -1,
+        _parent: null,
+      } as any,
+    ].concat(createXml(widgets)),
+  };
   if (ctx.isPage) {
     const originElements = xmlJson.elements;
     if (originElements?.length) {
@@ -120,6 +134,7 @@ export function generateWxml(
         data: data0 = {},
         listeners = [],
         directives = {},
+        staticResourceAttribute = ['src'],
       } = xProps || {};
 
       const data = { ...data0 };
@@ -270,7 +285,11 @@ export function generateWxml(
         xmlJsonSetCustomAttr(
           node,
           prop,
-          getAttrBind(data[prop], `${attrPrefix}${prop}`),
+          getAttrBind(
+            data[prop],
+            `${attrPrefix}${prop}`,
+            staticResourceAttribute.includes(prop)
+          ),
           xComponent
         );
       }
@@ -485,8 +504,14 @@ export function getUsedComponents(
   return usedCmps;
 }
 
-function getAttrBind(dVale: IDynamicValue, widgetBind: string) {
+function getAttrBind(
+  dVale: IDynamicValue,
+  widgetBind: string,
+  isStaticResource?: boolean
+) {
   const { type, value } = dVale;
   const attrVal = type === PropBindType.prop ? value : widgetBind;
-  return `{{${attrVal}}}`;
+  return isStaticResource
+    ? `{{wxsUtils._getStaticResourceAttribute(${attrVal})}}`
+    : `{{${attrVal}}}`;
 }
