@@ -216,7 +216,6 @@ export async function buildWebApp(
     );
     console.timeEnd(runHandleMaterialTag);
 
-    console.log('runGenerateCoremainAppData', mainAppData);
     // 安装依赖
     await runGenerateCore(
       appBuildDir,

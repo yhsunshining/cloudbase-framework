@@ -30,7 +30,6 @@ export function AppRender(props) {
     properties = {},
     genericComp = {},
   } = componentSchema;
-  console.log('componentSchema', componentSchema);
   // 判断是否为 slot
   const isSlot = !xProps;
   if (isSlot && !(renderSlot || rootNode)) {
@@ -70,7 +69,6 @@ export function AppRender(props) {
       );
     }
   }
-  console.log('22componentSchema', componentSchema);
   const children = getComponentChildren(componentSchema);
   const slots = {};
   // eslint-disable-next-line guard-for-in

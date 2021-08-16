@@ -87,9 +87,6 @@ export async function runGenerateCore(props: {
     runtime = RUNTIME.NONE,
     ignoreInstall = false,
   } = props;
-  debugger
-  console.log('222props', props);
-  console.log('appData', appData);
   const { domain } = appData.extra;
   
   const allAppDataList = [appData].concat(subAppDataList);
@@ -224,7 +221,6 @@ export async function generateSinglePageJsxFile(
   );
   const { componentSchemaJson, data } = pageInstance;
 
-  console.log('pageInstance', pageInstance);
   const genericCompMap = getGenericCompFromDep(dependencies);
 
   // originComponentList 包含了引入的组件与抽象节点绑定的组件

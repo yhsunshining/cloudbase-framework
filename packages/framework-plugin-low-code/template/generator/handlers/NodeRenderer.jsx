@@ -18,7 +18,6 @@ export const CompRenderer = observer(function (props) {
     genericComp = {},
     emitEvents = [],
   } = props;
-  console.log('11111xProps', xProps);
   const isInComposite = !!codeContext.$WEAPPS_COMP;
   // 判断 widgets 是从 page 来的，还是组件来的 
   const widgetsData = !isInComposite
@@ -38,7 +37,6 @@ export const CompRenderer = observer(function (props) {
     classNameList = [],
     staticResourceAttribute = []
   } = xProps;
-  console.log('xProps', xProps);
   const dataBinds =
     (codeContext._dataBinds && codeContext._dataBinds[compId]) || {};
   const FieldKey = genericComp.propName
