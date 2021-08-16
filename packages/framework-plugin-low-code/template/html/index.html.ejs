@@ -387,7 +387,6 @@
               .then((res) => {
                 const { name, data = {} } = args || {};
                 try {
-                  console.log(args);
                   if (res.result && res.result.code) {
                     aegis.report({
                       msg:
@@ -422,7 +421,6 @@
                     trace: 'trace',
                   });
                 } catch (e) {}
-                console.error(e);
                 throw e;
               });
           } else {
