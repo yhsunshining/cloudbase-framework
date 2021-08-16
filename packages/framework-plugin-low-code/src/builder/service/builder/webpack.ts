@@ -145,6 +145,7 @@ export async function fixAppJson(appBuildDir: string) {
 }
 
 export async function generateWebpackWebBuildParamsFile({
+  appId,
   allAppDataList,
   appBuildDir,
   materialsDir,
@@ -156,6 +157,7 @@ export async function generateWebpackWebBuildParamsFile({
   buildTypeList,
   assets = [],
 }: {
+  appId: string;
   allAppDataList: IWebRuntimeAppData[];
   appBuildDir: string;
   materialsDir: string;
@@ -174,6 +176,7 @@ export async function generateWebpackWebBuildParamsFile({
     }"`,
   };
   const params = getWebpackWebBuildParams(
+    appId,
     appBuildDir,
     materialsDir,
     dependencies,
@@ -487,6 +490,7 @@ export function getMpAllRouterConfig(
 }
 
 export function getWebpackWebBuildParams(
+  appId: string,
   appBuildDir: string,
   materialsDir: string,
   dependencies: IMaterialItem[] = [],
@@ -521,7 +525,7 @@ export function getWebpackWebBuildParams(
   }
   return {
     context: appBuildDir,
-    mode: mode !== 'production' ? 'development' : mode,
+    mode: mode !== WebpackModeType.PRODUCTION ? 'development' : mode,
     watch,
     entry: path.resolve(appBuildDir, 'src/index.jsx'),
     output: {
@@ -550,10 +554,11 @@ export function getWebpackWebBuildParams(
     },
     htmlTemplatePath: path.resolve(appBuildDir, './html/index.html.ejs'),
     htmlTemplateData: {
+      appId,
       meta: {
         jsApis,
       },
-      delevopment: mode !== 'production',
+      delevopment: mode !== WebpackModeType.PRODUCTION,
       cloudSDKFileName: CLOUD_SDK_FILE_NAME,
       isAdminPortal: buildTypeList.includes(BuildType.ADMIN_PORTAL),
     },
@@ -561,6 +566,7 @@ export function getWebpackWebBuildParams(
       mobx: 'window.mobx',
       '@cloudbase/js-sdk': 'window.cloudbase',
       '@cloudbase/weda-cloud-sdk/dist/h5': 'window.CloudSDK',
+      '@zxing/library': 'window.ZXing',
     },
     resolveModules: [
       path.resolve(appBuildDir, 'node_modules'),

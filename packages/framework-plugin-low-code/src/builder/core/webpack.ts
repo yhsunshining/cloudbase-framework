@@ -41,6 +41,7 @@ export async function runWebpackCore({
   console.time('webpackGenerate');
   const allAppDataList = subAppDataList.concat(mainAppData);
   const webWebpackConfigPath = await generateWebpackWebBuildParamsFile({
+    appId: (mainAppData as any).id || appKey,
     allAppDataList,
     appBuildDir,
     materialsDir,

@@ -10,6 +10,18 @@
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="<%= meta.desc %>" />
+    <% if(!isAdminPortal){ %>
+    <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js"></script>
+    <script>
+      const aegis = new Aegis({
+        id: 'lXHFsBpTjIzNADiczY', // 项目ID，即上报key
+        reportApiSpeed: true, // 接口测速
+        reportAssetSpeed: true, // 静态资源测速
+        spa: true,
+        ext1: '<%=appId%>',
+      });
+    </script>
+    <% }%>
     <title><%= meta.title %></title>
     <% if(delevopment){ %>
     <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -361,14 +373,68 @@
 
   <body data-weui-theme="light">
     <div id="react-body" class="main-wrap"></div>
+
     <% if(!isAdminPortal){ %>
     <script src="//imgcache.qq.com/qcloud/cloudbase-js-sdk/1.5.3-alpha.0/cloudbase.full.js"></script>
     <% }%>
+    <script>
+      if (cloudbase) {
+        const _callFunction = cloudbase.__proto__.callFunction;
+        cloudbase.__proto__.callFunction = function (args) {
+          let promise = _callFunction.call(cloudbase, ...arguments);
+          if (promise instanceof Promise) {
+            return promise
+              .then((res) => {
+                const { name, data = {} } = args || {};
+                try {
+                  if (res.result && res.result.code) {
+                    aegis.report({
+                      msg:
+                        '[' +
+                        name +
+                        ':' +
+                        data.methodName +
+                        ']: ' +
+                        (res.result.message || '函数调用失败'),
+                      level: '16',
+                      ext2: res.result.code,
+                      ext3: res.requestId,
+                      trace: 'trace',
+                    });
+                  }
+                } catch (e) {}
+                return res;
+              })
+              .catch((e) => {
+                try {
+                  aegis.report({
+                    msg:
+                      '[' +
+                      name +
+                      ':' +
+                      data.methodName +
+                      ']: ' +
+                      (e.message || '函数调用失败'),
+                    level: '16',
+                    ext2: e.code,
+                    ext3: e.requestId,
+                    trace: 'trace',
+                  });
+                } catch (e) {}
+                throw e;
+              });
+          } else {
+            return promise;
+          }
+        };
+      }
+    </script>
     <script
       src="//cdnjs.cloudflare.com/ajax/libs/mobx/5.15.7/mobx.umd.js"
       integrity="sha512-eVSAFJAkqn7381lHvfGgHKrZWDr75+Do7qZdD0kfFz/4Eq5hntLp/IS66l85BGClN1oYxLwd4G/bxrgIIvedag=="
       crossorigin="anonymous"
     ></script>
-    <script src="//unpkg.com/@cloudbase/weda-cloud-sdk@0.3.0/dist/h5.browser.js"></script>
+    <script src="//unpkg.com/@cloudbase/weda-cloud-sdk@0.3.3-alpha.3.0/dist/h5.browser.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
   </body>
 </html>
