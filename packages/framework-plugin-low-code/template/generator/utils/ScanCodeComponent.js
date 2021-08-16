@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useImperativeHandle, useState, useCallback } from 'react';
+import React, { useMemo, useRef, useEffect, useImperativeHandle, useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 
 import { BrowserMultiFormatReader, NotFoundException, BarcodeFormat, DecodeHintType } from '@zxing/library';
@@ -191,11 +191,21 @@ export default function ScanCode({ root, options }) {
       onScanFail(err);
     }
   };
+  const scanTypeText = useMemo(() => scanType.map((type) => {
+    switch (type) {
+      case 'qrCode':
+        return '二维码';
+      case 'barCode':
+        return '条码';
+      default:
+        return type;
+    }
+  }).join(' / '), [scanType]);
   if (isShowNotFound) {
     return <div className="weapp-scancode-modal" onClick={handleModalClick}>
       <div className="weapp-scancode-modal-main">
         <div className="weapp-scancode-scan-wrapper">
-          <p className="weapp-scancode-scan-not-found">未发现二维码 / 条码</p>
+          <p className="weapp-scancode-scan-not-found">未发现${scanTypeText}</p>
           <p>点击重新扫码</p>
         </div>
         <CloseButton onClick={handleModalClick} />
@@ -218,7 +228,7 @@ export default function ScanCode({ root, options }) {
           <div className="weapp-scancode-scan-square">
             <div className="weapp-scancode-scan-bar"></div>
           </div>
-          <p className="weapp-scancode-scan-tip">扫二维码 / 条码</p>
+          <p className="weapp-scancode-scan-tip">扫${scanTypeText}</p>
         </div>
         </>
         }
