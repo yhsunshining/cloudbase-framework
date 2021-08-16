@@ -82,8 +82,6 @@ export function isPlainObject(src) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
-  debugger;
-  console.log('props', props);
   if (isPlainProps === 1) {
     const { data = {}, ...restProps } = props;
     staticResourceAttribute &&
@@ -132,8 +130,6 @@ export function resolveComponentProps(props, isPlainProps) {
       (prop) =>
         data[prop] && (data[prop] = getStaticResourceAttribute(data[prop]))
     );
-  console.log('data', data);
-  console.log('restProps', restProps);
   return {
     ...data,
     ...restProps,
