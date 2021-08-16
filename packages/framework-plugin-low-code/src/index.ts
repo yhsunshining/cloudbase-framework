@@ -703,11 +703,8 @@ class LowCodePlugin extends Plugin {
                     await HostingProvider.getHostingInfo({ envId: envId })
                   ).data;
                 }
-                console.log('================hostingDatas', hostingDatas);
                 let domains = hostingDatas.map((item) => item.cdnDomain);
-                console.log('================domainsdomainsdomains', domains);
                 this._domain = domains; //domains[0].cdnDomain;
-                console.log('================domains', this._domain);
               }
             }
             this._rules = rules;
