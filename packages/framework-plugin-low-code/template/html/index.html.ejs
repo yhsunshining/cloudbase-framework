@@ -10,6 +10,15 @@
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="<%= meta.desc %>" />
+    <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js"></script>
+    <script>
+      const aegis = new Aegis({
+        id: 'lXHFsBpTjIzNADiczY', // 项目ID，即上报key
+        reportApiSpeed: true, // 接口测速
+        reportAssetSpeed: true, // 静态资源测速
+        ext1: '<%=appId%>'
+      });
+    </script>
     <title><%= meta.title %></title>
     <% if(delevopment){ %>
     <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -361,6 +370,7 @@
 
   <body data-weui-theme="light">
     <div id="react-body" class="main-wrap"></div>
+
     <% if(!isAdminPortal){ %>
     <script src="//imgcache.qq.com/qcloud/cloudbase-js-sdk/1.5.3-alpha.0/cloudbase.full.js"></script>
     <% }%>
