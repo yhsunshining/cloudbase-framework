@@ -6,6 +6,9 @@ function createNavigatorFn(fnName) {
     let url;
     if(mode == 'plugin'){
       url = `plugin://${packageName}/${pageId}`
+    } else if(mode ==='web'){
+      console.warn(`${fnName} url can only be used in h5 build`);
+      return;
     } else {
       pageId = pageId ? pageId.replace(/^(\.)?\//,'') : pageId;
       url = packageName
