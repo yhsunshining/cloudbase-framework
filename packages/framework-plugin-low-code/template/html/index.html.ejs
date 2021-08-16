@@ -10,15 +10,18 @@
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="<%= meta.desc %>" />
+    <% if(!isAdminPortal){ %>
     <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js"></script>
     <script>
       const aegis = new Aegis({
         id: 'lXHFsBpTjIzNADiczY', // 项目ID，即上报key
         reportApiSpeed: true, // 接口测速
         reportAssetSpeed: true, // 静态资源测速
+        spa: true,
         ext1: '<%=appId%>'
       });
     </script>
+    <% }%>
     <title><%= meta.title %></title>
     <% if(delevopment){ %>
     <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
