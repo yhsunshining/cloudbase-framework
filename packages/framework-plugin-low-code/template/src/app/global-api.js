@@ -109,7 +109,7 @@ export const mountAPIs = (sdks) => {
         break;
       }
       case 'showModal': {
-        const OFFICIAL_COMPONENT_LIB = 'weda';
+        const OFFICIAL_COMPONENT_LIB = 'gsd-h5-react';
         const showModal =
           actionMap[OFFICIAL_COMPONENT_LIB] &&
           actionMap[OFFICIAL_COMPONENT_LIB].showModal;
