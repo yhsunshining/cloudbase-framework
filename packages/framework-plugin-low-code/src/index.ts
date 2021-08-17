@@ -614,12 +614,6 @@ class LowCodePlugin extends Plugin {
     try {
       const HostingProvider = this.api.resourceProviders?.hosting;
       const envId = this.api.envId;
-      let historyType =
-        this._resolvedInputs.mainAppSerializeData?.historyType ||
-        this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
-        this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
-          ? HISTORY_TYPE.HASH
-          : '';
       try {
         async function getHostingInfo(envId) {
           let [website, hostingDatas] = await HostingProvider.getHostingInfo({
@@ -653,65 +647,17 @@ class LowCodePlugin extends Plugin {
         if (timeout) {
           clearTimeout(timeout);
         }
-        if (website) {
-          this._website = website;
-          if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-            let { WebsiteConfiguration } =
-              await this.api.cloudbaseManager.hosting.getWebsiteConfig();
-            let path = this._getWebRootPath();
-            let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
-              (arr, rule) => {
-                let meta: any = {};
-                let { Condition, Redirect } = rule;
-                if (Condition.HttpErrorCodeReturnedEquals) {
-                  meta.httpErrorCodeReturnedEquals =
-                    Condition.HttpErrorCodeReturnedEquals;
-                }
-                if (Condition.KeyPrefixEquals) {
-                  meta.keyPrefixEquals = Condition.KeyPrefixEquals;
-                }
-                if (Redirect.ReplaceKeyWith) {
-                  meta.replaceKeyWith = Redirect.ReplaceKeyWith;
-                }
-                if (Redirect.ReplaceKeyPrefixWith) {
-                  meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
-                }
-                if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
-                  return arr;
-                }
-                if (meta.httpErrorCodeReturnedEquals !== '404') {
-                  arr.push(meta);
-                }
-                return arr;
-              },
-              []
-            );
 
-            this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
-              (page) => {
-                rules.push({
-                  keyPrefixEquals: `${path.slice(1)}${page.id}`,
-                  replaceKeyWith: path,
-                });
-              }
-            );
-
-            if (rules) {
-              if (HostingProvider) {
-                if (!hostingDatas) {
-                  hostingDatas = (
-                    await HostingProvider.getHostingInfo({ envId: envId })
-                  ).data;
-                }
-                let domains = hostingDatas.map((item) => item.cdnDomain);
-                this._domain = domains; //domains[0].cdnDomain;
-              }
-            }
-            this._rules = rules;
+        if (HostingProvider) {
+          if (!hostingDatas) {
+            hostingDatas = (
+              await HostingProvider.getHostingInfo({ envId: envId })
+            ).data;
           }
-        } else {
-          throw new Error('检查静态托管开通超时');
+          let domains = hostingDatas.map((item) => item.cdnDomain);
+          this._domain = domains; //domains[0].cdnDomain;
         }
+        this._website = website;
       } catch (e) {
         this.api.logger.error('获取静态托管失败: ', e);
         throw e;
@@ -1050,6 +996,58 @@ class LowCodePlugin extends Plugin {
    * 部署
    */
   async deploy() {
+    let historyType =
+    this._resolvedInputs.mainAppSerializeData?.historyType ||
+    this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
+    this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
+      ? HISTORY_TYPE.HASH
+      : '';
+    if (this._website) {
+      if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
+        let { WebsiteConfiguration } =
+          await this.api.cloudbaseManager.hosting.getWebsiteConfig();
+        let path = this._getWebRootPath();
+        let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
+          (arr, rule) => {
+            let meta: any = {};
+            let { Condition, Redirect } = rule;
+            if (Condition.HttpErrorCodeReturnedEquals) {
+              meta.httpErrorCodeReturnedEquals =
+                Condition.HttpErrorCodeReturnedEquals;
+            }
+            if (Condition.KeyPrefixEquals) {
+              meta.keyPrefixEquals = Condition.KeyPrefixEquals;
+            }
+            if (Redirect.ReplaceKeyWith) {
+              meta.replaceKeyWith = Redirect.ReplaceKeyWith;
+            }
+            if (Redirect.ReplaceKeyPrefixWith) {
+              meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
+            }
+            if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
+              return arr;
+            }
+            if (meta.httpErrorCodeReturnedEquals !== '404') {
+              arr.push(meta);
+            }
+            return arr;
+          },
+          []
+        );
+
+        this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
+          (page) => {
+            rules.push({
+              keyPrefixEquals: `${path.slice(1)}${page.id}`,
+              replaceKeyWith: path,
+            });
+          }
+        );
+        this._rules = rules;
+      }
+    } else {
+      throw new Error('检查静态托管开通超时');
+    }
     try {
       this._time(TIME_LABEL.DEPLOY);
       const hostingService = this.api.cloudbaseManager.hosting;
@@ -1065,7 +1063,6 @@ class LowCodePlugin extends Plugin {
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
         try {
-
           let domains = this._domain;
           let { Domains: domainList } = await hostingService.tcbCheckResource({
             domains,
