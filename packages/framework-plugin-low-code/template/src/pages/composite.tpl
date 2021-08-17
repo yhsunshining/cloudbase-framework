@@ -49,8 +49,9 @@ class CompositeCompWrapper extends React.Component {
     this.compConfig = <%= JSON.stringify(compConfig, null, 2) %>
     this.virtualFields = Object.assign({}, props.pageVirtualFields || {}, {
     <% useComponents.forEach(compItem => {%>
-      "<%= compItem.key %>": <% if(compItem.isPlainProps) {%> (props) => <<%= compItem.var %> {...resolveComponentProps(props)} /> <% } else {%> <%= compItem.var %> <% }%>,
+      "<%= compItem.key %>": <% if(compItem.isPlainProps) {%> (props) => <<%= compItem.var %> {...resolveComponentProps(props, 1)} /> <% } else {%> <<%= compItem.var %>{...resolveComponentProps(props, 0)} />  <% }%>,
     <%}) %>
+    
     });
     this.events = (<%= emitEvents %>).reduce((obj, trigger) => {
       obj[trigger] = (event) => {

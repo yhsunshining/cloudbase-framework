@@ -84,8 +84,7 @@ export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
   if (isPlainProps === 1) {
     const { data = {}, ...restProps } = props;
-    staticResourceAttribute &&
-      staticResourceAttribute.map(
+    staticResourceAttribute && staticResourceAttribute.map(
         (property) =>
           (data[property] = getStaticResourceAttribute(data[property]))
       );

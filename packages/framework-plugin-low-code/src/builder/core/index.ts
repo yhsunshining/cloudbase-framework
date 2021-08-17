@@ -96,7 +96,6 @@ export async function buildWebApp(
     runtime === RUNTIME.CI ? getCompileDirs('app') : getCompileDirs(appKey);
 
   const startTime = Date.now();
-  console.log('==============buildTypeList', buildTypeList);
   if (buildTypeList.includes(BuildType.MP)) {
     appBuildDir = path.join(appBuildDir, 'mp');
 
@@ -160,7 +159,6 @@ export async function buildWebApp(
       mainAppData: mainAppSerializeData,
     };
 
-    console.log('buildContext', buildContext);
     const { allAppUsedComps } = handleUsedComponents({
       buildContext,
       weapps: [mainAppSerializeData, ...subAppSerializeDataList],

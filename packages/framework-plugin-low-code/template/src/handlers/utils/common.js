@@ -101,7 +101,7 @@ export function resolveComponentProps(props, isPlainProps) {
     'hidden',
     'slot',
   ];
-  staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
+  staticResourceAttribute && staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
   builtinProps.map((prop) => delete customProps[prop]);
   return {
     ...data,
