@@ -34,6 +34,9 @@ export interface IWebRuntimeAppData extends IAppAndPageVar {
   themeVars?: { [key: string]: string };
   presetColors?: string[]; // 预置颜色列表
   appConfig?: { [key: string]: any };
+  extra: {
+    domain: string
+  }
 }
 
 export interface IPageInstance extends ICommonInstanceProps, IAppAndPageVar {

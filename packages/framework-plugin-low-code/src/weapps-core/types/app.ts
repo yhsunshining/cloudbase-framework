@@ -38,6 +38,9 @@ export interface IWeAppData {
   dataset?: IAppAndPageVar['dataset'];
   vars: IAppAndPageVar['vars'];
   miniprogramPlugins: IMiniprogramPlugin[];
+  extra: {
+    domain: string
+  }
 }
 
 export interface IWeAppPage {

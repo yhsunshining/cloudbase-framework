@@ -456,7 +456,6 @@ class LowCodePlugin extends Plugin {
         minify: true,
         codeProtect: false,
       };
-
       this._miniprogramePlugin = new MiniProgramsPlugin(
         'miniprograme',
         this.api,
@@ -704,11 +703,8 @@ class LowCodePlugin extends Plugin {
                     await HostingProvider.getHostingInfo({ envId: envId })
                   ).data;
                 }
-                console.log('================hostingDatas', hostingDatas);
                 let domains = hostingDatas.map((item) => item.cdnDomain);
-                console.log('================domainsdomainsdomains', domains);
                 this._domain = domains; //domains[0].cdnDomain;
-                console.log('================domains', this._domain);
               }
             }
             this._rules = rules;
@@ -723,7 +719,7 @@ class LowCodePlugin extends Plugin {
     } catch (e) {
       this.api.logger.error('11获取静态托管失败: ', e);
       throw e;
-    } 
+    }
 
     try {
       // 构建中间日志暂停输出
@@ -757,7 +753,7 @@ class LowCodePlugin extends Plugin {
                 this._resolvedInputs.mpAppId !==
                 this._resolvedInputs.deployOptions?.targetMpAppId,
               resourceAppid: this._resolvedInputs.mpAppId,
-              domain: this._domain[0]
+              domain: this._domain[0],
             },
             async (err: any, result) => {
               if (!err) {
@@ -930,10 +926,8 @@ class LowCodePlugin extends Plugin {
           TIME_LABEL.BUILD
         )}s: ${this._appPath}`
       );
-
       // 子插件构建
       this._subPluginConstructor(this._resolvedInputs);
-
       if (this._miniprogramePlugin) {
         this._time(TIME_LABEL.MP_BUILD);
         await this._miniprogramePlugin.init();
@@ -1070,159 +1064,59 @@ class LowCodePlugin extends Plugin {
         await this._miniprogramePlugin.deploy();
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
-        // let historyType =
-        //   this._resolvedInputs.mainAppSerializeData?.historyType ||
-        //   this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
-        //   this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
-        //     ? HISTORY_TYPE.HASH
-        //     : '';
         try {
-          // async function getHostingInfo(envId) {
-          //   let [website, hostingDatas] = await HostingProvider.getHostingInfo({
-          //     envId: envId,
-          //   }).then(({ data: hostingDatas }) => {
-          //     let website = hostingDatas[0];
-          //     return [website, hostingDatas];
-          //   });
 
-          //   if (!website || website?.status !== 'online') {
-          //     await new Promise((resolve) => {
-          //       setTimeout(() => {
-          //         resolve(true);
-          //       }, 8 * 1000);
-          //     });
-          //     return getHostingInfo(envId);
-          //   } else {
-          //     return [website, hostingDatas];
-          //   }
-          // }
-
-          // let timeout: any = null;
-          // let [website, hostingDatas] = await Promise.race([
-          //   new Promise((resolve) => {
-          //     timeout = setTimeout(() => {
-          //       resolve([]);
-          //     }, 120 * 1000);
-          //   }),
-          //   this._webPlugin.website
-          //     ? Promise.resolve([this._webPlugin.website])
-          //     : getHostingInfo(envId),
-          // ]);
-          // if (timeout) {
-          //   clearTimeout(timeout);
-          // }
-
-            // if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-            //   let { WebsiteConfiguration } =
-            //     await this.api.cloudbaseManager.hosting.getWebsiteConfig();
-
-            //   let path = this._getWebRootPath();
-
-            //   let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
-            //     (arr, rule) => {
-            //       let meta: any = {};
-            //       let { Condition, Redirect } = rule;
-            //       if (Condition.HttpErrorCodeReturnedEquals) {
-            //         meta.httpErrorCodeReturnedEquals =
-            //           Condition.HttpErrorCodeReturnedEquals;
-            //       }
-            //       if (Condition.KeyPrefixEquals) {
-            //         meta.keyPrefixEquals = Condition.KeyPrefixEquals;
-            //       }
-
-            //       if (Redirect.ReplaceKeyWith) {
-            //         meta.replaceKeyWith = Redirect.ReplaceKeyWith;
-            //       }
-
-            //       if (Redirect.ReplaceKeyPrefixWith) {
-            //         meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
-            //       }
-
-            //       if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
-            //         return arr;
-            //       }
-
-            //       if (meta.httpErrorCodeReturnedEquals !== '404') {
-            //         arr.push(meta);
-            //       }
-            //       return arr;
-            //     },
-            //     []
-            //   );
-
-              // this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
-              //   (page) => {
-              //     rules.push({
-              //       keyPrefixEquals: `${path.slice(1)}${page.id}`,
-              //       replaceKeyWith: path,
-              //     });
-              //   }
-              // );
-
-              // if (rules) {
-              //   if (HostingProvider) {
-              //     if (!hostingDatas) {
-              //       hostingDatas = (
-              //         await HostingProvider.getHostingInfo({ envId: envId })
-              //       ).data;
-              //     }
-              //     console.log('================hostingDatas', hostingDatas);
-              //     let domains = hostingDatas.map((item) => item.cdnDomain);
-              //     this.domain = domains[0].cdnDomain;
-              //     console.log('================domains', domains);
-
-              //   }
-              // }
-              let domains = this._domain;
-              let { Domains: domainList } =
-              await hostingService.tcbCheckResource({ domains });
-            let modifyDomainConfigPromises = domainList
-              .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
-              .map((item) =>
-                hostingService.tcbModifyAttribute({
-                  domain: item.Domain,
-                  domainId: item.DomainId,
-                  domainConfig: { FollowRedirect: 'on' } as any,
-                })
-              );
-            await Promise.all(modifyDomainConfigPromises);
-              await this.api.cloudbaseManager.hosting.setWebsiteDocument({
-                indexDocument: 'index.html',
-                routingRules: this._rules,
-              });
-            
-
-            const link = buildAsAdminPortalByBuildType(
-              this._resolvedInputs.buildTypeList
-            )
-              ? `https://${this._website.cdnDomain}/adminportal/`
-              : `https://${
-                this._website.cdnDomain + this._webPlugin.resolvedInputs.cloudPath
-                }`;
-            const qrcodeOutputPath = path.resolve(
-              this.api.projectPath,
-              QRCODE_PATH
+          let domains = this._domain;
+          let { Domains: domainList } = await hostingService.tcbCheckResource({
+            domains,
+          });
+          let modifyDomainConfigPromises = domainList
+            .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
+            .map((item) =>
+              hostingService.tcbModifyAttribute({
+                domain: item.Domain,
+                domainId: item.DomainId,
+                domainConfig: { FollowRedirect: 'on' } as any,
+              })
             );
-            await QRCode.toFile(
-              path.resolve(this.api.projectPath, QRCODE_PATH),
-              link,
-              {
-                errorCorrectionLevel: 'M',
-                type: 'image/jpeg',
-                scale: 12,
-                margin: 2,
-              }
-            );
-            this.api.logger.info(
-              `${this.api.emoji(
-                '🚀'
-              )} 网站部署成功, 访问二维码地址：${this.api.genClickableLink(
-                url.format({
-                  protocol: 'file:',
-                  host: qrcodeOutputPath,
-                })
-              )}`
-            );
+          await Promise.all(modifyDomainConfigPromises);
+          await this.api.cloudbaseManager.hosting.setWebsiteDocument({
+            indexDocument: 'index.html',
+            routingRules: this._rules,
+          });
+
+          const link = buildAsAdminPortalByBuildType(
+            this._resolvedInputs.buildTypeList
+          )
+            ? `https://${this._website.cdnDomain}/adminportal/`
+            : `https://${
+                this._website.cdnDomain +
+                this._webPlugin.resolvedInputs.cloudPath
+              }`;
+          const qrcodeOutputPath = path.resolve(
+            this.api.projectPath,
+            QRCODE_PATH
+          );
+          await QRCode.toFile(
+            path.resolve(this.api.projectPath, QRCODE_PATH),
+            link,
+            {
+              errorCorrectionLevel: 'M',
+              type: 'image/jpeg',
+              scale: 12,
+              margin: 2,
+            }
+          );
+          this.api.logger.info(
+            `${this.api.emoji(
+              '🚀'
+            )} 网站部署成功, 访问二维码地址：${this.api.genClickableLink(
+              url.format({
+                protocol: 'file:',
+                host: qrcodeOutputPath,
+              })
+            )}`
+          );
         } catch (e) {
           this.api.logger.error('网站部署失败: ', e);
           throw e;
@@ -1250,8 +1144,6 @@ class LowCodePlugin extends Plugin {
     }
     return;
   }
-
-
 
   _checkIsVersion(version) {
     return version === 'latest' || String(version).startsWith('2');

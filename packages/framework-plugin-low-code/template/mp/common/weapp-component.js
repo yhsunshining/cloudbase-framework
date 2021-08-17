@@ -133,7 +133,7 @@ export function createComponent(key, behaviors, properties, events, handler, dat
             console.error(`WatchEffect(${name}) of ${key} is not a function.`)
           }
         })
-      }
+      },
     },
     // observers: createObservers(Object.keys(properties))
   })

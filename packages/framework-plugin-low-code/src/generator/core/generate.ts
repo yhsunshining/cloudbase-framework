@@ -87,6 +87,8 @@ export async function runGenerateCore(props: {
     runtime = RUNTIME.NONE,
     ignoreInstall = false,
   } = props;
+  const { domain } = appData.extra;
+  
   const allAppDataList = [appData].concat(subAppDataList);
 
   // 安装插件依赖
@@ -143,7 +145,8 @@ export async function runGenerateCore(props: {
         isSandbox,
         subAppDataList,
         buildTypeList,
-        deployMode
+        deployMode,
+        domain
       );
       await writeLowCodeFiles(data, dstDir, fileCodeMap, rootPath);
     })
@@ -217,6 +220,7 @@ export async function generateSinglePageJsxFile(
     rootPath ? `packages/${rootPath}` : ''
   );
   const { componentSchemaJson, data } = pageInstance;
+
   const genericCompMap = getGenericCompFromDep(dependencies);
 
   // originComponentList 包含了引入的组件与抽象节点绑定的组件
@@ -235,7 +239,6 @@ export async function generateSinglePageJsxFile(
     dependencies,
     fileCodeMap
   );
-
   const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
     componentSchemaJson as IComponentSchemaJson,
     false,
@@ -923,7 +926,11 @@ export async function generateCodeFromTpl(
   isSandbox: boolean,
   subAppDataList: IWebRuntimeAppData[],
   buildTypeList: IBuildType[],
-  deployMode: DEPLOY_MODE
+  deployMode: DEPLOY_MODE,
+    /**
+   * 静态域名
+   */
+  domain: string,
 ) {
   const pageIds: string[] = [];
   const pageModules = {};
@@ -938,6 +945,7 @@ export async function generateCodeFromTpl(
     'app/global-api.js': {
       appId: appKey,
       subPackageName: rootPath,
+      domain: domain
     },
     'app/handlers.js': {
       pageModules,

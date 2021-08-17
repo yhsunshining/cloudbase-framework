@@ -71,7 +71,7 @@ export async function buildWebApp(
     },
     isCrossAccount = false,
     resourceAppid = undefined,
-    domain = ''
+    domain = '',
   }: BuildAppProps & {
     deployMode: DEPLOY_MODE;
     runtime: RUNTIME;
@@ -107,6 +107,7 @@ export async function buildWebApp(
         weapps: apps,
         projDir: appBuildDir,
         appId: appKey,
+        domain: domain,
         materials: dependencies,
         plugins,
         isProduction: mode === WebpackModeType.PRODUCTION,
@@ -154,6 +155,7 @@ export async function buildWebApp(
       isProduction: mode === WebpackModeType.PRODUCTION,
       materialLibs: dependencies,
       isMixMode: false,
+      domain,
       mainAppData: mainAppSerializeData,
     };
 
@@ -247,7 +249,7 @@ export async function buildWebApp(
       generateMpPath,
       plugins,
       assets: jsAssets,
-      domain
+      domain,
     });
 
     return appBuildDir;

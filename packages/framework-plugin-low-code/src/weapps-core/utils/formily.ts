@@ -45,7 +45,6 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     vars: webRuntimeAppData.vars || { data: [] },
     dataset: webRuntimeAppData.dataset,
   };
-  console.log('webRuntimeAppData', webRuntimeAppData);
   setValidValue(weAppData, 'appConfig', webRuntimeAppData.appConfig);
   setValidValue(weAppData, 'themeVars', webRuntimeAppData.themeVars);
   setValidValue(weAppData, 'presetColors', webRuntimeAppData.presetColors);
@@ -60,7 +59,6 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     collection: IWeAppPage[]
   ) {
     pageInstanceList.map((pageData) => {
-      console.log('pageData', pageData);
       const newPage: IWeAppPage = {
         id: pageData.id,
       } as IWeAppPage;
@@ -298,6 +296,7 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
     vars: weAppData.vars || { data: [] },
     dataset: weAppData.dataset,
     envId: weAppData.envId || '',
+    extra: weAppData.extra || {},
   };
   handlePageInstanceList(
     weAppData.pageInstanceList,
@@ -348,7 +347,6 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
       collection.push(page);
     });
   }
-
   return webRuntimeAppData;
 }
 /* tslint:disable */
@@ -356,10 +354,6 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
   const properties = {};
   for (const key in cmps) {
     const cmp = cmps[key];
-    if (key === 'id16') {
-      console.log('key', key);
-      console.log('cmp', cmp);
-    }
     const target = (properties[key] = {
       key,
       type: 'object',

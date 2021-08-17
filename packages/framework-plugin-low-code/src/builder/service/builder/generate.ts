@@ -497,6 +497,7 @@ export function getComponentSchemaString(
       }
 
       xProps['commonStyle'] = toCssStyle(xProps['commonStyle']);
+      xProps['staticResourceAttribute'] = staticResourceAttribute;
       if (isEmptyObj(xProps['commonStyle'])) {
         delete xProps['commonStyle'];
       }

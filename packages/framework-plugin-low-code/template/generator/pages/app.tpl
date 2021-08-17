@@ -38,9 +38,9 @@ import <%= action.variableName %> from "/src/libraries/<%= action.materialName %
 const virtualFields = {
   <% useComponents.forEach(compItem => {%>
   <% if(compItem.isPlainProps) { %>
-  '<%= compItem.materialName %>:<%= compItem.name %>': (props) => <<%= upperFirst(compItem.variableName) %> {...resolveComponentProps(props)} pageVirtualFields={virtualFields}/>,
+  '<%= compItem.materialName %>:<%= compItem.name %>': (props) => <<%= upperFirst(compItem.variableName) %> {...resolveComponentProps(props, 1)} pageVirtualFields={virtualFields}/>,
   <% } else { %>
-  '<%= compItem.materialName %>:<%= compItem.name %>': (props) => <<%= upperFirst(compItem.variableName) %> {...props} pageVirtualFields={virtualFields}/>,
+  '<%= compItem.materialName %>:<%= compItem.name %>': (props) => <<%= upperFirst(compItem.variableName) %> {...resolveComponentProps(props, 0)} pageVirtualFields={virtualFields}/>,
   <% }}) %>
 };
 

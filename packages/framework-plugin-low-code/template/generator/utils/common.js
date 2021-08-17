@@ -3,6 +3,7 @@
  * @param {*} dataBinds
  * @param {*} forItems
  */
+import { app } from '../app/global-api';
 export function resolveDataBinds(
   dataBinds,
   forItems,
@@ -79,7 +80,16 @@ export function isPlainObject(src) {
 /**
  * 用于处理自定义组件props传参结构，对系统变量进行保留
  */
-export function resolveComponentProps(props) {
+export function resolveComponentProps(props, isPlainProps) {
+  const { staticResourceAttribute } = props;
+  staticResourceAttribute && staticResourceAttribute.map(
+    (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
+  );
+  if (isPlainProps === 0) {
+    return {
+      ...props
+      }
+  };
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
@@ -110,15 +120,6 @@ export function resolveComponentProps(props) {
   ];
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
-
-  // const { staticResourceAttribute = [] } = restProps;
-  // staticResourceAttribute.map(
-  //   // getStaticResourceAttribute(data[prop]);
-  //   (prop) => (data[prop] = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg'),
-  // );
-  data.src = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
-
-  data.src.value = 'https://img1.baidu.com/it/u=1063055391,1546843555&fm=26&fmt=auto&gp=0.jpg';
   return {
     ...data,
     ...restProps,
@@ -170,6 +171,14 @@ export function isScopeSlot(comp, slot) {
   return map && map[slot];
 }
 
+export function getStaticResourceAttribute(staticUrl) {
+  if (staticUrl && staticUrl.indexOf('/') !== 0) {
+    return staticUrl;
+  }
+  const { domain = '' } = app;
+  const url = `${domain}${staticUrl}`;
+  return url;
+}
 /**
  * 检查页面权限
  **/

@@ -25,7 +25,6 @@ export function AppRender(props) {
     codeContext,
     scopeContext = {},
   } = props;
-
   const {
     'x-props': xProps,
     properties = {},
@@ -70,7 +69,6 @@ export function AppRender(props) {
       );
     }
   }
-
   const children = getComponentChildren(componentSchema);
   const slots = {};
   // eslint-disable-next-line guard-for-in

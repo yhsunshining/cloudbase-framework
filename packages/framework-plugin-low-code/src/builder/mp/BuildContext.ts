@@ -10,6 +10,7 @@ import {
 export interface IBuildContext {
   // build params
   appId: string;
+  domain: string; 
   projDir: string;
   materialLibs: IMaterialItem[];
   isProduction: boolean; // production build

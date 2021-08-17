@@ -54,7 +54,6 @@ export async function runGenerateCore(
   const timeTag = '-------------------- runGenerateCore';
   console.time(timeTag);
   const allAppDataList = subAppDataList.concat(appData);
-
   // 安装插件依赖
   const deps = {};
   allAppDataList.map((app) => {
@@ -94,7 +93,7 @@ export async function runGenerateCore(
       const globalApiContent = tpl(tplStr)({
         appId: appKey,
         subPackageName: rootPath,
-        domain
+        domain: domain
       });
       await fs.writeFile(
         path.join(dstDir, 'app/global-api.js'),

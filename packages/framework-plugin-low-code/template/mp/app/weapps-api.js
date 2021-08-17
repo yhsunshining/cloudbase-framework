@@ -23,6 +23,7 @@ export { process }
 function createGlboalApi() {
   const globalAPI = {
     id: '<%= appId %>',
+    domain: '<%= domain %>',
     platform: 'MINIPROGRAME',
     activePage: null,
     dataSources: DS_SDK,
