@@ -83,12 +83,11 @@ export function isPlainObject(src) {
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
   staticResourceAttribute &&
-    staticResourceAttribute.map(
-      (property) =>
-        (props.data[property] = getStaticResourceAttribute(
-          props.data[property]
-        ))
-    );
+    staticResourceAttribute.map((property) => {
+      if (props.data && props.data[property]) {
+        props.data[property] = getStaticResourceAttribute(props.data[property]);
+      }
+    });
   if (!isPlainProps) {
     return {
       ...props,

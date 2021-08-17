@@ -65,12 +65,11 @@ export function getDeep(target, key) {
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
   staticResourceAttribute &&
-    staticResourceAttribute.map(
-      (property) =>
-        (props.data[property] = getStaticResourceAttribute(
-          props.data[property]
-        ))
-    );
+    staticResourceAttribute.map((property) => {
+      if (props.data && props.data[property]) {
+        props.data[property] = getStaticResourceAttribute(props.data[property]);
+      }
+    });
   if (!isPlainProps) {
     return {
       ...props,
@@ -113,7 +112,6 @@ export function resolveComponentProps(props, isPlainProps) {
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
     }, {}),
-    ...props,
   };
 }
 
