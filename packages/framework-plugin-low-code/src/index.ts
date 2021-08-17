@@ -996,58 +996,6 @@ class LowCodePlugin extends Plugin {
    * 部署
    */
   async deploy() {
-    let historyType =
-    this._resolvedInputs.mainAppSerializeData?.historyType ||
-    this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
-    this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
-      ? HISTORY_TYPE.HASH
-      : '';
-    if (this._website) {
-      if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-        let { WebsiteConfiguration } =
-          await this.api.cloudbaseManager.hosting.getWebsiteConfig();
-        let path = this._getWebRootPath();
-        let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
-          (arr, rule) => {
-            let meta: any = {};
-            let { Condition, Redirect } = rule;
-            if (Condition.HttpErrorCodeReturnedEquals) {
-              meta.httpErrorCodeReturnedEquals =
-                Condition.HttpErrorCodeReturnedEquals;
-            }
-            if (Condition.KeyPrefixEquals) {
-              meta.keyPrefixEquals = Condition.KeyPrefixEquals;
-            }
-            if (Redirect.ReplaceKeyWith) {
-              meta.replaceKeyWith = Redirect.ReplaceKeyWith;
-            }
-            if (Redirect.ReplaceKeyPrefixWith) {
-              meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
-            }
-            if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
-              return arr;
-            }
-            if (meta.httpErrorCodeReturnedEquals !== '404') {
-              arr.push(meta);
-            }
-            return arr;
-          },
-          []
-        );
-
-        this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
-          (page) => {
-            rules.push({
-              keyPrefixEquals: `${path.slice(1)}${page.id}`,
-              replaceKeyWith: path,
-            });
-          }
-        );
-        this._rules = rules;
-      }
-    } else {
-      throw new Error('检查静态托管开通超时');
-    }
     try {
       this._time(TIME_LABEL.DEPLOY);
       const hostingService = this.api.cloudbaseManager.hosting;
@@ -1067,6 +1015,57 @@ class LowCodePlugin extends Plugin {
           let { Domains: domainList } = await hostingService.tcbCheckResource({
             domains,
           });
+          let historyType =
+          this._resolvedInputs.mainAppSerializeData?.historyType ||
+          this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
+          this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
+            ? HISTORY_TYPE.HASH
+            : '';
+          if (this._website) {
+            if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
+              let { WebsiteConfiguration } =
+                await this.api.cloudbaseManager.hosting.getWebsiteConfig();
+              let path = this._getWebRootPath();
+              let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
+                (arr, rule) => {
+                  let meta: any = {};
+                  let { Condition, Redirect } = rule;
+                  if (Condition.HttpErrorCodeReturnedEquals) {
+                    meta.httpErrorCodeReturnedEquals =
+                      Condition.HttpErrorCodeReturnedEquals;
+                  }
+                  if (Condition.KeyPrefixEquals) {
+                    meta.keyPrefixEquals = Condition.KeyPrefixEquals;
+                  }
+                  if (Redirect.ReplaceKeyWith) {
+                    meta.replaceKeyWith = Redirect.ReplaceKeyWith;
+                  }
+                  if (Redirect.ReplaceKeyPrefixWith) {
+                    meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
+                  }
+                  if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
+                    return arr;
+                  }
+                  if (meta.httpErrorCodeReturnedEquals !== '404') {
+                    arr.push(meta);
+                  }
+                  return arr;
+                },
+                []
+              );
+                this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
+                  (page) => {
+                    rules.push({
+                      keyPrefixEquals: `${path.slice(1)}${page.id}`,
+                      replaceKeyWith: path,
+                    });
+                  }
+                );
+                this._rules = rules;
+              }
+            } else {
+              throw new Error('检查静态托管开通超时');
+            }
           let modifyDomainConfigPromises = domainList
             .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
             .map((item) =>
