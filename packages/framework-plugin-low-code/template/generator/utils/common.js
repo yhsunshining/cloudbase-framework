@@ -82,18 +82,14 @@ export function isPlainObject(src) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
-  if (isPlainProps === 1) {
-    const { data = {}, ...restProps } = props;
-    staticResourceAttribute && staticResourceAttribute.map(
-        (property) =>
-          (data[property] = getStaticResourceAttribute(data[property]))
-      );
+  staticResourceAttribute && staticResourceAttribute.map(
+    (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
+  );
+  if (isPlainProps === 0) {
     return {
-      ...data,
-      ...restProps,
-      ...props,
-    };
-  }
+      ...props
+      }
+  };
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
@@ -124,11 +120,6 @@ export function resolveComponentProps(props, isPlainProps) {
   ];
   // delete builtin props
   builtinProps.map((prop) => delete customProps[prop]);
-  staticResourceAttribute &&
-    staticResourceAttribute.map(
-      (prop) =>
-        data[prop] && (data[prop] = getStaticResourceAttribute(data[prop]))
-    );
   return {
     ...data,
     ...restProps,
@@ -181,10 +172,10 @@ export function isScopeSlot(comp, slot) {
 }
 
 export function getStaticResourceAttribute(staticUrl) {
-  const { domain = '' } = app;
   if (staticUrl && staticUrl.indexOf('/') !== 0) {
     return staticUrl;
   }
+  const { domain = '' } = app;
   const url = `${domain}${staticUrl}`;
   return url;
 }

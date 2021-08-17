@@ -63,12 +63,11 @@ export function getDeep(target, key) {
  * 用于处理自定义组件props传参结构，对系统变量进行保留
  */
 export function resolveComponentProps(props, isPlainProps) {
-  
   const { staticResourceAttribute } = props;
-  if (isPlainProps === 1) {
-    staticResourceAttribute && staticResourceAttribute.map(
-      (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
-    );
+  staticResourceAttribute && staticResourceAttribute.map(
+    (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
+  );
+  if (isPlainProps === 0) {
     return {
       ...props
       }
@@ -101,7 +100,6 @@ export function resolveComponentProps(props, isPlainProps) {
     'hidden',
     'slot',
   ];
-  staticResourceAttribute && staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
   builtinProps.map((prop) => delete customProps[prop]);
   return {
     ...data,
@@ -111,6 +109,7 @@ export function resolveComponentProps(props, isPlainProps) {
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
     }, {}),
+    ...props,
   };
 }
 
@@ -120,7 +119,7 @@ export function getStaticResourceAttribute(staticUrl){
     return staticUrl;
   }
   const { domain = '' } = app;
-  const url = `https://${domain}/${staticUrl}`;
+  const url = `https://${domain}${staticUrl}`;
   return url;
 }
 /**

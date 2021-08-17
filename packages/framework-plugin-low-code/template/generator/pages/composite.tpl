@@ -65,7 +65,7 @@ class CompositeCompWrapper extends React.Component {
 
     this.virtualFields = Object.assign({}, props.pageVirtualFields || {}, {
     <% useComponents.forEach(compItem => {%>
-      "<%= compItem.key %>": <% if(compItem.isPlainProps) {%> (props) => <<%= compItem.var %> {...resolveComponentProps(props, 1)} /> <% } else {%> <<%= compItem.var %>{...resolveComponentProps(props, 0)} />  <% }%>,
+      "<%= compItem.key %>": <% if(compItem.isPlainProps) {%> (props) => <<%= compItem.var %> {...resolveComponentProps(props, 1)} /> <% } else {%>  (props) => <<%= compItem.var %>{...resolveComponentProps(props, 0)} />  <% }%>,
     <%}) %>
     });
 
