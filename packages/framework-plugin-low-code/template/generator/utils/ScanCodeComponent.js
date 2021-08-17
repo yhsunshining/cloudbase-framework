@@ -60,34 +60,36 @@ const Codescanner = React.forwardRef(({ events = {}, closeScanCode, scanType, on
     const devices = await codeReader.listVideoInputDevices();
 
     if (devices.length) {
-      HTMLVideoElement = Object.getPrototypeOf(ref.current ?? document.createElement('video')).constructor;
-      await codeReader.decodeFromConstraints(
-        { video: { facingMode: 'environment' } },
-        ref.current,
-        (result, err) => {
-          if (!inited.current) {
-            inited.current = true;
-            onInit();
-          }
-          if (result) {
-            if (scanType.includes(FORMAT[result.format].wxtype)) {
-              success(wechatLikeResult(result));
-              complete();
-              closeScanCode();
+      try {
+        await codeReader.decodeFromConstraints(
+          { video: { facingMode: 'environment' } },
+          ref.current,
+          (result, err) => {
+            if (!inited.current) {
+              inited.current = true;
+              onInit();
             }
-          }
-
-          if (err && !err instanceof NotFoundException) {
-            fail(err);
-            complete();
-            closeScanCode();
-          }
-        },
-      );
+            if (result) {
+              if (scanType.includes(FORMAT[result.format].wxtype)) {
+                success(wechatLikeResult(result));
+                complete();
+                closeScanCode();
+              }
+            }
+  
+            if (err && !err instanceof NotFoundException) {
+              fail(err);
+              complete();
+            }
+          },
+        );
+      } catch (err) {
+        fail(err);
+        complete();
+      }
     } else {
       fail(new Error('No camera detect'));
       complete();
-      closeScanCode();
     }
   };
 
@@ -131,6 +133,7 @@ function fileToImage(file) {
   });
 }
 
+const SCAN_CODE_STATE = 'scan-code-modal';
 export default function ScanCode({ root, options }) {
   const {
     onlyFromCamera,
@@ -140,9 +143,25 @@ export default function ScanCode({ root, options }) {
     complete,
     enableDefaultBehavior,
   } = options;
+  useEffect(() => {
+    // 覆盖一次返回按键为关闭
+    if (history.state?.SCANCODE !== SCAN_CODE_STATE) {
+      history.pushState({ SCANCODE: SCAN_CODE_STATE }, null);
+    }
+    const onPopState = () => {
+      closeScanCode();
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      if (history.state?.SCANCODE === SCAN_CODE_STATE) {
+        history.back();
+      }
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [closeScanCode]);
   const ref = useRef();
   const closeScanCode = () => {
-    ref.current.stop();
+    ref.current?.stop?.();
     ReactDOM.render(null, root);
   };
   const success = useCallback((res) => {
@@ -165,16 +184,9 @@ export default function ScanCode({ root, options }) {
   const onInitCamera = () => {
     setIscameraInit(true);
   };
-  const [isShowNotFound, setIsShouwNotFound] = useState(false);
+  const [modalErrMessage, setModalErrMessage] = useState('');
   const handleModalClick = () => {
-    setIsShouwNotFound(false);
-  };
-  const onScanFail = (err) => {
-    if (err instanceof NotFoundException) {
-      setIsShouwNotFound(true);
-      setIscameraInit(false);
-    }
-    fail(err);
+    setModalErrMessage('');
   };
   const fileChanged = async (ev) => {
     const { files } = ev.target;
@@ -201,14 +213,28 @@ export default function ScanCode({ root, options }) {
         return type;
     }
   }).join(' / '), [scanType]);
-  if (isShowNotFound) {
+  const onScanFail = (err) => {
+    if (err instanceof NotFoundException) {
+      setModalErrMessage(`未发现${scanTypeText}`);
+      setIscameraInit(false);
+    } else if (err.message === 'Permission denied') {
+      setModalErrMessage('请打开相机权限以获取扫码功能');
+    } else if (err.message === 'No camera detect') {
+      setModalErrMessage('未能检测到相机设备');
+    } else {
+      setModalErrMessage(err.message);
+    }
+    setIscameraInit(false);
+    fail(err);
+  };
+  if (modalErrMessage) {
     return <div className="weapp-scancode-modal" onClick={handleModalClick}>
       <div className="weapp-scancode-modal-main">
         <div className="weapp-scancode-scan-wrapper">
-          <p className="weapp-scancode-scan-not-found">未发现${scanTypeText}</p>
+          <p className="weapp-scancode-scan-not-found">{modalErrMessage}</p>
           <p>点击重新扫码</p>
         </div>
-        <CloseButton onClick={handleModalClick} />
+        <CloseButton onClick={closeScanCode} />
       </div>
     </div>;
   }
