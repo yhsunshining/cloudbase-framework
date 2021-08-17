@@ -98,7 +98,7 @@ module.exports = function (options) {
         {
           test: /\.(js|jsx)$/,
           loader: 'babel-loader',
-          exclude: /node_modules|gsd-kbone-react/,
+          exclude: /node_modules\/(?!@cloudbase\/weda-ui)|gsd-kbone-react/,
           options: {
             compact: false,
             cacheDirectory: true,
