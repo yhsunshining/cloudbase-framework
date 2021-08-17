@@ -62,10 +62,22 @@ export function getDeep(target, key) {
 /**
  * 用于处理自定义组件props传参结构，对系统变量进行保留
  */
-export function resolveComponentProps(props) {
+export function resolveComponentProps(props, isPlainProps) {
+  
+  if (isPlainProps === 1) {
+    const { staticResourceAttribute } = props;
+
+    staticResourceAttribute && staticResourceAttribute.map(
+      // getStaticResourceAttribute(data[prop]);
+      (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
+    );
+    // staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
+    return {
+      ...props
+      }
+  };
   let { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
-
   const builtinProps = [
     // react 保留字
     'ref',
@@ -92,9 +104,8 @@ export function resolveComponentProps(props) {
     'hidden',
     'slot',
   ];
-  // delete builtin props
+  staticResourceAttribute.map((prop) => (data[prop] = getStaticResourceAttribute(data[prop])));
   builtinProps.map((prop) => delete customProps[prop]);
-
   return {
     ...data,
     ...restProps,
@@ -106,6 +117,12 @@ export function resolveComponentProps(props) {
   };
 }
 
+
+export function getStaticResourceAttribute(staticUrl){
+  const { domain = '' } = app;
+  const url = `https://${domain}/${staticUrl}`;
+  return url;
+}
 /**
  * 检查页面权限
  **/

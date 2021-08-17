@@ -457,7 +457,6 @@ async function generateFramework(
   ctx: IBuildContext
 ) {
   let fileData: Record<string, any> = {};
-
   if (appData.mpPkgUrl) {
     if (!appData.rootPath) {
       fileData = {

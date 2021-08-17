@@ -40,6 +40,7 @@ export const CompRenderer = observer(function (props) {
     styleBind,
     classNameList = [],
     classNameListBind,
+    staticResourceAttribute = []
   } = xProps;
   const Field = virtualFields[sourceKey];
   const parentForItems = useContext(ForContext);
@@ -66,7 +67,7 @@ export const CompRenderer = observer(function (props) {
     [props]
   );
 
-  function getSafeComponentProps({ style, classNameList }) {
+  function getSafeComponentProps({ style, classNameList, staticResourceAttribute}) {
     const componentProps = {};
     if (classNameList.length) {
       componentProps.className = classNameList.join(' ');
@@ -74,6 +75,9 @@ export const CompRenderer = observer(function (props) {
 
     if (style && Object.keys(style).length) {
       componentProps.style = style;
+    }
+    if (staticResourceAttribute && staticResourceAttribute.length > 0) {
+      componentProps.staticResourceAttribute = staticResourceAttribute;
     }
     return componentProps;
   }
@@ -122,6 +126,7 @@ export const CompRenderer = observer(function (props) {
       const componentProps = getSafeComponentProps({
         style: forItemStyle,
         classNameList: forItemClassNameList,
+        staticResourceAttribute
       });
       return (
         <ForContext.Provider key={index} value={forItems}>
@@ -176,8 +181,9 @@ export const CompRenderer = observer(function (props) {
   const componentProps = getSafeComponentProps({
     style: finalStyle,
     classNameList: finalClassNameList,
+    staticResourceAttribute
   });
-
+  console.log('componentProps', componentProps);
   return (
     <Field
       data={fieldData}

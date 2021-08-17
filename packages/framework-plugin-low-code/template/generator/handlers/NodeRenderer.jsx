@@ -18,9 +18,8 @@ export const CompRenderer = observer(function (props) {
     genericComp = {},
     emitEvents = [],
   } = props;
-
   const isInComposite = !!codeContext.$WEAPPS_COMP;
-  // 判断 widgets 是从 page 来的，还是组件来的
+  // 判断 widgets 是从 page 来的，还是组件来的 
   const widgetsData = !isInComposite
     ? codeContext.$page.widgets[compId]
     : codeContext.$WEAPPS_COMP.widgets[compId];
@@ -36,6 +35,7 @@ export const CompRenderer = observer(function (props) {
     sourceKey,
     listenerInstances,
     classNameList = [],
+    staticResourceAttribute = []
   } = xProps;
   const dataBinds =
     (codeContext._dataBinds && codeContext._dataBinds[compId]) || {};
@@ -75,7 +75,7 @@ export const CompRenderer = observer(function (props) {
     [props]
   );
 
-  function getSafeComponentProps({ style, classNameList }) {
+  function getSafeComponentProps({ style, classNameList, staticResourceAttribute}) {
     const componentProps = {};
     if (classNameList.length) {
       componentProps.className = classNameList.join(' ');
@@ -83,6 +83,10 @@ export const CompRenderer = observer(function (props) {
 
     if (style && Object.keys(style).length) {
       componentProps.style = style;
+    }
+
+    if (staticResourceAttribute && staticResourceAttribute.length > 0) {
+      componentProps.staticResourceAttribute = staticResourceAttribute;
     }
     return componentProps;
   }
@@ -132,6 +136,7 @@ export const CompRenderer = observer(function (props) {
             {...getSafeComponentProps({
               style: forItemStyle,
               classNameList: forItemClassNameList,
+              staticResourceAttribute
             })}
             emit={emitWithForItems}
             events={emitEvents}
@@ -148,7 +153,7 @@ export const CompRenderer = observer(function (props) {
   }
 
   // 单节点渲染
-  const { fieldData, finalClassNameList, finalStyle } = getBindData(
+  const { fieldData, finalClassNameList, finalStyle} = getBindData(
     parentForItems,
     scopeContext
   );
@@ -184,6 +189,7 @@ export const CompRenderer = observer(function (props) {
       {...getSafeComponentProps({
         style: finalStyle,
         classNameList: finalClassNameList,
+        staticResourceAttribute
       })}
       emit={emitWithFiedle}
       events={emitEvents}

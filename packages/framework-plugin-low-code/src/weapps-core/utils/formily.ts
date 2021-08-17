@@ -45,7 +45,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     vars: webRuntimeAppData.vars || { data: [] },
     dataset: webRuntimeAppData.dataset,
   };
-
+  console.log('webRuntimeAppData', webRuntimeAppData);
   setValidValue(weAppData, 'appConfig', webRuntimeAppData.appConfig);
   setValidValue(weAppData, 'themeVars', webRuntimeAppData.themeVars);
   setValidValue(weAppData, 'presetColors', webRuntimeAppData.presetColors);
@@ -60,6 +60,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
     collection: IWeAppPage[]
   ) {
     pageInstanceList.map((pageData) => {
+      console.log('pageData', pageData);
       const newPage: IWeAppPage = {
         id: pageData.id,
       } as IWeAppPage;
@@ -123,6 +124,7 @@ export function serialize(webRuntimeAppData: IWebRuntimeAppData): IWeAppData {
           'listeners',
           readListeners(srcProps.listenerInstances)
         );
+        setValidValue(componentXProps, 'staticResourceAttribute', srcProps.staticResourceAttribute);
         setValidValue(componentXProps, 'directives', readDirectives(srcProps));
         setValidValue(
           componentXProps,
@@ -326,7 +328,6 @@ export function deserialize(weAppData: IWeAppData): IWebRuntimeAppData {
         'x-index': 0,
       };
       page.listenerInstances = readListeners(srcPage.listeners) || [];
-
       // Compatibility logic
       if (srcPage['code']) {
         const target =
@@ -355,6 +356,10 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
   const properties = {};
   for (const key in cmps) {
     const cmp = cmps[key];
+    if (key === 'id16') {
+      console.log('key', key);
+      console.log('cmp', cmp);
+    }
     const target = (properties[key] = {
       key,
       type: 'object',
@@ -373,6 +378,7 @@ export function readCmpInstances(cmps: IWeAppPage['componentInstances']) {
       xProps.customDataForm = xProps.customDataForm || {};
       xProps.style = cmp.xProps.style || {};
       xProps.commonStyle = cmp.xProps.commonStyle || {};
+      xProps.staticResourceAttribute = cmp.xProps.staticResourceAttribute || [];
       setValidValue(xProps, 'styleBindPath', cmp.xProps.styleBindPath);
 
       let { classList, classListBind } = cmp.xProps;

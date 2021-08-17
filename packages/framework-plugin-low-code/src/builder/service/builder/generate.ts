@@ -200,13 +200,11 @@ export async function generateSinglePageJsxFile(
     getComponentImportStringArr(originComponentList);
   const actionImportStringArr = getActionImportStringArr(originActionList);
   const pluginImportStringArr = getPluginImportStringArr(originPluginList);
-
   const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
     componentSchemaJson as IComponentSchemaJson,
     false,
     componentsMeta
   );
-
   const templateData = {
     pageUUID: rootPath ? `${rootPath}/${pageInstance.id}` : pageInstance.id,
     pageName: pageInstance.id,
@@ -225,7 +223,6 @@ export async function generateSinglePageJsxFile(
     compProps: extraData.compProps,
     title: data.navigationBarTitleText || data.title || '',
   };
-
   const dest = path.resolve(
     appBuildDir,
     `./pages/${pageInstance.id}/index.jsx`
@@ -401,7 +398,7 @@ export function getVirtualFieldsString(components: IOriginKeyInfo[]) {
     result[`${materialName}:${name}`] = `%%%(props) => <${_.upperFirst(
       variableName
     )} ${
-      isPlainProps ? '{...resolveComponentProps(props)}' : '{...props}'
+      isPlainProps ? '{...resolveComponentProps(props, 0)}' : '{...resolveComponentProps(props, 1)}'
     } pageVirtualFields={virtualFields}/>%%%`;
     return result;
   }, {});
@@ -437,8 +434,8 @@ export function getComponentSchemaString(
       sourceKey,
       styleBind,
       classNameListBind,
+      staticResourceAttribute = []
     } = xProps;
-
     const componentInfo = componentsInfoMap[sourceKey];
     if ((componentInfo as any)?.events) {
       schema['emitEvents'] = (componentInfo as any)?.events.map(
@@ -459,7 +456,7 @@ export function getComponentSchemaString(
         widgetType: sourceKey,
         _parentId: isSlot(schema.parent as Schema)
           ? schema?.parent?.parent?.key
-          : schema?.parent?.key,
+          : schema?.parent?.key
       };
       if (dataBinds.length > 0) {
         compDataBinds[schema.key] = generateDataBinds(dataBinds, isComposite);
@@ -500,7 +497,6 @@ export function getComponentSchemaString(
       }
 
       xProps['commonStyle'] = toCssStyle(xProps['commonStyle']);
-
       if (isEmptyObj(xProps['commonStyle'])) {
         delete xProps['commonStyle'];
       }
@@ -523,6 +519,9 @@ export function getComponentSchemaString(
         }
         if (xPropsData.title === '') {
           delete xPropsData.title;
+        }
+        if (xPropsData.staticResourceAttribute && xPropsData.staticResourceAttribute.length === 0) {
+          delete xPropsData.staticResourceAttribute;
         }
         if (isEmptyObj(xPropsData)) {
           delete xProps['data'];

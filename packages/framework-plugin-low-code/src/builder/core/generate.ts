@@ -48,7 +48,8 @@ export async function runGenerateCore(
   } = {
     isComposite: false,
     compProps: {},
-  }
+  },
+  domain: string
 ) {
   const timeTag = '-------------------- runGenerateCore';
   console.time(timeTag);
@@ -93,6 +94,7 @@ export async function runGenerateCore(
       const globalApiContent = tpl(tplStr)({
         appId: appKey,
         subPackageName: rootPath,
+        domain
       });
       await fs.writeFile(
         path.join(dstDir, 'app/global-api.js'),
