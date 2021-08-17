@@ -64,15 +64,19 @@ export function getDeep(target, key) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
-  staticResourceAttribute && staticResourceAttribute.map(
-    (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
-  );
-  if (isPlainProps === 0) {
+  staticResourceAttribute &&
+    staticResourceAttribute.map(
+      (property) =>
+        (props.data[property] = getStaticResourceAttribute(
+          props.data[property]
+        ))
+    );
+  if (!isPlainProps) {
     return {
-      ...props
-      }
-  };
-  let { data = {}, events = [], ...restProps } = props;
+      ...props,
+    };
+  }
+  const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
     // react 保留字
@@ -113,21 +117,23 @@ export function resolveComponentProps(props, isPlainProps) {
   };
 }
 
-
-export function getStaticResourceAttribute(staticUrl){
-  if (staticUrl && staticUrl.indexOf('/') !== 0) {
-    return staticUrl;
+export function getStaticResourceAttribute(staticUrl) {
+  if (/^\//.test(staticUrl)) {
+    const { domain = '' } = app;
+    const url = `https://${domain}${staticUrl}`;
+    return url;
   }
-  const { domain = '' } = app;
-  const url = `https://${domain}${staticUrl}`;
-  return url;
+  return staticUrl;
 }
 /**
  * 检查页面权限
  **/
 export async function checkAuth(app, appId, pageId) {
   app.showNavigationBarLoading();
-  const checkAuthResult = await app.cloud.checkAuth({ type: 'app', extResourceId: `${appId}-${pageId}` });
+  const checkAuthResult = await app.cloud.checkAuth({
+    type: 'app',
+    extResourceId: `${appId}-${pageId}`,
+  });
   let isLogin = false;
   if (Array.isArray(checkAuthResult) && checkAuthResult.length > 0) {
     isLogin = checkAuthResult[0]?.IsAccess ?? false;

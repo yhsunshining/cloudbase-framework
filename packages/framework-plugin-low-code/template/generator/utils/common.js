@@ -82,14 +82,18 @@ export function isPlainObject(src) {
  */
 export function resolveComponentProps(props, isPlainProps) {
   const { staticResourceAttribute } = props;
-  staticResourceAttribute && staticResourceAttribute.map(
-    (property) => (props.data[property] = getStaticResourceAttribute(props.data[property])),
-  );
-  if (isPlainProps === 0) {
+  staticResourceAttribute &&
+    staticResourceAttribute.map(
+      (property) =>
+        (props.data[property] = getStaticResourceAttribute(
+          props.data[property]
+        ))
+    );
+  if (!isPlainProps) {
     return {
-      ...props
-      }
-  };
+      ...props,
+    };
+  }
   const { data = {}, events = [], ...restProps } = props;
   const customProps = { ...data };
   const builtinProps = [
@@ -172,12 +176,12 @@ export function isScopeSlot(comp, slot) {
 }
 
 export function getStaticResourceAttribute(staticUrl) {
-  if (staticUrl && staticUrl.indexOf('/') !== 0) {
-    return staticUrl;
+  if (/^\//.test(staticUrl)) {
+    const { domain = '' } = app;
+    const url = `https://${domain}${staticUrl}`;
+    return url;
   }
-  const { domain = '' } = app;
-  const url = `${domain}${staticUrl}`;
-  return url;
+  return staticUrl;
 }
 /**
  * 检查页面权限
