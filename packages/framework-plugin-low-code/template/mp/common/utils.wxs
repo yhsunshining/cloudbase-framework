@@ -1,8 +1,8 @@
 function getStaticResourceAttribute(staticUrl) {
-  var domain = '<%=domain%>'
   if (staticUrl && staticUrl.indexOf('/') !== 0) {
     return staticUrl;
   }
+  var domain = '<%=domain%>'
   return 'https://' + domain + staticUrl;
 }
 
