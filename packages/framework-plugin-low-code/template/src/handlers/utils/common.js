@@ -70,7 +70,6 @@ export function resolveComponentProps(props, isPlainProps) {
         props.data[property] = getStaticResourceAttribute(props.data[property]);
       }
     });
-  console.log('isPlainProps', isPlainProps);
   if (!isPlainProps) {
     return {
       ...props,
