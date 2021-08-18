@@ -70,6 +70,7 @@ export function resolveComponentProps(props, isPlainProps) {
         props.data[property] = getStaticResourceAttribute(props.data[property]);
       }
     });
+  console.log('isPlainProps', isPlainProps);
   if (!isPlainProps) {
     return {
       ...props,
@@ -112,6 +113,7 @@ export function resolveComponentProps(props, isPlainProps) {
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
     }, {}),
+    data: data
   };
 }
 
