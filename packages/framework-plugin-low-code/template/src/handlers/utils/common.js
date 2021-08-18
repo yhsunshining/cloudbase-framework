@@ -111,8 +111,7 @@ export function resolveComponentProps(props, isPlainProps) {
       const propName = item;
       events[propName] = (e) => restProps.emit(propName, e);
       return events;
-    }, {}),
-    data: data
+    }, {})
   };
 }
 
