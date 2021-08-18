@@ -398,7 +398,7 @@ export function getVirtualFieldsString(components: IOriginKeyInfo[]) {
     result[`${materialName}:${name}`] = `%%%(props) => <${_.upperFirst(
       variableName
     )} ${
-      isPlainProps ? '{...resolveComponentProps(props, 0)}' : '{...resolveComponentProps(props, 1)}'
+      isPlainProps ? '{...resolveComponentProps(props, 1)}' : '{...resolveComponentProps(props, 0)}'
     } pageVirtualFields={virtualFields}/>%%%`;
     return result;
   }, {});

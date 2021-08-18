@@ -183,7 +183,6 @@ export const CompRenderer = observer(function (props) {
     classNameList: finalClassNameList,
     staticResourceAttribute
   });
-  console.log('componentProps', componentProps);
   return (
     <Field
       data={fieldData}
