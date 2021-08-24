@@ -1,5 +1,5 @@
 import sdk from '@tcwd/weapps-sdk/lib/app-h5-sdk';
-import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
+import { DS_SDK, CLOUD_SDK, createDataset, EXTRA_API } from '../datasources';
 import { formatDate } from '../utils/date';
 import { getter, setter, _isMobile } from '../utils';
 import { scanCodeApi } from '../utils/scan-code-action';
@@ -39,7 +39,15 @@ function createGlboalApi() {
       );
     });
   };
-
+  /**
+   * 内部通用的设置状态变量值的方法
+   *  varPath 结构为 $global.<变量名> 即全局变量
+   *                $page.<变量名>  即当前页面变量
+   *                <pageId>.<变量名> 指定页面 pageId 的变量 (应当避免修改非当前页面的变量值)
+   */
+  globalAPI._setStateVal = (config) => {
+    EXTRA_API.setState(config.varPath, config.val);
+  };
   // 给全局挂上 mainApp/subApp
   // The global api exposed to lowcode
   if (subPackageName) {

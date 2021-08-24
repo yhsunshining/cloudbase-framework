@@ -1,6 +1,6 @@
 import * as sdk from '@tcwd/weapps-sdk';
 import { createComputed } from 'utils';
-import { DS_SDK, CLOUD_SDK, createDataset } from '../datasources';
+import { DS_SDK, CLOUD_SDK, createDataset, EXTRA_API } from '../datasources';
 import store, { subPackageName } from '../store';
 import computed from '../store/computed';
 import common from './common';
@@ -54,6 +54,15 @@ function createGlboalApi() {
         userSetState[keyPath]
       );
     });
+  };
+  /**
+   * 内部通用的设置状态变量值的方法
+   *  varPath 结构为 $global.<变量名> 即全局变量
+   *                $page.<变量名>  即当前页面变量
+   *                <pageId>.<变量名> 指定页面 pageId 的变量 (应当避免修改非当前页面的变量值)
+   */
+  globalAPI._setStateVal = (config) => {
+    EXTRA_API.setState(config.varPath, config.val);
   };
   if (subPackageName) {
     // is sub app
