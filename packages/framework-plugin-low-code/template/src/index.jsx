@@ -110,8 +110,6 @@ async function bootstrap() {
  * 应用每次进入都会调用 mount 方法，通常我们在这里触发应用的渲染方法
  */
 async function mount(props) {
-  console.log(props)
-  console.log(window.cloudbase)
   render(props)
 }
 
