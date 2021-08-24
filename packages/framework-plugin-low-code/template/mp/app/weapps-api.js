@@ -1,7 +1,7 @@
 import { observable } from 'mobx'
 import { createComputed, formatDate, getter, setter } from '<%= subLevelPath %>../common/util'
 import process from '<%= subLevelPath %>../common/process'
-import { DS_SDK, CLOUD_SDK, createDataset } from '<%= subLevelPath %>../datasources/index'
+import { DS_SDK, CLOUD_SDK, createDataset, EXTRA_API } from '<%= subLevelPath %>../datasources/index'
 import appGlobal from '<%= subLevelPath %>../app/app-global'
 import weappApis from '<%= subLevelPath %>../common/weapp-sdk'
 
@@ -52,7 +52,16 @@ function createGlboalApi() {
       globalAPI.utils.set(globalAPI.dataset.state, keyPath, userSetState[keyPath]);
     });
   };
-
+   /**
+   * 内部通用的设置状态变量值的方法
+   *  varPath 结构为 $global.<变量名> 即全局变量
+   *                $page.<变量名>  即当前页面变量
+   *                <pageId>.<变量名> 指定页面 pageId 的变量 (应当避免修改非当前页面的变量值)
+   */
+  globalAPI._setStateVal = (config) => {
+    // @ts-ignore
+    EXTRA_API.setState(config.varPath, config.val);
+  };
   // mount wx apis
   Object.assign(globalAPI, weappApis)
 
