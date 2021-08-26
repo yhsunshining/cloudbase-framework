@@ -6,7 +6,6 @@ body {
   padding: 0;
 }
 
-
 #weapp-scancode-video {
   width: 100%;
   height: 100%;
@@ -63,15 +62,14 @@ body {
       position: absolute;
       height: 10px;
       width: 100%;
-      background: 
-        linear-gradient(90deg, transparent, #07c160 50%, transparent);
+      background: linear-gradient(90deg, transparent, #07c160 50%, transparent);
       top: 0%;
       border-top-left-radius: 50%;
       border-top-right-radius: 50%;
       animation: slideinout-top-down 2s;
       animation-direction: normal;
       animation-timing-function: linear;
-      animation-iteration-count:infinite;
+      animation-iteration-count: infinite;
     }
     &-tip {
       margin-top: 10rem;
@@ -107,10 +105,16 @@ body {
   }
   50% {
     transform: translateY(calc(var(--square-size) / 2));
-    opacity: .5;
+    opacity: 0.5;
   }
   100% {
     transform: translateY(var(--square-size));
     opacity: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .weda-responsive_flex_flow {
+    flex-flow: row !important;
   }
 }
