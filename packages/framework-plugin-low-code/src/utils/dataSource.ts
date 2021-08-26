@@ -75,7 +75,7 @@ function getDependencies(pkg) {
  */
 export function lowercaseKey(obj: any, deep?: boolean): any {
   if (!obj || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(item => lowercaseKey(item, deep));
+  if (Array.isArray(obj)) return obj.map((item) => lowercaseKey(item, deep));
   const result: Record<string, any> = {};
   return Object.keys(obj).reduce((acc, key) => {
     const smallCase = key.charAt(0).toLowerCase() + key.slice(1);
@@ -98,11 +98,19 @@ export function standardizeDataSource(ds: any) {
       transformed.schema = JSON.parse(transformed.schema);
     }
     if (!transformed.schema || typeof transformed.schema !== 'object') {
-      console.warn('[standardizeDataSource]invalid schema', schema, 'in datasource', transformed);
+      // console.warn(
+      //   '[standardizeDataSource]invalid schema',
+      //   schema,
+      //   'in datasource',
+      //   transformed
+      // );
       transformed.schema = {};
     }
   } catch (error) {
-    console.warn('[standardizeDataSource] unable to transform schema', transformed.schema);
+    // console.warn(
+    //   '[standardizeDataSource] unable to transform schema',
+    //   transformed.schema
+    // );
     transformed.schema = {};
   }
   try {
@@ -111,11 +119,19 @@ export function standardizeDataSource(ds: any) {
       transformed.methods = JSON.parse(transformed.methods);
     }
     if (!Array.isArray(transformed.methods)) {
-      console.warn('[standardizeDataSource]invalid methods', methods, 'in datasource', transformed);
+      // console.warn(
+      //   '[standardizeDataSource]invalid methods',
+      //   methods,
+      //   'in datasource',
+      //   transformed
+      // );
       transformed.methods = [];
     }
   } catch (error) {
-    console.warn('[standardizeDataSource]unable to transform methods', transformed.methods);
+    // console.warn(
+    //   '[standardizeDataSource]unable to transform methods',
+    //   transformed.methods
+    // );
     transformed.methods = [];
   }
   return transformed;
@@ -137,13 +153,15 @@ export function getDatasourceProfiles(datasources) {
         type: ds.type,
         childDataSourceNames: ds.childDataSourceNames,
         schema: ds.schema,
-        methods: ds.methods && ds.methods.map((method) => {
-          return {
-            name: method.name,
-            type: method.type,
-          };
-        })
-      }
+        methods:
+          ds.methods &&
+          ds.methods.map((method) => {
+            return {
+              name: method.name,
+              type: method.type,
+            };
+          }),
+      };
     }) || []
   );
 }
@@ -179,7 +197,7 @@ function _generateDynamicDataset(dataset) {
             if (!bind.type || bind.type === PropBindType.static) {
               let value = bind.value;
               processed[paramKey] = `${REPLACE_SIGN}(app, $page) => (${
-                typeof value === 'string' ? `'${value}'` : value
+                typeof value === 'string' ? `'${value}'` : JSON.stringify(value)
               })${REPLACE_SIGN}`;
             } else {
               let jsExp = generateDataBind(bind);
