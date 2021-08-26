@@ -11,10 +11,6 @@ import path from 'path';
 import { Plugin, PluginServiceApi } from '@cloudbase/framework-core';
 import { plugin as MiniProgramsPlugin } from '@cloudbase/framework-plugin-mp';
 import { plugin as WebsitePlugin } from '@cloudbase/framework-plugin-website';
-import {
-  plugin as FunctionPlugin,
-  IFrameworkPluginFunctionInputs,
-} from '@cloudbase/framework-plugin-function';
 import { plugin as AuthPlugin } from '@cloudbase/framework-plugin-auth';
 import { deserializePlatformApp } from '@cloudbase/cals';
 import {
@@ -32,11 +28,8 @@ import {
 import { IMaterialItem, IPlugin } from './weapps-core';
 import { handleMpPlugins } from './generate';
 import {
-  postProcessCloudFunction,
   postprocessDeployExtraJson,
   postprocessProjectConfig,
-  processCloudFunctionInputs,
-  processInstalledHook,
 } from './utils/postProcess';
 import { merge } from 'lodash';
 import archiver from 'archiver';
@@ -58,7 +51,6 @@ const DEFAULT_CLOUDFUNCTION_ROOT_PATH = path.join(
   DEFAULT_CLOUDFUNCTION_ROOT_NAME,
   '/'
 );
-export const CLOUD_SDK_FILE_NAME = 'weda-cloud-sdk.0.2.1-alpha.5.js';
 
 const enum TIME_LABEL {
   LOW_CODE = 'low code lifetime',
@@ -228,12 +220,10 @@ export type ResolvedInputs = IFrameworkPluginLowCodeInputs &
 class LowCodePlugin extends Plugin {
   protected _resolvedInputs: ResolvedInputs;
   protected _appPath: string;
-  protected _functionInputs?: IFrameworkPluginFunctionInputs;
   protected _authPlugin;
   protected _miniprogramePlugin;
   protected _webPlugin;
   protected _functionPlugin;
-  protected _databasePlugin;
   protected _productBasePath?: string;
   protected _timeMap = {};
   protected _logFilePath?: PathLike;
@@ -258,15 +248,6 @@ class LowCodePlugin extends Plugin {
       resolveInputs(params, DEFAULT_INPUTS)
     );
 
-    // 测试环境部署
-    if (
-      (this._resolvedInputs.appId === 'app-fho1xlir' ||
-        this._resolvedInputs.appId === 'app-64tleig4') &&
-      this._resolvedInputs.buildTypeList?.[0] === 'pc'
-    ) {
-      this._resolvedInputs.buildTypeList = ['adminPortal'] as any;
-    }
-
     this._appPath = '';
     this._productBasePath = `lca/${this._resolvedInputs.appId}/${
       process.env.CLOUDBASE_CIID ? `/${process.env.CLOUDBASE_CIID}` : ''
@@ -286,8 +267,8 @@ class LowCodePlugin extends Plugin {
         );
 
         if (cals.extra?.miniprogramPlugins) {
-          this._resolvedInputs.mainAppSerializeData.miniprogramPlugins =
-            cals.extra.miniprogramPlugins.map((plugin) => {
+          this._resolvedInputs.mainAppSerializeData.miniprogramPlugins = cals.extra.miniprogramPlugins.map(
+            (plugin) => {
               return {
                 ...plugin,
                 componentConfigs:
@@ -322,11 +303,13 @@ class LowCodePlugin extends Plugin {
                     return processedCompoennt;
                   }) || [],
               };
-            });
+            }
+          );
         }
       } else {
-        this._resolvedInputs.mainAppSerializeData =
-          processPkgUrlCals2WeappData(cals);
+        this._resolvedInputs.mainAppSerializeData = processPkgUrlCals2WeappData(
+          cals
+        );
       }
     }
 
@@ -358,8 +341,11 @@ class LowCodePlugin extends Plugin {
       }
     } else {
       // 小程序构建
-      const { mpAppId, mpDeployPrivateKey, deployOptions } =
-        this._resolvedInputs;
+      const {
+        mpAppId,
+        mpDeployPrivateKey,
+        deployOptions,
+      } = this._resolvedInputs;
 
       if (deployOptions.mpAppId === undefined) {
         deployOptions.mpAppId = mpAppId;
@@ -372,29 +358,9 @@ class LowCodePlugin extends Plugin {
       if (deployOptions.targetMpAppId === undefined) {
         deployOptions.targetMpAppId = deployOptions.mpAppId;
       }
-
-      // if (this._resolvedInputs.mainAppSerializeData.miniprogramPlugins) {
-      //   this._resolvedInputs.dependencies.concat(
-      //     this._resolvedInputs.mainAppSerializeData.miniprogramPlugins.map(
-      //       (plugin) => {
-      //         const { name, version,pluginAppId };
-      //         return {};
-      //       }
-      //     )
-      //   );
-      // }
     }
 
     this._initDir();
-
-    // if (this._resolvedInputs.runtime === RUNTIME.CI) {
-    //   this._logFilePath = path.resolve(this.api.projectPath, LOG_FILE)
-    //   fs.removeSync(this._logFilePath)
-    //   fs.ensureFileSync(this._logFilePath)
-    //   let logStream = fs.createWriteStream(this._logFilePath, { flags: 'a' })
-    //   process.stdout.pipe(logStream)
-    //   process.stderr.pipe(logStream)
-    // }
 
     this.api.logger.debug(`low-code plugin construct at ${Date.now()}`);
     this._time(TIME_LABEL.LOW_CODE);
@@ -458,7 +424,7 @@ class LowCodePlugin extends Plugin {
       };
       this._miniprogramePlugin = new MiniProgramsPlugin(
         'miniprograme',
-        this.api,
+        this.api as any,
         {
           appid: deployOptions.mpAppId as string,
           privateKeyPath: `./private.${deployOptions.mpAppId}.key`,
@@ -502,17 +468,6 @@ class LowCodePlugin extends Plugin {
           DEFAULT_CLOUDFUNCTION_ROOT_NAME,
         ],
       });
-    }
-
-    /**
-     * 资源相关
-     */
-    if (this._functionInputs) {
-      this._functionPlugin = new FunctionPlugin(
-        'function',
-        this.api as any,
-        this._functionInputs
-      );
     }
   }
 
@@ -614,56 +569,51 @@ class LowCodePlugin extends Plugin {
     try {
       const HostingProvider = this.api.resourceProviders?.hosting;
       const envId = this.api.envId;
-      try {
-        async function getHostingInfo(envId) {
-          let [website, hostingDatas] = await HostingProvider.getHostingInfo({
-            envId: envId,
-          }).then(({ data: hostingDatas }) => {
-            let website = hostingDatas[0];
-            return [website, hostingDatas];
+      async function getHostingInfo(envId) {
+        let [website, hostingDatas] = await HostingProvider.getHostingInfo({
+          envId: envId,
+        }).then(({ data: hostingDatas }) => {
+          let website = hostingDatas[0];
+          return [website, hostingDatas];
+        });
+        if (!website || website?.status !== 'online') {
+          await new Promise((resolve) => {
+            setTimeout(() => {
+              resolve(true);
+            }, 8 * 1000);
           });
-          if (!website || website?.status !== 'online') {
-            await new Promise((resolve) => {
-              setTimeout(() => {
-                resolve(true);
-              }, 8 * 1000);
-            });
-            return getHostingInfo(envId);
-          } else {
-            return [website, hostingDatas];
-          }
+          return getHostingInfo(envId);
+        } else {
+          return [website, hostingDatas];
         }
-        let timeout: any = null;
-        let [website, hostingDatas] = await Promise.race([
-          new Promise((resolve) => {
-            timeout = setTimeout(() => {
-              resolve([]);
-            }, 120 * 1000);
-          }),
-          this._webPlugin?.website
-            ? Promise.resolve([this._webPlugin.website])
-            : getHostingInfo(envId),
-        ]);
-        if (timeout) {
-          clearTimeout(timeout);
-        }
-
-        if (HostingProvider) {
-          if (!hostingDatas) {
-            hostingDatas = (
-              await HostingProvider.getHostingInfo({ envId: envId })
-            ).data;
-          }
-          let domains = hostingDatas.map((item) => item.cdnDomain);
-          this._domain = domains; //domains[0].cdnDomain;
-        }
-        this._website = website;
-      } catch (e) {
-        this.api.logger.error('获取静态托管失败: ', e);
-        throw e;
       }
+      let timeout: any = null;
+      let [website, hostingDatas] = await Promise.race([
+        new Promise((resolve) => {
+          timeout = setTimeout(() => {
+            resolve([]);
+          }, 120 * 1000);
+        }),
+        this._webPlugin?.website
+          ? Promise.resolve([this._webPlugin.website])
+          : getHostingInfo(envId),
+      ]);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+
+      if (HostingProvider) {
+        if (!hostingDatas) {
+          hostingDatas = (
+            await HostingProvider.getHostingInfo({ envId: envId })
+          ).data;
+        }
+        let domains = hostingDatas.map((item) => item.cdnDomain);
+        this._domain = domains; //domains[0].cdnDomain;
+      }
+      this._website = website;
     } catch (e) {
-      this.api.logger.error('11获取静态托管失败: ', e);
+      this.api.logger.error('获取静态托管失败: ', e);
       throw e;
     }
 
@@ -706,11 +656,8 @@ class LowCodePlugin extends Plugin {
                 try {
                   const { appConfig = {} } = mainAppSerializeData;
                   const { publicPath = '' } = appConfig?.window || {};
-                  const {
-                    outDir = '',
-                    timeElapsed = 0,
-                    plugins,
-                  } = result || {};
+                  const { outDir = '', timeElapsed = 0, plugins } =
+                    result || {};
 
                   if (buildTypeList.includes(BuildType.MP)) {
                     miniAppDir = outDir;
@@ -760,62 +707,8 @@ class LowCodePlugin extends Plugin {
                   }
                   // 编译web
                   else if (buildAsWebByBuildType(buildTypeList) && webAppDir) {
-                    if (buildAsAdminPortalByBuildType(buildTypeList)) {
-                      await fs.copy(
-                        path.join(
-                          appTemplateDir,
-                          `assets/${CLOUD_SDK_FILE_NAME}`
-                        ),
-                        path.join(webAppDir, CLOUD_SDK_FILE_NAME)
-                      );
-                    }
-
                     const staticAppDir = path.join(staticDir, publicPath);
                     fs.ensureDirSync(staticAppDir);
-
-                    if (buildAsAdminPortalByBuildType(buildTypeList)) {
-                      await postProcessCloudFunction(
-                        path.resolve(webAppDir, DEFAULT_CLOUDFUNCTION_ROOT_PATH)
-                      );
-
-                      this._functionInputs = processCloudFunctionInputs(
-                        DEFAULT_CLOUDFUNCTION_ROOT_PATH
-                      ) as IFrameworkPluginFunctionInputs;
-                    }
-
-                    if (webpackMode !== WebpackModeType.PRODUCTION) {
-                      // if (!startWebDevServer.get(appId)) {
-                      //   const devConfig = devServerConf
-                      //   const params = devConfig ? ['--devServerConf', devConfig] : []
-                      //   const devServerPath = path.resolve(appBuildDir, './webpack/devServer.js')
-                      //   logger.info(`start node ${devServerPath} --devServerConf ${devConfig}....`)
-                      //   const env = process.env
-                      //   env.NODE_PATH = appBuildDir
-                      //   logger.info('spawn env 环境：', env.NODE_PATH)
-                      //   const ls = spawn('node', [devServerPath, ...params], {
-                      //     env,
-                      //   })
-                      //   startWebDevServer.set(appId, true)
-                      //   ls.stdout.on('data', data => {
-                      //     logger.info(`${data}`, 'devServer stdout:')
-                      //     if (data.includes('dev server listening on port 8001')) {
-                      //       startWebDevServer.set(appId, true)
-                      //     }
-                      //   })
-                      //   ls.stderr.on('data', data => {
-                      //     logger.error(`${data}`, 'devServer strerr:')
-                      //   })
-                      //   ls.on('close', code => {
-                      //     logger.error(`子进程退出，退出码 ${code}`)
-                      //   })
-                      // }
-                    } else {
-                      // try {
-                      //   await symlinkDir(webAppDir, staticAppDir + '/' + appId)
-                      // } catch (e) { }
-                      // logger.info(`h5 url: ${h5url}`)
-                      // openBrowser(h5url)
-                    }
                   }
 
                   let distPath = path.resolve(this.api.projectPath, DIST_PATH);
@@ -891,37 +784,10 @@ class LowCodePlugin extends Plugin {
           `website plugin build cost ${this._timeEnd(TIME_LABEL.WEB_BUILD)}s`
         );
       }
-
-      if (this._functionPlugin) {
-        this._time(TIME_LABEL.FUNCTION_BUILD);
-        await this._functionPlugin.init();
-        await this._functionPlugin.build();
-        logger.debug(
-          `function plugin build cost ${this._timeEnd(
-            TIME_LABEL.FUNCTION_BUILD
-          )}s`
-        );
-      }
     } catch (e) {
       if (debug) {
         await this._debugInfo();
       }
-      // 不再保留privateKeyPath产物
-      // try {
-      //   let privateKeyPath = path.join(
-      //     this.api.projectPath,
-      //     `./private.${this._resolvedInputs.deployOptions.mpAppId}.key`
-      //   )
-      //   if (
-      //     fs.existsSync(privateKeyPath) &&
-      //     fs.existsSync(path.join(this.api.projectPath, DIST_PATH))
-      //   ) {
-      //     fs.copySync(
-      //       privateKeyPath,
-      //       path.join(this.api.projectPath, DIST_PATH)
-      //     )
-      //   }
-      // } catch (e) {}
       if (this._resolvedInputs.runtime === RUNTIME.CI) {
         await this._handleCIProduct();
       }
@@ -944,15 +810,7 @@ class LowCodePlugin extends Plugin {
       if (this._miniprogramePlugin) {
         res = merge(res, await this._miniprogramePlugin.compile());
       } else if (this._webPlugin) {
-        res = merge(res, await this._webPlugin.compile());
-      }
-
-      if (this._databasePlugin) {
-        res = merge(res, await this._databasePlugin.compile());
-      }
-
-      if (this._functionPlugin) {
-        res = merge(res, await this._functionPlugin.compile());
+        res = merge(res, {});
       }
 
       // 兼容逻辑，当没有资源部署时输出低码资源描述
@@ -969,10 +827,23 @@ class LowCodePlugin extends Plugin {
         });
       }
 
-      if (buildAsWebByBuildType(this._resolvedInputs.buildTypeList)) {
-      }
+      if (
+        buildAsWebByBuildType(this._resolvedInputs.buildTypeList) &&
+        this._webPlugin
+      ) {
+        const deployContent = [
+          ...(this._webPlugin.buildOutput.static || []),
+          ...(this._webPlugin.buildOutput.staticConfig || []),
+        ];
 
-      res = merge(res, processInstalledHook(this));
+        await deployContent.map((options) => {
+          return this.api.cloudbaseManager.hosting.uploadFiles({
+            localPath: options.src,
+            cloudPath: options.cloudPath,
+            ignore: this._webPlugin.resolvedInputs.ignore,
+          });
+        });
+      }
 
       this.api.logger.info(
         `compile end, cost ${this._timeEnd(TIME_LABEL.COMPILE)}s: `,
@@ -998,89 +869,19 @@ class LowCodePlugin extends Plugin {
   async deploy() {
     try {
       this._time(TIME_LABEL.DEPLOY);
-      const hostingService = this.api.cloudbaseManager.hosting;
-      const HostingProvider = this.api.resourceProviders?.hosting;
-      const envId = this.api.envId;
-
-      if (this._functionPlugin) {
-        await this._functionPlugin.deploy();
-      }
 
       if (this._miniprogramePlugin) {
         await this._miniprogramePlugin.deploy();
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
-        try {
-          let domains = this._domain;
-          let { Domains: domainList } = await hostingService.tcbCheckResource({
-            domains,
-          });
-          let historyType =
-          this._resolvedInputs.mainAppSerializeData?.historyType ||
-          this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
-          this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
-            ? HISTORY_TYPE.HASH
-            : '';
-          if (this._website) {
-            if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-              let { WebsiteConfiguration } =
-                await this.api.cloudbaseManager.hosting.getWebsiteConfig();
-              let path = this._getWebRootPath();
-              let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
-                (arr, rule) => {
-                  let meta: any = {};
-                  let { Condition, Redirect } = rule;
-                  if (Condition.HttpErrorCodeReturnedEquals) {
-                    meta.httpErrorCodeReturnedEquals =
-                      Condition.HttpErrorCodeReturnedEquals;
-                  }
-                  if (Condition.KeyPrefixEquals) {
-                    meta.keyPrefixEquals = Condition.KeyPrefixEquals;
-                  }
-                  if (Redirect.ReplaceKeyWith) {
-                    meta.replaceKeyWith = Redirect.ReplaceKeyWith;
-                  }
-                  if (Redirect.ReplaceKeyPrefixWith) {
-                    meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
-                  }
-                  if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
-                    return arr;
-                  }
-                  if (meta.httpErrorCodeReturnedEquals !== '404') {
-                    arr.push(meta);
-                  }
-                  return arr;
-                },
-                []
-              );
-                this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
-                  (page) => {
-                    rules.push({
-                      keyPrefixEquals: `${path.slice(1)}${page.id}`,
-                      replaceKeyWith: path,
-                    });
-                  }
-                );
-                this._rules = rules;
-              }
-            } else {
-              throw new Error('检查静态托管开通超时');
-            }
-          let modifyDomainConfigPromises = domainList
-            .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
-            .map((item) =>
-              hostingService.tcbModifyAttribute({
-                domain: item.Domain,
-                domainId: item.DomainId,
-                domainConfig: { FollowRedirect: 'on' } as any,
-              })
-            );
-          await Promise.all(modifyDomainConfigPromises);
-          await this.api.cloudbaseManager.hosting.setWebsiteDocument({
-            indexDocument: 'index.html',
-            routingRules: this._rules,
-          });
 
+        if (buildAsAdminPortalByBuildType(this._resolvedInputs.buildTypeList)) {
+          await this._postProcessAdminPortal();
+        } else {
+          await this._postProcessWebsiteConfig();
+        }
+
+        try {
           const link = buildAsAdminPortalByBuildType(
             this._resolvedInputs.buildTypeList
           )
@@ -1103,6 +904,7 @@ class LowCodePlugin extends Plugin {
               margin: 2,
             }
           );
+          this.api.logger.info(`${this.api.emoji('🚀')} 网站部署成功：${link}`);
           this.api.logger.info(
             `${this.api.emoji(
               '🚀'
@@ -1306,6 +1108,127 @@ class LowCodePlugin extends Plugin {
       archive.pipe(output);
       archive.finalize();
     });
+  }
+
+  async _postProcessAdminPortal() {
+    const {
+      appId,
+      buildTypeList,
+      mainAppSerializeData,
+      deployOptions,
+    } = this._resolvedInputs;
+    if (buildAsAdminPortalByBuildType(buildTypeList)) {
+      try {
+        const isPreview = deployOptions?.mode === DEPLOY_MODE.PREVIEW;
+        const id = isPreview ? `${appId}-preview` : appId;
+        let name = mainAppSerializeData?.label || appId;
+        name = isPreview ? `${name}-预览` : name;
+
+        const params = {
+          ID: id,
+          Name: name,
+          EnvId: this.api.envId,
+          DeployUrl: `https://${path.join(
+            this._website.cdnDomain,
+            this._getWebRootPath()
+          )}`,
+          Pages: (mainAppSerializeData?.pageInstanceList || [])
+            .filter((page) => !page.hideAdminPortalMenu)
+            .map((page) => ({
+              ID: page.id,
+              Title: page.data?.title?.value || page.id,
+              Path: `/${page.id}`,
+            })),
+        };
+        this.api.cloudbaseManager.commonService('lowcode', '2021-01-08').call({
+          Action: 'CreateRouter',
+          Param: params,
+        });
+        this.api.logger.info('门户路由成功');
+      } catch (e) {
+        this.api.logger.error('门户路由注册失败: ', e);
+      }
+    }
+  }
+
+  async _postProcessWebsiteConfig() {
+    const hostingService = this.api.cloudbaseManager.hosting;
+    try {
+      let domains = this._domain;
+      let { Domains: domainList } = await hostingService.tcbCheckResource({
+        domains,
+      });
+      // hostingService.getInfo();
+      let historyType =
+        this._resolvedInputs.mainAppSerializeData?.historyType ||
+        this._resolvedInputs.buildTypeList.includes(BuildType.APP) ||
+        this._resolvedInputs.buildTypeList.includes(BuildType.ADMIN_PORTAL)
+          ? HISTORY_TYPE.HASH
+          : '';
+      if (this._website) {
+        if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
+          let {
+            WebsiteConfiguration,
+          } = await hostingService.getWebsiteConfig();
+          let path = this._getWebRootPath();
+          let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
+            (arr, rule) => {
+              let meta: any = {};
+              let { Condition, Redirect } = rule;
+              if (Condition.HttpErrorCodeReturnedEquals) {
+                meta.httpErrorCodeReturnedEquals =
+                  Condition.HttpErrorCodeReturnedEquals;
+              }
+              if (Condition.KeyPrefixEquals) {
+                meta.keyPrefixEquals = Condition.KeyPrefixEquals;
+              }
+              if (Redirect.ReplaceKeyWith) {
+                meta.replaceKeyWith = Redirect.ReplaceKeyWith;
+              }
+              if (Redirect.ReplaceKeyPrefixWith) {
+                meta.replaceKeyPrefixWith = Redirect.ReplaceKeyPrefixWith;
+              }
+              if (`/${meta.keyPrefixEquals}`.startsWith(path)) {
+                return arr;
+              }
+              if (meta.httpErrorCodeReturnedEquals !== '404') {
+                arr.push(meta);
+              }
+              return arr;
+            },
+            []
+          );
+          this._resolvedInputs.mainAppSerializeData.pageInstanceList?.forEach(
+            (page) => {
+              rules.push({
+                keyPrefixEquals: `${path.slice(1)}${page.id}`,
+                replaceKeyWith: path,
+              });
+            }
+          );
+          this._rules = rules;
+        }
+      } else {
+        throw new Error('检查静态托管开通超时');
+      }
+      let modifyDomainConfigPromises = domainList
+        .filter((item) => item.DomainConfig.FollowRedirect !== 'on')
+        .map((item) =>
+          hostingService.tcbModifyAttribute({
+            domain: item.Domain,
+            domainId: item.DomainId,
+            domainConfig: { FollowRedirect: 'on' } as any,
+          })
+        );
+      await Promise.all(modifyDomainConfigPromises);
+      await hostingService.setWebsiteDocument({
+        indexDocument: 'index.html',
+        routingRules: this._rules,
+      });
+    } catch (e) {
+      this.api.logger.error('网站路由注册失败: ', e);
+      throw e;
+    }
   }
 }
 

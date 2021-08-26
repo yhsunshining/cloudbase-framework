@@ -275,3 +275,12 @@ export function readComponentLibMata(libDir): {
 
   return meta;
 }
+
+const _OFFICIAL_COMPONENT_LIB = {
+  'gsd-h5-react': ['0.0.61', '0.0.70'],
+  CLOUDBASE_BUSSINESS: ['1627377179261'],
+};
+
+export function isOfficialComponentLib(name, version): boolean {
+  return !!_OFFICIAL_COMPONENT_LIB[name]?.includes(version);
+}

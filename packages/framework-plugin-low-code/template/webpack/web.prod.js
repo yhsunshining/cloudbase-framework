@@ -6,6 +6,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const themeVars = require('./themeVars');
+const HappyPack = require('happypack');
+const core = 4;
+const happyThreadPool = HappyPack.ThreadPool({ size: core });
 
 module.exports = function (options) {
   const {
@@ -24,13 +27,57 @@ module.exports = function (options) {
   } = options;
   const isDevelopment = mode !== 'production';
   let plugins = [
+    new HappyPack({
+      id: 'babel',
+      loaders: [
+        {
+          loader: 'babel-loader',
+          options: {
+            compact: false,
+            cacheDirectory: true,
+            cwd: context,
+            presets: [
+              [
+                '@babel/preset-env',
+                {
+                  targets: {
+                    esmodules: true,
+                  },
+                },
+              ],
+              '@babel/preset-react',
+            ],
+            plugins: [
+              [
+                'babel-plugin-import',
+                {
+                  libraryName: '@govcloud/gsd-kbone-react',
+                  libraryDirectory: 'lib/components',
+                  camel2DashComponentName: false,
+                },
+              ],
+              '@babel/plugin-proposal-class-properties',
+              ['@babel/plugin-proposal-decorators', { legacy: true }],
+              '@babel/plugin-proposal-export-default-from',
+              '@babel/plugin-proposal-export-namespace-from',
+              '@babel/plugin-proposal-optional-chaining',
+              '@babel/plugin-proposal-partial-application',
+              [
+                '@babel/plugin-proposal-pipeline-operator',
+                { proposal: 'minimal' },
+              ],
+            ].filter(Boolean),
+          },
+        },
+      ],
+      threadPool: happyThreadPool,
+    }),
     new HtmlWebpackPlugin({
       template: htmlTemplatePath,
       filename: 'index.html',
       cache: false,
       templateParameters: htmlTemplateData,
     }),
-    new webpack.NoEmitOnErrorsPlugin(),
     new MiniCssExtractPlugin({
       filename: isDevelopment ? '[name].css' : '[name].[contenthash].css',
       chunkFilename: isDevelopment ? '[id].css' : '[id].[contenthash].css',
@@ -44,7 +91,6 @@ module.exports = function (options) {
         definePlugin
       )
     ),
-    new webpack.optimize.ModuleConcatenationPlugin(),
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -97,44 +143,8 @@ module.exports = function (options) {
       rules: [
         {
           test: /\.(js|jsx)$/,
-          loader: 'babel-loader',
           exclude: /node_modules\/(?!@cloudbase\/weda-ui)|gsd-kbone-react/,
-          options: {
-            compact: false,
-            cacheDirectory: true,
-            cwd: context,
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  targets: {
-                    esmodules: true,
-                  },
-                },
-              ],
-              '@babel/preset-react',
-            ],
-            plugins: [
-              [
-                'babel-plugin-import',
-                {
-                  libraryName: '@govcloud/gsd-kbone-react',
-                  libraryDirectory: 'lib/components',
-                  camel2DashComponentName: false,
-                },
-              ],
-              '@babel/plugin-proposal-class-properties',
-              ['@babel/plugin-proposal-decorators', { legacy: true }],
-              '@babel/plugin-proposal-export-default-from',
-              '@babel/plugin-proposal-export-namespace-from',
-              '@babel/plugin-proposal-optional-chaining',
-              '@babel/plugin-proposal-partial-application',
-              [
-                '@babel/plugin-proposal-pipeline-operator',
-                { proposal: 'minimal' },
-              ],
-            ].filter(Boolean),
-          },
+          use: ['happypack/loader?id=babel'],
         },
         {
           test: /\.(scss|sass)$/,
@@ -214,6 +224,8 @@ module.exports = function (options) {
     },
     plugins,
     optimization: {
+      concatenateModules: true,
+      noEmitOnErrors: true,
       splitChunks: {
         cacheGroups: {
           base: {
@@ -236,21 +248,6 @@ module.exports = function (options) {
             minChunks: 2,
             priority: 20,
           },
-
-          // commons: {
-          //   test: /[\\/]node_modules[\\/]/,
-          //   // cacheGroupKey here is `commons` as the key of the cacheGroup
-          //   name(module, chunks, cacheGroupKey) {
-          //     const { name: moduleFileName } = path
-          //       .parse(module.identifier())
-          //       .reduceRight((item) => item);
-          //     const allChunksNames = chunks
-          //       .map((item) => item.name)
-          //       .join('~');
-          //     return `${cacheGroupKey}-${allChunksNames}-${moduleFileName}`;
-          //   },
-          //   chunks: 'all',
-          // },
         },
       },
       ...(isDevelopment
@@ -263,15 +260,9 @@ module.exports = function (options) {
             minimizer: [
               new TerserPlugin({
                 test: /\.js(\?.*)?$/i,
-                cache: true,
+                cache: false,
                 parallel: true,
-                sourceMap: true,
-                terserOptions: {
-                  compress: {
-                    // eslint-disable-next-line @typescript-eslint/camelcase
-                    drop_console: false,
-                  },
-                },
+                sourceMap: false,
               }),
             ],
           }),

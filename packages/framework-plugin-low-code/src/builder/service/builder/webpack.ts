@@ -26,7 +26,7 @@ import {
 } from '../../config';
 import { getPluginKboneSubpackage } from './plugin';
 import { sync as commandExistsSync } from 'command-exists';
-import { getFileNameByUrl } from '../../util/common';
+import { getFileNameByUrl, isOfficialComponentLib } from '../../util/common';
 import {
   BuildType,
   WebpackModeType,
@@ -36,7 +36,6 @@ import {
 import { appTemplateDir } from '../../config';
 import { notice } from '../../util/console';
 import { HISTORY_TYPE, RUNTIME } from '../../../types';
-import { CLOUD_SDK_FILE_NAME } from '../../../index';
 const yarnExists = commandExistsSync('yarn');
 
 export interface IMpConfig {
@@ -559,7 +558,6 @@ export function getWebpackWebBuildParams(
         jsApis,
       },
       delevopment: mode !== WebpackModeType.PRODUCTION,
-      cloudSDKFileName: CLOUD_SDK_FILE_NAME,
       isAdminPortal: buildTypeList.includes(BuildType.ADMIN_PORTAL),
     },
     externals: {
@@ -691,10 +689,7 @@ export async function downloadAndInstallDependencies(
       await installDependencies(targetDir, {
         ...installOptions,
         isDependence: true,
-        ignoreInstall:
-          name === 'gsd-h5-react' && version?.startsWith('0.0.61')
-            ? true
-            : false,
+        ignoreInstall: isOfficialComponentLib(name, version),
       });
       dependenciesMap.set(targetDir, true);
     })
@@ -742,7 +737,10 @@ export async function installDependencies(
   targetDir: string,
   options: IInstallOpts = {}
 ) {
-  if (options?.ignoreInstall) {
+  if (
+    options?.ignoreInstall &&
+    fs.existsSync(path.join(targetDir, 'node_modules'))
+  ) {
     console.log('ignore install dependencies in ' + targetDir);
     return;
   }
