@@ -40,7 +40,7 @@ export const CompRenderer = observer(function (props) {
     styleBind,
     classNameList = [],
     classNameListBind,
-    staticResourceAttribute = []
+    staticResourceAttribute = [],
   } = xProps;
   const Field = virtualFields[sourceKey];
   const parentForItems = useContext(ForContext);
@@ -67,7 +67,11 @@ export const CompRenderer = observer(function (props) {
     [props]
   );
 
-  function getSafeComponentProps({ style, classNameList, staticResourceAttribute}) {
+  function getSafeComponentProps({
+    style,
+    classNameList,
+    staticResourceAttribute,
+  }) {
     const componentProps = {};
     if (classNameList.length) {
       componentProps.className = classNameList.join(' ');
@@ -94,6 +98,10 @@ export const CompRenderer = observer(function (props) {
     console.warn('_waFor data', e);
   }
   if (forList) {
+    if (!Array.isArray(forList)) {
+      console.warn(`${compId}循环绑定非数组值：`, forList);
+      forList = [];
+    }
     return forList.map((item, index) => {
       const forItemsIndexes = (parentForItems.forIndexes || []).concat(index);
       const forItems = {
@@ -126,7 +134,7 @@ export const CompRenderer = observer(function (props) {
       const componentProps = getSafeComponentProps({
         style: forItemStyle,
         classNameList: forItemClassNameList,
-        staticResourceAttribute
+        staticResourceAttribute,
       });
       return (
         <ForContext.Provider key={index} value={forItems}>
@@ -181,7 +189,7 @@ export const CompRenderer = observer(function (props) {
   const componentProps = getSafeComponentProps({
     style: finalStyle,
     classNameList: finalClassNameList,
-    staticResourceAttribute
+    staticResourceAttribute,
   });
   return (
     <Field

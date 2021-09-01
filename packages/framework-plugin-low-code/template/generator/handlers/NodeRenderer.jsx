@@ -19,7 +19,7 @@ export const CompRenderer = observer(function (props) {
     emitEvents = [],
   } = props;
   const isInComposite = !!codeContext.$WEAPPS_COMP;
-  // 判断 widgets 是从 page 来的，还是组件来的 
+  // 判断 widgets 是从 page 来的，还是组件来的
   const widgetsData = !isInComposite
     ? codeContext.$page.widgets[compId]
     : codeContext.$WEAPPS_COMP.widgets[compId];
@@ -35,7 +35,7 @@ export const CompRenderer = observer(function (props) {
     sourceKey,
     listenerInstances,
     classNameList = [],
-    staticResourceAttribute = []
+    staticResourceAttribute = [],
   } = xProps;
   const dataBinds =
     (codeContext._dataBinds && codeContext._dataBinds[compId]) || {};
@@ -75,7 +75,11 @@ export const CompRenderer = observer(function (props) {
     [props]
   );
 
-  function getSafeComponentProps({ style, classNameList, staticResourceAttribute}) {
+  function getSafeComponentProps({
+    style,
+    classNameList,
+    staticResourceAttribute,
+  }) {
     const componentProps = {};
     if (classNameList.length) {
       componentProps.className = classNameList.join(' ');
@@ -100,6 +104,10 @@ export const CompRenderer = observer(function (props) {
     console.error('_waFor data', e);
   }
   if (forList) {
+    if (!Array.isArray(forList)) {
+      console.warn(`${compId}循环绑定非数组值：`, forList);
+      forList = [];
+    }
     return forList.map((item, index) => {
       const forItemsIndexes = (parentForItems.forIndexes || []).concat(index);
       const forItems = {
@@ -136,7 +144,7 @@ export const CompRenderer = observer(function (props) {
             {...getSafeComponentProps({
               style: forItemStyle,
               classNameList: forItemClassNameList,
-              staticResourceAttribute
+              staticResourceAttribute,
             })}
             emit={emitWithForItems}
             events={emitEvents}
@@ -153,7 +161,7 @@ export const CompRenderer = observer(function (props) {
   }
 
   // 单节点渲染
-  const { fieldData, finalClassNameList, finalStyle} = getBindData(
+  const { fieldData, finalClassNameList, finalStyle } = getBindData(
     parentForItems,
     scopeContext
   );
@@ -189,7 +197,7 @@ export const CompRenderer = observer(function (props) {
       {...getSafeComponentProps({
         style: finalStyle,
         classNameList: finalClassNameList,
-        staticResourceAttribute
+        staticResourceAttribute,
       })}
       emit={emitWithFiedle}
       events={emitEvents}
