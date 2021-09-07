@@ -836,13 +836,15 @@ class LowCodePlugin extends Plugin {
           ...(this._webPlugin.buildOutput.staticConfig || []),
         ];
 
-        await deployContent.map((options) => {
-          return this.api.cloudbaseManager.hosting.uploadFiles({
-            localPath: options.src,
-            cloudPath: options.cloudPath,
-            ignore: this._webPlugin.resolvedInputs.ignore,
-          });
-        });
+        await Promise.all(
+          deployContent.map((options) => {
+            return this.api.cloudbaseManager.hosting.uploadFiles({
+              localPath: options.src,
+              cloudPath: options.cloudPath,
+              ignore: this._webPlugin.resolvedInputs.ignore,
+            });
+          })
+        );
       }
 
       this.api.logger.info(
