@@ -378,10 +378,10 @@
     <script src="//imgcache.qq.com/qcloud/cloudbase-js-sdk/1.5.3-alpha.0/cloudbase.full.js"></script>
     <% }%>
     <script>
-      if (cloudbase) {
-        const _callFunction = cloudbase.__proto__.callFunction;
-        cloudbase.__proto__.callFunction = function (args) {
-          let promise = _callFunction.call(cloudbase, ...arguments);
+      if (window.cloudbase) {
+        const _callFunction = window.cloudbase.__proto__.callFunction;
+        window.cloudbase.__proto__.callFunction = function (args) {
+          let promise = _callFunction.call(window.cloudbase, ...arguments);
           if (promise instanceof Promise) {
             return promise
               .then((res) => {

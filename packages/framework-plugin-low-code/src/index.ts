@@ -230,6 +230,7 @@ class LowCodePlugin extends Plugin {
   protected _domain: any[] = [];
   protected _website: any;
   protected _rules: any;
+  protected _skipInstallExt: any;
   constructor(
     public name: string,
     public api: PluginServiceApi,
@@ -805,29 +806,23 @@ class LowCodePlugin extends Plugin {
     try {
       this._time(TIME_LABEL.COMPILE);
 
-      let res = await this._authPlugin.compile();
+      let res: any = {};
+
+      try {
+        await this.api.cloudbaseManager
+          .commonService('lowcode', '2021-01-08')
+          .call({
+            Action: 'UpdateLoginConfig',
+            Param: { EnvId: this.api.envId },
+          });
+        this.api.logger.debug('login config set success');
+      } catch (e) {
+        this.api.logger.error('设置登录配置失败', e);
+      }
 
       if (this._miniprogramePlugin) {
         res = merge(res, await this._miniprogramePlugin.compile());
-      } else if (this._webPlugin) {
-        res = merge(res, {});
-      }
-
-      // 兼容逻辑，当没有资源部署时输出低码资源描述
-      if (!res.Resources) {
-        res = merge(res, {
-          Resources: {
-            Lowcode: {
-              Type: 'CloudBase::Lowcode',
-              Properties: {
-                Description: 'lowcode application',
-              },
-            },
-          },
-        });
-      }
-
-      if (
+      } else if (
         buildAsWebByBuildType(this._resolvedInputs.buildTypeList) &&
         this._webPlugin
       ) {
@@ -845,6 +840,14 @@ class LowCodePlugin extends Plugin {
             });
           })
         );
+      }
+
+      // 没有 resource 和 config 则不拉起扩展
+      if (
+        !Object.keys(res.Resources || {}).length &&
+        !Object.keys(res.Config || {}).length
+      ) {
+        this._skipInstallExt = true;
       }
 
       this.api.logger.info(
@@ -871,6 +874,24 @@ class LowCodePlugin extends Plugin {
   async deploy() {
     try {
       this._time(TIME_LABEL.DEPLOY);
+      if (this._skipInstallExt) {
+        try {
+          await this.api.cloudApi.tcbService.request(
+            'CloudBaseCIResultCallback',
+            {
+              CIID: this.api.ciId,
+              TraceId: this.api.ciId,
+              Status: 0,
+            }
+          );
+          this.api.logger.debug('回调云项目成功');
+        } catch (e) {
+          this.api.logger.error(
+            '通知云项目状态失败[CloudBaseCIResultCallback]',
+            e
+          );
+        }
+      }
 
       if (this._miniprogramePlugin) {
         await this._miniprogramePlugin.deploy();
@@ -1142,10 +1163,12 @@ class LowCodePlugin extends Plugin {
               Path: `/${page.id}`,
             })),
         };
-        this.api.cloudbaseManager.commonService('lowcode', '2021-01-08').call({
-          Action: 'CreateRouter',
-          Param: params,
-        });
+        await this.api.cloudbaseManager
+          .commonService('lowcode', '2021-01-08')
+          .call({
+            Action: 'CreateRouter',
+            Param: params,
+          });
         this.api.logger.info('门户路由成功');
       } catch (e) {
         this.api.logger.error('门户路由注册失败: ', e);
