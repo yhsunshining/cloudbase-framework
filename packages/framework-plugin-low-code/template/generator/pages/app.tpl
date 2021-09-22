@@ -106,6 +106,12 @@ export default function App() {
   useScrollTop()
   return (
     <div className="weapps-page weapps-page-<%= pageClass %>">
+      <style
+        type="text/css"
+        dangerouslySetInnerHTML={{
+          __html: `<%= pageStyleText %>`,
+        }}
+      />
       <AppRender
         virtualFields={virtualFields}
         componentSchema={componentSchema}

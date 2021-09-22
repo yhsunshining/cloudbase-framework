@@ -1,5 +1,3 @@
-import { transformSync } from '@babel/core';
-import * as prettier from 'prettier';
 import chalk from 'chalk';
 import {
   IDynamicValue,
@@ -22,45 +20,6 @@ import { walkThroughWidgets } from '../util/weapp';
 import NameMangler from '../util/name-mangler';
 
 const error = chalk.redBright;
-
-// export function generateDataBind4wxml(bind: IDynamicValue, wxmlDataPrefix) {
-//   if (bind.value == null) {
-//     console.warn(error('Bad wxml attribute bind'), bind)
-//   }
-
-//   let attrVal = ''
-//   const { type, value = '' } = bind
-//   if (type === PropBindType.state) {
-//     const isGlobalSt = value.startsWith('global.')
-//     const bindTarget = isGlobalSt
-//       ? wxmlDataPrefix.appState
-//       : wxmlDataPrefix.pageState
-//     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
-//   } else if (type === PropBindType.forItem) {
-//     attrVal = wxmlDataPrefix.forItem + value
-//   } else if (type === PropBindType.expression) {
-//     // FIXME using ast to replace code
-//     attrVal = value
-//       .replace(/\bapp.state./g, wxmlDataPrefix.appState + '.')
-//       .replace(/\$page.state./g, wxmlDataPrefix.pageState + '.')
-//       .replace(/\$comp.state./g, wxmlDataPrefix.pageState + '.')
-//       .replace(/\bapp.computed./g, wxmlDataPrefix.appComputed + '.')
-//       .replace(/\$page.computed./g, wxmlDataPrefix.pageComputed + '.')
-//       .replace(/\$comp.computed./g, wxmlDataPrefix.pageComputed + '.')
-//       .replace(/\$page.widgets./g, wxmlDataPrefix.widgetProp)
-//       .replace(/\bforItems./g, wxmlDataPrefix.forItem)
-//       .replace(/\$comp.props.data./g, '')
-//   } else if (type === PropBindType.computed) {
-//     const isGlobalSt = value.startsWith('global.')
-//     const bindTarget = isGlobalSt
-//       ? wxmlDataPrefix.appComputed
-//       : wxmlDataPrefix.pageComputed
-//     attrVal = value.replace(/^\$?\w+./, bindTarget + '.')
-//   } else if (type === PropBindType.prop) {
-//     attrVal = value
-//   }
-//   return `{{${transpileJsExpr(attrVal)}}}`
-// }
 
 interface INode {
   type: string;
@@ -311,8 +270,9 @@ export function generateWxml(
       listeners.forEach((l) => {
         const evtName = getMpEventName(l.trigger);
         const modifiers = l;
-        node.attributes[getMpEventAttr(evtName, modifiers, tagName)] =
-          getMpEventHanlderName(id, evtName, modifiers);
+        node.attributes[
+          getMpEventAttr(evtName, modifiers, tagName)
+        ] = getMpEventHanlderName(id, evtName, modifiers);
       });
 
       // 扩展组件配置
@@ -424,23 +384,6 @@ function xmlJsonSetCustomAttr(node, prop: string, value: string, comp) {
   if (prop === textContentPropName) {
     node.elements.push({ type: 'text', text: value });
   }
-}
-
-function transpileJsExpr(expr: string) {
-  let result = transformSync(expr, {
-    cwd: __dirname, // help to resolve babel plugin
-    plugins: [['@babel/plugin-transform-template-literals', { loose: true }]],
-  });
-
-  let code = result?.code || '';
-
-  code = prettier.format(code, {
-    semi: false,
-    singleQuote: true,
-    parser: 'babel',
-    printWidth: Number.MAX_SAFE_INTEGER,
-  });
-  return code.substr(0, code.length - 1);
 }
 
 const evtNameMap = {

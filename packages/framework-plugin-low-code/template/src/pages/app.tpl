@@ -104,6 +104,12 @@ export default function App() {
 
   return (
     <div className="weapps-page">
+      <style
+        type="text/css"
+        dangerouslySetInnerHTML={{
+          __html: `<%= pageStyleText %>`,
+        }}
+      />
     {weDaHasLogin && (
     <AppRender pageListenerInstances={pageListenerInstances}
                virtualFields={virtualFields}

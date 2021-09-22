@@ -88,7 +88,7 @@ export async function runGenerateCore(props: {
     ignoreInstall = false,
   } = props;
   const { domain } = appData.extra;
-  
+
   const allAppDataList = [appData].concat(subAppDataList);
 
   // 安装插件依赖
@@ -166,8 +166,10 @@ export async function runGenerateCore(props: {
  * @returns
  */
 function getGenericCompFromDep(dependencies: IMaterialItem[] = []) {
-  const genericCompMap: Record<string, IWeAppComponentInstance['genericComp']> =
-    {};
+  const genericCompMap: Record<
+    string,
+    IWeAppComponentInstance['genericComp']
+  > = {};
   dependencies.forEach((compLib) => {
     if (compLib.isComposite) {
       compLib.components.forEach((component) => {
@@ -219,19 +221,21 @@ export async function generateSinglePageJsxFile(
     'src',
     rootPath ? `packages/${rootPath}` : ''
   );
-  const { componentSchemaJson, data } = pageInstance;
+  const { componentSchemaJson, data, style } = pageInstance;
 
   const genericCompMap = getGenericCompFromDep(dependencies);
 
   // originComponentList 包含了引入的组件与抽象节点绑定的组件
-  const { originComponentList, originActionList } =
-    getOriginComponentAndActionList(
-      componentSchemaJson as IComponentSchemaJson,
-      dependencies,
-      [],
-      [],
-      genericCompMap
-    );
+  const {
+    originComponentList,
+    originActionList,
+  } = getOriginComponentAndActionList(
+    componentSchemaJson as IComponentSchemaJson,
+    dependencies,
+    [],
+    [],
+    genericCompMap
+  );
 
   // @ts-ignore
   const componentInfo = await getComponentsInfo(
@@ -251,6 +255,7 @@ export async function generateSinglePageJsxFile(
     cleanVarName,
     isSandbox,
     pageName: pageInstance.id,
+    pageStyleString: toCssText(toCssStyle(style), `body`),
     useComponents: originComponentList,
     useActions: originActionList.filter(
       (action) => action.type === ActionType.Material
@@ -286,8 +291,10 @@ export function getOriginComponentAndActionList(
   if (fieldSchema.isObject()) {
     const { 'x-props': xProps } = fieldSchema;
     if (xProps) {
-      const { listenerInstances, sourceKey } =
-        xProps as IComponentInstanceProps;
+      const {
+        listenerInstances,
+        sourceKey,
+      } = xProps as IComponentInstanceProps;
 
       // 属于抽象节点属性
       if (genericCompMap[sourceKey]) {
@@ -315,7 +322,7 @@ export function getOriginComponentAndActionList(
     const filedSchemaProperties = fieldSchema.properties || {};
     Object.keys(filedSchemaProperties).forEach((key) => {
       const schema = filedSchemaProperties[key];
-      const schemaJson = schema as unknown as IComponentSchemaJson;
+      const schemaJson = (schema as unknown) as IComponentSchemaJson;
       getOriginComponentAndActionList(
         schemaJson,
         dependencies,
@@ -345,8 +352,9 @@ export function pullActionToListByInstances(
   }
   listenerInstances.map((pageListenerInstance: IListenerInstance) => {
     const { sourceKey, type } = pageListenerInstance;
-    const { materialName, name, variableName } =
-      getMetaInfoBySourceKey(sourceKey);
+    const { materialName, name, variableName } = getMetaInfoBySourceKey(
+      sourceKey
+    );
     const material = fixedDependencies.find((m) => m.name === materialName);
     const actionKey = `${materialName}_${name}`;
     const isExistAction = originActionList.find(
@@ -371,8 +379,9 @@ export function pullComponentToListByInstance(
   originComponentList: IOriginKeyInfo[],
   fixedDependencies: IMaterialItem[]
 ) {
-  const { materialName, name, variableName } =
-    getMetaInfoBySourceKey(sourceKey);
+  const { materialName, name, variableName } = getMetaInfoBySourceKey(
+    sourceKey
+  );
   const componentKey = `${materialName}_${name}`;
   const isExistComponent = originComponentList.find(
     (item: IOriginKeyInfo) => item.key === componentKey
@@ -879,7 +888,10 @@ export async function writeLowCodeFiles(
         );
       }
       code = await processLess((themeCode?.code || defaultThemeCode) + code);
-      code = pageStyleString + os.EOL + code;
+      // 页面类的样式通过注入css标签的方式挂载到body上
+      // 此处不采用这种方式是为了防止 body.width 50% pagecontainer.width 50% 情况的出现
+      // 期望是半屏，结果四分之一屏了
+      // code = pageStyleString + os.EOL + code;
     }
 
     if (mod.type === 'theme') {
@@ -927,10 +939,10 @@ export async function generateCodeFromTpl(
   subAppDataList: IWebRuntimeAppData[],
   buildTypeList: IBuildType[],
   deployMode: DEPLOY_MODE,
-    /**
+  /**
    * 静态域名
    */
-  domain: string,
+  domain: string
 ) {
   const pageIds: string[] = [];
   const pageModules = {};
@@ -945,7 +957,7 @@ export async function generateCodeFromTpl(
     'app/global-api.js': {
       appId: appKey,
       subPackageName: rootPath,
-      domain: domain
+      domain: domain,
     },
     'app/handlers.js': {
       pageModules,

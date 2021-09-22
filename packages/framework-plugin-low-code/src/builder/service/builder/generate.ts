@@ -159,11 +159,13 @@ export async function generateSinglePageJsxFile(
     style: PageStyle,
     data,
   } = pageInstance;
-  const { originComponentList, originActionList } =
-    getOriginComponentAndActionList(
-      componentSchemaJson as IComponentSchemaJson,
-      fixedDependencies
-    );
+  const {
+    originComponentList,
+    originActionList,
+  } = getOriginComponentAndActionList(
+    componentSchemaJson as IComponentSchemaJson,
+    fixedDependencies
+  );
   const componentsMeta = await getComponentsInfo(appBuildDir, dependencies);
 
   const originPluginList = getOriginPluginList(pluginInstances, dependencies);
@@ -196,8 +198,9 @@ export async function generateSinglePageJsxFile(
   const entryImportStringArr = getEntryImportStringArr(
     Object.values(originEntryMap)
   );
-  const componentImportStringArr =
-    getComponentImportStringArr(originComponentList);
+  const componentImportStringArr = getComponentImportStringArr(
+    originComponentList
+  );
   const actionImportStringArr = getActionImportStringArr(originActionList);
   const pluginImportStringArr = getPluginImportStringArr(originPluginList);
   const { widgets, dataBinds, componentSchema } = getComponentSchemaString(
@@ -205,9 +208,16 @@ export async function generateSinglePageJsxFile(
     false,
     componentsMeta
   );
+
+  const pageStyleString = toCssText(
+    toCssStyle(PageStyle),
+    buildAsWebByBuildType(buildTypeList) ? 'body' : 'page'
+  );
+
   const templateData = {
     pageUUID: rootPath ? `${rootPath}/${pageInstance.id}` : pageInstance.id,
     pageName: pageInstance.id,
+    pageStyleText: pageStyleString,
     entryImports: entryImportStringArr.join(';\n'),
     componentImports: componentImportStringArr.join(';\n'),
     pluginImports: pluginImportStringArr.join(';\n'),
@@ -233,6 +243,7 @@ export async function generateSinglePageJsxFile(
       encoding: 'utf8',
     }
   );
+
   const jsx = tpl(template)(templateData);
   await fs.ensureFile(dest);
   await fs.writeFile(dest, jsx);
@@ -242,16 +253,10 @@ export async function generateSinglePageJsxFile(
     appBuildDir,
     `./pages/${pageInstance.id}/index.less`
   );
-  const pageStyleString = toCssText(
-    toCssStyle(PageStyle),
-    buildAsWebByBuildType(buildTypeList) ? 'body' : 'page'
-  );
+
   const prefixStyleImport = `@import "../../lowcode/${pageInstance.id}/style.less";`;
   await fs.ensureFile(pageStyleDest);
-  await fs.writeFile(
-    pageStyleDest,
-    prefixStyleImport + os.EOL + pageStyleString
-  );
+  await fs.writeFile(pageStyleDest, prefixStyleImport + os.EOL);
 }
 
 export function getOriginComponentAndActionList(
@@ -264,8 +269,10 @@ export function getOriginComponentAndActionList(
   if (fieldSchema.isObject()) {
     const { 'x-props': xProps } = fieldSchema;
     if (xProps) {
-      const { listenerInstances, sourceKey } =
-        xProps as IComponentInstanceProps;
+      const {
+        listenerInstances,
+        sourceKey,
+      } = xProps as IComponentInstanceProps;
       pullComponentToListByInstance(
         sourceKey,
         originComponentList,
@@ -281,7 +288,7 @@ export function getOriginComponentAndActionList(
     if (fieldSchema.properties) {
       for (let key in fieldSchema.properties) {
         const schema = fieldSchema.properties[key];
-        const schemaJson = schema as unknown as IComponentSchemaJson;
+        const schemaJson = (schema as unknown) as IComponentSchemaJson;
         getOriginComponentAndActionList(
           schemaJson,
           fixedDependencies,
@@ -305,8 +312,9 @@ export function getOriginPluginList(
 ) {
   pluginInstances.map((instance: IPluginInstance) => {
     const { sourceKey } = instance;
-    const { materialName, name, variableName } =
-      getMetaInfoBySourceKey(sourceKey);
+    const { materialName, name, variableName } = getMetaInfoBySourceKey(
+      sourceKey
+    );
     const pluginKey = `${materialName}_${name}`;
     const isExist = originPluginList.find(
       (item: any) => item.key === pluginKey
@@ -341,8 +349,9 @@ export function pullActionToListByInstances(
   }
   listenerInstances.map((pageListenerInstance: IListenerInstance) => {
     const { sourceKey, type } = pageListenerInstance;
-    const { materialName, name, variableName } =
-      getMetaInfoBySourceKey(sourceKey);
+    const { materialName, name, variableName } = getMetaInfoBySourceKey(
+      sourceKey
+    );
     const material = fixedDependencies.find((m) => m.name === materialName);
     const actionKey = `${materialName}_${name}`;
     const isExistAction = originActionList.find(
@@ -370,8 +379,9 @@ export function pullComponentToListByInstance(
     entry?: string;
   })[]
 ) {
-  const { materialName, name, variableName } =
-    getMetaInfoBySourceKey(sourceKey);
+  const { materialName, name, variableName } = getMetaInfoBySourceKey(
+    sourceKey
+  );
   const componentKey = `${materialName}_${name}`;
   const isExistComponent = originComponentList.find(
     (item: IOriginKeyInfo) => item.key === componentKey
@@ -398,7 +408,9 @@ export function getVirtualFieldsString(components: IOriginKeyInfo[]) {
     result[`${materialName}:${name}`] = `%%%(props) => <${_.upperFirst(
       variableName
     )} ${
-      isPlainProps ? '{...resolveComponentProps(props, 1)}' : '{...resolveComponentProps(props, 0)}'
+      isPlainProps
+        ? '{...resolveComponentProps(props, 1)}'
+        : '{...resolveComponentProps(props, 0)}'
     } pageVirtualFields={virtualFields}/>%%%`;
     return result;
   }, {});
@@ -434,7 +446,7 @@ export function getComponentSchemaString(
       sourceKey,
       styleBind,
       classNameListBind,
-      staticResourceAttribute = []
+      staticResourceAttribute = [],
     } = xProps;
     const componentInfo = componentsInfoMap[sourceKey];
     if ((componentInfo as any)?.events) {
@@ -456,7 +468,7 @@ export function getComponentSchemaString(
         widgetType: sourceKey,
         _parentId: isSlot(schema.parent as Schema)
           ? schema?.parent?.parent?.key
-          : schema?.parent?.key
+          : schema?.parent?.key,
       };
       if (dataBinds.length > 0) {
         compDataBinds[schema.key] = generateDataBinds(dataBinds, isComposite);
@@ -521,7 +533,10 @@ export function getComponentSchemaString(
         if (xPropsData.title === '') {
           delete xPropsData.title;
         }
-        if (xPropsData.staticResourceAttribute && xPropsData.staticResourceAttribute.length === 0) {
+        if (
+          xPropsData.staticResourceAttribute &&
+          xPropsData.staticResourceAttribute.length === 0
+        ) {
           delete xPropsData.staticResourceAttribute;
         }
         if (isEmptyObj(xPropsData)) {
@@ -787,8 +802,13 @@ export function getComponentImportStringArr(
   componentImportStringArr: string[] = []
 ) {
   components.map(async (component: IOriginKeyInfo) => {
-    const { name, materialName, materialVersion, variableName, entry } =
-      component;
+    const {
+      name,
+      materialName,
+      materialVersion,
+      variableName,
+      entry,
+    } = component;
     // const fullName = `${materialName}_${name}`
 
     // 这里将头字母变成大写是为了能在jsx中以<XXX/>去引用组件
@@ -849,8 +869,13 @@ export function pushActionToImportStringArr(
   listenerInstance: IOriginKeyInfo,
   actionImportStringArr: string[]
 ) {
-  const { name, materialName, materialVersion, variableName, entry } =
-    listenerInstance;
+  const {
+    name,
+    materialName,
+    materialVersion,
+    variableName,
+    entry,
+  } = listenerInstance;
 
   const componentsLibVariableName = camelcase(`${materialName}`);
 

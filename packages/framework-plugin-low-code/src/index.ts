@@ -874,24 +874,6 @@ class LowCodePlugin extends Plugin {
   async deploy() {
     try {
       this._time(TIME_LABEL.DEPLOY);
-      if (this._skipInstallExt) {
-        try {
-          await this.api.cloudApi.tcbService.request(
-            'CloudBaseCIResultCallback',
-            {
-              CIID: this.api.ciId,
-              TraceId: this.api.ciId,
-              Status: 0,
-            }
-          );
-          this.api.logger.debug('回调云项目成功');
-        } catch (e) {
-          this.api.logger.error(
-            '通知云项目状态失败[CloudBaseCIResultCallback]',
-            e
-          );
-        }
-      }
 
       if (this._miniprogramePlugin) {
         await this._miniprogramePlugin.deploy();
@@ -941,6 +923,25 @@ class LowCodePlugin extends Plugin {
         } catch (e) {
           this.api.logger.error('网站部署失败: ', e);
           throw e;
+        }
+      }
+
+      if (this._skipInstallExt) {
+        try {
+          await this.api.cloudApi.tcbService.request(
+            'CloudBaseCIResultCallback',
+            {
+              CIID: this.api.ciId,
+              TraceId: this.api.ciId,
+              Status: 0,
+            }
+          );
+          this.api.logger.debug('回调云项目成功');
+        } catch (e) {
+          this.api.logger.error(
+            '通知云项目状态失败[CloudBaseCIResultCallback]',
+            e
+          );
         }
       }
 
