@@ -67,6 +67,7 @@ export function emitEvent(trigger, listeners = [], args, scopeContext = {}) {
         );
         // 之前 invoke 内部catch 了错误，不会抛错
         // throw e
+        console.error(`Action error: [${listener.trigger}]`, e);
       }
     }
   });

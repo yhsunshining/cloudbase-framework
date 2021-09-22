@@ -255,7 +255,7 @@ export async function generateSinglePageJsxFile(
     cleanVarName,
     isSandbox,
     pageName: pageInstance.id,
-    pageStyleString: toCssText(toCssStyle(style), `body`),
+    pageStyleText: toCssText(toCssStyle(style), `body`),
     useComponents: originComponentList,
     useActions: originActionList.filter(
       (action) => action.type === ActionType.Material
