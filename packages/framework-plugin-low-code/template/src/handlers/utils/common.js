@@ -117,7 +117,7 @@ export function resolveComponentProps(props, isPlainProps) {
 
 export function getStaticResourceAttribute(staticUrl) {
   if (/^\//.test(staticUrl)) {
-    const { domain = '' } = app;
+    const { domain = '' } = window.app || {};
     const url = `https://${domain}${staticUrl}`;
     return url;
   }

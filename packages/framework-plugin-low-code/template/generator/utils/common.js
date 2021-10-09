@@ -3,7 +3,6 @@
  * @param {*} dataBinds
  * @param {*} forItems
  */
-import { app } from '../app/global-api';
 export function resolveDataBinds(
   dataBinds,
   forItems,
@@ -176,7 +175,7 @@ export function isScopeSlot(comp, slot) {
 
 export function getStaticResourceAttribute(staticUrl) {
   if (/^\//.test(staticUrl)) {
-    const { domain = '' } = app;
+    const { domain = '' } = window.app || {};
     const url = `https://${domain}${staticUrl}`;
     return url;
   }
