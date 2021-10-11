@@ -160,16 +160,18 @@ module.exports = function (options) {
             {
               loader: 'postcss-loader',
               options: {
-                ident: 'postcss',
-                plugins: (loader) => {
-                  return [
-                    require('postcss-pxtorem')({
-                      rootValue: 14,
-                      propList: ['*'],
-                      // todo
-                      selectorBlackList: ['.weui-picker__indicator'],
-                    }),
-                  ];
+                postcssOptions: {
+                  plugins: [
+                    [
+                      'postcss-pxtorem',
+                      {
+                        rootValue: 14,
+                        propList: ['*'],
+                        // todo
+                        selectorBlackList: ['.weui-picker__indicator'],
+                      },
+                    ],
+                  ],
                 },
               },
             },
@@ -195,15 +197,19 @@ module.exports = function (options) {
             {
               loader: 'postcss-loader',
               options: {
-                ident: 'postcss',
-                plugins: (loader) => [
-                  require('postcss-pxtorem')({
-                    rootValue: 14,
-                    propList: ['*'],
-                    // todo
-                    selectorBlackList: ['.weui-picker__indicator'],
-                  }),
-                ],
+                postcssOptions: {
+                  plugins: [
+                    [
+                      'postcss-pxtorem',
+                      {
+                        rootValue: 14,
+                        propList: ['*'],
+                        // todo
+                        selectorBlackList: ['.weui-picker__indicator'],
+                      },
+                    ],
+                  ],
+                },
               },
             },
             {
