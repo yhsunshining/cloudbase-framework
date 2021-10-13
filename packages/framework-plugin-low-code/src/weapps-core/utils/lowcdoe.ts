@@ -1,7 +1,7 @@
 import { ILowCodesModifyStatus, IWeAppData, ILockedPage } from '../types'
 export function evalExpression(code: string, runtime: any) {
   try {
-    return runtime.eval(`(function(forItems){let $for = forItems; return ${code};})`)
+    return runtime.eval(`(function(forItems){const $for = forItems; return ${code};})`)
   } catch (e) {
     runtime.console.error(`Error in expression:\t${code}\n\n`, e)
   }
