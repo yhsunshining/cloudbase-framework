@@ -746,6 +746,7 @@ export async function installDependencies(
   }
   // const isExist = fs.existsSync(path.join(targetDir, 'package-lock.json'))
 
+  fs.removeSync(path.join(targetDir, 'node_modules'));
   // 是否安装最新的
   let packageName = options.packageName || '';
   if (packageName && options.latest) {
