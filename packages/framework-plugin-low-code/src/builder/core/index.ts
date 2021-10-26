@@ -225,7 +225,7 @@ export async function buildWebApp(
       buildTypeList,
       deployMode,
       runtime,
-      false,
+      ignoreInstall,
       extraData,
       domain
     );
