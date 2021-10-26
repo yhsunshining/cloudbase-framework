@@ -536,14 +536,8 @@ export function getWebpackWebBuildParams(
       //     }
       //   : {}),
       path: path.resolve(appBuildDir, './preview'),
-      filename:
-        mode !== 'production'
-          ? '[name].bundle.js'
-          : '[name].[contenthash].bundle.js',
-      chunkFilename:
-        mode !== 'production'
-          ? '[name].chunk.js'
-          : '[name].[contenthash].chunk.js',
+      filename: '[name].[contenthash].bundle.js',
+      chunkFilename: '[name].[contenthash].chunk.js',
       publicPath:
         buildTypeList.includes(BuildType.APP) ||
         buildTypeList.includes(BuildType.ADMIN_PORTAL)
