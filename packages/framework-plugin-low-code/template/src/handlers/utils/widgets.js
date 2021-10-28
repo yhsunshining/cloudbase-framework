@@ -177,6 +177,7 @@ export function createWidgets(widgetProps, dataBinds, scopeContext = {}) {
               (currentWidget) => currentWidget.widgetType === type,
               includeInvisibleDescendants
             );
+          w.getOwnerWidget = () => null; // 寻找父widget，默认返回null， 后续会覆写
           // 提供一个给 Node 挂载 API 的方式
           untracked(() => {
             w.extends = (name, fnOrData) =>
