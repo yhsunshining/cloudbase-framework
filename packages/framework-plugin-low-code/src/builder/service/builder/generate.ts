@@ -25,6 +25,7 @@ import {
   PropBindType,
   getCompositedComponentClass,
   ICompositedComponent,
+  IBuildType,
 } from '../../../weapps-core';
 import {
   deepDealSchema,
@@ -42,6 +43,7 @@ import {
   defaultThemeCode,
 } from '../../util/style';
 import {
+  buildAsAdminPortalByBuildType,
   buildAsWebByBuildType,
   BuildType,
   IComponentsInfoMap,
@@ -1049,6 +1051,7 @@ export async function generateCodeFromTpl(
   appKey: string,
   rootPath,
   deployMode: DEPLOY_MODE,
+  buildTypeList: BuildType[],
   extraData
 ) {
   const pageIds: string[] = [];
@@ -1067,6 +1070,9 @@ export async function generateCodeFromTpl(
       appId: appKey,
       rootPath: rootPath,
     },
+    'store/computed.js': {
+      pageIds,
+    },
     'app/handlers.js': {
       pageModules,
     },
@@ -1079,9 +1085,7 @@ export async function generateCodeFromTpl(
         .filter((m) => m.type === 'normal-module' && m.name !== '____index____')
         .map((m) => m.name),
     },
-    'store/computed.js': {
-      pageIds,
-    },
+
     'datasources/config.js.tpl': {
       appID: appKey,
       envID: appData.envId,
@@ -1096,6 +1100,9 @@ export async function generateCodeFromTpl(
       datasetProfiles: JsonToStringWithVariableName(
         getDatasetProfiles(appData, [appData])
       ),
+    },
+    'handlers/utils/common.js': {
+      isAdminPortal: buildAsAdminPortalByBuildType(buildTypeList),
     },
   };
 

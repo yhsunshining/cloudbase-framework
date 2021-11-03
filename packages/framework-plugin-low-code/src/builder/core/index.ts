@@ -115,6 +115,7 @@ export async function buildWebApp(
         extraData,
         isMixMode,
         options: { isCrossAccount: !!isCrossAccount, resourceAppid },
+        buildTypeList,
       });
       // 如果是混合模式，则将特定的目录复制到工程下
       // 针对 app.json / package.json 则采用 merge 的操作

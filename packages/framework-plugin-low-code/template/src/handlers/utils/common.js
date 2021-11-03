@@ -128,9 +128,12 @@ export function getStaticResourceAttribute(staticUrl) {
  **/
 export async function checkAuth(app, appId, pageId) {
   app.showNavigationBarLoading();
-  const checkAuthResult = await app.cloud.checkAuth({
-    type: 'app',
-    extResourceId: `${appId}-${pageId}`,
+  const checkAuthResult = await app.cloud.callWedaApi({
+    action: 'DescribeResourcesPermission',
+    data: {
+      ResourceType: `<%= isAdminPortal? 'modelApp' : 'app'%>`,
+      ResourceIdList: [`${appId}-${pageId}`],
+    },
   });
   let isLogin = false;
   if (Array.isArray(checkAuthResult) && checkAuthResult.length > 0) {

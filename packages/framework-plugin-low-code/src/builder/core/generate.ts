@@ -93,7 +93,7 @@ export async function runGenerateCore(
       const globalApiContent = tpl(tplStr)({
         appId: appKey,
         subPackageName: rootPath,
-        domain: domain
+        domain: domain,
       });
       await fs.writeFile(
         path.join(dstDir, 'app/global-api.js'),
@@ -115,6 +115,7 @@ export async function runGenerateCore(
         appKey,
         rootPath,
         deployMode,
+        buildTypeList,
         extraData
       );
       await writeLowCodeFiles(data, dstDir);

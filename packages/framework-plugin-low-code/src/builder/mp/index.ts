@@ -39,7 +39,12 @@ import {
 } from '../../utils/dataSource';
 
 import { DEPLOY_MODE } from '../../types';
-import { IAppUsedComp, IUsedComps } from '../types/common';
+import {
+  buildAsAdminPortalByBuildType,
+  BuildType,
+  IAppUsedComp,
+  IUsedComps,
+} from '../types/common';
 import { add, get } from 'lodash';
 import * as junk from '../util/junk';
 import pt from 'path';
@@ -61,6 +66,7 @@ export async function generateWxMp({
   extraData,
   isMixMode,
   options,
+  buildTypeList,
 }: {
   weapps: IWeAppData[];
   projDir: string;
@@ -76,6 +82,7 @@ export async function generateWxMp({
     resourceAppid?: string;
     isCrossAccount: boolean;
   };
+  buildTypeList: BuildType[];
 }): Promise<{ miniprogramRoot: string }> {
   const operationLabel = em('Wexin MiniProgram Generated');
   console.time(operationLabel);
@@ -152,7 +159,9 @@ export async function generateWxMp({
     'common/utils.wxs': {
       domain: domain,
     },
-    'common/util.js': {},
+    'common/util.js': {
+      isAdminPortal: buildAsAdminPortalByBuildType(buildTypeList as any),
+    },
     'common/widget.js': {},
     'common/url.js': {},
     'common/weapp-sdk.js': {},
