@@ -62,6 +62,9 @@ export function isScopeSlot(comp, slot) {
 }
 
 export function _isMobile() {
+  if (window.matchMedia) {
+    return Boolean(window.matchMedia('(max-width: 1024px)')?.matches);
+  }
   let check = false;
   (function (a) {
     if (
