@@ -43,6 +43,7 @@ import { appTemplateDir } from './builder/config';
  */
 
 export const DIST_PATH = './dist';
+export const PERSISTENT_DEPENDIENCES_MAP = {};
 const DEBUG_PATH = './debug';
 const QRCODE_PATH = './qrcode.jpg';
 const LOG_FILE = 'build.log';
@@ -268,8 +269,8 @@ class LowCodePlugin extends Plugin {
         );
 
         if (cals.extra?.miniprogramPlugins) {
-          this._resolvedInputs.mainAppSerializeData.miniprogramPlugins = cals.extra.miniprogramPlugins.map(
-            (plugin) => {
+          this._resolvedInputs.mainAppSerializeData.miniprogramPlugins =
+            cals.extra.miniprogramPlugins.map((plugin) => {
               return {
                 ...plugin,
                 componentConfigs:
@@ -304,13 +305,11 @@ class LowCodePlugin extends Plugin {
                     return processedCompoennt;
                   }) || [],
               };
-            }
-          );
+            });
         }
       } else {
-        this._resolvedInputs.mainAppSerializeData = processPkgUrlCals2WeappData(
-          cals
-        );
+        this._resolvedInputs.mainAppSerializeData =
+          processPkgUrlCals2WeappData(cals);
       }
     }
 
@@ -342,11 +341,8 @@ class LowCodePlugin extends Plugin {
       }
     } else {
       // 小程序构建
-      const {
-        mpAppId,
-        mpDeployPrivateKey,
-        deployOptions,
-      } = this._resolvedInputs;
+      const { mpAppId, mpDeployPrivateKey, deployOptions } =
+        this._resolvedInputs;
 
       if (deployOptions.mpAppId === undefined) {
         deployOptions.mpAppId = mpAppId;
@@ -657,8 +653,11 @@ class LowCodePlugin extends Plugin {
                 try {
                   const { appConfig = {} } = mainAppSerializeData;
                   const { publicPath = '' } = appConfig?.window || {};
-                  const { outDir = '', timeElapsed = 0, plugins } =
-                    result || {};
+                  const {
+                    outDir = '',
+                    timeElapsed = 0,
+                    plugins,
+                  } = result || {};
 
                   if (buildTypeList.includes(BuildType.MP)) {
                     miniAppDir = outDir;
@@ -887,10 +886,15 @@ class LowCodePlugin extends Plugin {
         }
 
         try {
+          const { deployOptions, appId } = this._resolvedInputs;
+          const isPreview = deployOptions?.mode === DEPLOY_MODE.PREVIEW;
+
           const link = buildAsAdminPortalByBuildType(
             this._resolvedInputs.buildTypeList
           )
-            ? `https://${this._website.cdnDomain}/adminportal/`
+            ? `https://${this._website.cdnDomain}/adminportal/#/app/${
+                isPreview ? `${appId}-preview` : appId
+              }?envType=${isPreview ? 'preivew' : 'prod'}`
             : `https://${
                 this._website.cdnDomain +
                 this._webPlugin.resolvedInputs.cloudPath
@@ -962,6 +966,7 @@ class LowCodePlugin extends Plugin {
 
       if (this._resolvedInputs.runtime === RUNTIME.CI) {
         await this._handleCIProduct();
+        await this._postPersistentDependiences();
       }
     }
     return;
@@ -1095,6 +1100,83 @@ class LowCodePlugin extends Plugin {
     }
   }
 
+  async _postPersistentDependiences() {
+    let promises: any = [];
+    let { credential } = this._resolvedInputs;
+    let cos = credential?.token
+      ? new COS({
+          getAuthorization: function (options, callback) {
+            callback({
+              TmpSecretId: credential?.secretId || '',
+              TmpSecretKey: credential?.secretKey || '',
+              XCosSecurityToken: credential?.token || '',
+              ExpiredTime: Math.floor(Date.now() / 1000) + 600,
+              StartTime: Math.floor(Date.now() / 1000),
+            } as any);
+          },
+        })
+      : new COS({
+          SecretId: credential?.secretId,
+          SecretKey: credential?.secretKey,
+        });
+
+    promises = Object.keys(PERSISTENT_DEPENDIENCES_MAP).map(async (key) => {
+      let meta = PERSISTENT_DEPENDIENCES_MAP[key];
+      const zipPath = path.join(
+        this.api.projectPath,
+        `${meta.name}@${meta.version}.zip`
+      );
+      try {
+        await this._zipDir(meta.source, zipPath);
+        const matched = meta.downloadUrl.match(
+          /^https?:\/\/(.*?)\.cos\.(.*?)\.myqcloud.com\/(.*)$/
+        );
+        if (matched) {
+          const [_, bucket, region, cosKey] = matched;
+          this.api.logger.debug(`解析持久化地址`, matched);
+          if (bucket && region && cosKey) {
+            console.log({
+              Bucket: bucket,
+              Region: region,
+              Key: cosKey,
+              Body: fs.createReadStream(zipPath),
+            });
+            await new Promise((resolve, reject) => {
+              cos.putObject(
+                {
+                  Bucket: bucket,
+                  Region: region,
+                  Key: cosKey,
+                  Body: fs.createReadStream(zipPath),
+                },
+                function (err, data) {
+                  if (err) {
+                    reject(err);
+                  } else {
+                    resolve(data);
+                  }
+                }
+              );
+            });
+
+            this.api.logger.error(
+              `持久化组件库${meta.name}@${meta.version}成功`
+            );
+          }
+        }
+      } catch (e) {
+        this.api.logger.error(
+          `持久化组件库${meta.name}@${meta.version}失败：`,
+          e
+        );
+      }
+      return true;
+    });
+
+    this.api.logger.info(`开始持久化组件库...`);
+    await Promise.all(promises);
+  }
+
   async _debugInfo() {
     fs.ensureDirSync(path.resolve(this.api.projectPath, DEBUG_PATH));
     let {
@@ -1135,12 +1217,8 @@ class LowCodePlugin extends Plugin {
   }
 
   async _postProcessAdminPortal() {
-    const {
-      appId,
-      buildTypeList,
-      mainAppSerializeData,
-      deployOptions,
-    } = this._resolvedInputs;
+    const { appId, buildTypeList, mainAppSerializeData, deployOptions } =
+      this._resolvedInputs;
     if (buildAsAdminPortalByBuildType(buildTypeList)) {
       try {
         const isPreview = deployOptions?.mode === DEPLOY_MODE.PREVIEW;
@@ -1193,9 +1271,8 @@ class LowCodePlugin extends Plugin {
           : '';
       if (this._website) {
         if (!historyType || historyType === HISTORY_TYPE.BROWSER) {
-          let {
-            WebsiteConfiguration,
-          } = await hostingService.getWebsiteConfig();
+          let { WebsiteConfiguration } =
+            await hostingService.getWebsiteConfig();
           let path = this._getWebRootPath();
           let rules = (WebsiteConfiguration.RoutingRules || []).reduce(
             (arr, rule) => {

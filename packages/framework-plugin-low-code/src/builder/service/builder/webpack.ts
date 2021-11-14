@@ -36,6 +36,7 @@ import {
 import { appTemplateDir } from '../../config';
 import { notice } from '../../util/console';
 import { HISTORY_TYPE, RUNTIME } from '../../../types';
+import { PERSISTENT_DEPENDIENCES_MAP } from '../../../index';
 const yarnExists = commandExistsSync('yarn');
 
 export interface IMpConfig {
@@ -679,11 +680,19 @@ export async function downloadAndInstallDependencies(
         );
         return;
       }
+      console.log(`下载${name}@${version} ...`);
       await downloadDependencies(targetDir, srcZipUrl);
+      console.log(`处理${name}@${version}依赖 ...`);
       await installDependencies(targetDir, {
         ...installOptions,
-        isDependence: true,
-        ignoreInstall: isOfficialComponentLib(name, version),
+        ignoreInstall:
+          isOfficialComponentLib(name, version) ||
+          installOptions?.ignoreInstall,
+        dependenceMeta: {
+          name,
+          version,
+          downloadUrl: srcZipUrl,
+        },
       });
       dependenciesMap.set(targetDir, true);
     })
@@ -705,9 +714,30 @@ export async function downloadDependencies(
       responseType: 'stream',
       // proxy: false
     });
-
     await fs.ensureDir(targetDir);
+    // let download = spawn(
+    //   'curl',
+    //   ['-fsSL', srcZipUrl, '-o', `${targetDir}.zip`],
+    //   {
+    //     stdio: 'inherit',
+    //   }
+    // );
+    // await promisifyProcess(download);
+
+    const tag = `uncompress ${srcZipUrl}`;
+    console.time(tag);
     await compressing.zip.uncompress(response.data, targetDir);
+
+    // let unzip = spawn(
+    //   'unzip',
+    //   ['-q', '-o', `${targetDir}.zip`, '-d', targetDir],
+    //   {
+    //     stdio: 'inherit',
+    //   }
+    // );
+    // await promisifyProcess(unzip);
+    // await fs.remove(`${targetDir}.zip`);
+    console.timeEnd(tag);
   } catch (e) {
     console.error('Fail to download weapps material package ' + srcZipUrl, e);
     throw e;
@@ -724,7 +754,11 @@ export interface IInstallOpts {
   latest?: boolean;
   runtime?: RUNTIME;
   ignoreInstall?: boolean;
-  isDependence?: boolean;
+  dependenceMeta?: {
+    name: string;
+    version: string;
+    downloadUrl: string;
+  };
 }
 // TODO use yarn if installed
 export async function installDependencies(
@@ -736,8 +770,10 @@ export async function installDependencies(
     fs.existsSync(path.join(targetDir, 'node_modules'))
   ) {
     console.log('ignore install dependencies in ' + targetDir);
+
     return;
   }
+
   // const isExist = fs.existsSync(path.join(targetDir, 'package-lock.json'))
 
   // 是否安装最新的
@@ -758,8 +794,15 @@ export async function installDependencies(
     registry,
   ];
 
-  if (options?.isDependence) {
+  if (options?.dependenceMeta) {
     npmOptions.push('--production');
+    const { name, version } = options.dependenceMeta;
+    if (!fs.existsSync(path.join(targetDir, 'node_modules'))) {
+      PERSISTENT_DEPENDIENCES_MAP[`${name}@${version}`] = {
+        ...options?.dependenceMeta,
+        source: targetDir,
+      };
+    }
   }
 
   let installProcess;
@@ -782,6 +825,10 @@ export async function installDependencies(
   installProcess.on('exit', () => console.timeEnd(operationTag));
 
   await promisifyProcess(installProcess);
+  try {
+    await fs.remove(path.join(path.join(targetDir, 'package-lock.json')));
+    await fs.remove(path.join(path.join(targetDir, 'yarn.lock')));
+  } catch (e) {}
 }
 
 export function getMaterialNodeModulesPathList(

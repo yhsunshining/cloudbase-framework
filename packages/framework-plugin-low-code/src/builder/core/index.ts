@@ -1,8 +1,4 @@
-import {
-  extractAndRemoveKbConfig,
-  installDependencies,
-  IInstallOpts,
-} from '../service/builder/webpack';
+import { extractAndRemoveKbConfig } from '../service/builder/webpack';
 import { getCompileDirs } from '../service/builder';
 import {
   IMaterialItem,
@@ -255,10 +251,6 @@ export async function buildWebApp(
 
     return appBuildDir;
   }
-}
-
-export function installDep(dir, opts: IInstallOpts = {}) {
-  return installDependencies(dir, opts);
 }
 
 export default buildWebApp;

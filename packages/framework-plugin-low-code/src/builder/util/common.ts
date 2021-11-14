@@ -237,9 +237,7 @@ export async function writeLibCommonRes2file(
   );
 }
 
-export function readComponentLibMata(
-  libDir
-): {
+export function readComponentLibMata(libDir): {
   version?: string;
   schemaVersion?: string;
   styles?: IMaterialItem['styles'];
@@ -281,9 +279,6 @@ export function readComponentLibMata(
 const _OFFICIAL_COMPONENT_LIB = {
   'gsd-h5-react': ['0.0.61', '0.0.70'],
   CLOUDBASE_BUSSINESS: ['1627377179261'],
-  crm_basis: ['*', '1629778630449'],
-  tea_basis: ['*', '1629209320310'],
-  tea_shop: ['*'],
 };
 
 export function isOfficialComponentLib(name, version): boolean {

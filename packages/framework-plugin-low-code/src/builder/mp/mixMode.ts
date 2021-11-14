@@ -7,12 +7,12 @@ import {
   mergePages,
   mergePackageDependiences,
 } from '../util/mp';
-import { installDep } from '../core';
 import { getPluginType } from '../service/builder/plugin';
 import { IAppUsedComp } from '../types/common';
 import _ from 'lodash';
 import chalk from 'chalk';
 import { cleanDir, removeFile } from '../util/generateFiles';
+import { installDependencies } from '../service/builder/webpack';
 
 // 将 BUILD 目录往混合模式移动
 export async function handleMixMode({
@@ -32,7 +32,7 @@ export async function handleMixMode({
 
   // await handleAppJson()
   // await handlePkgJson()
-  await installDep(miniprogramRoot);
+  await installDependencies(miniprogramRoot);
   await handlePlugins();
 
   // 复制框架公用内容

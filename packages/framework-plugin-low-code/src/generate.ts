@@ -1,8 +1,8 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { IPlugin } from './weapps-core';
-import { installDep } from './builder/core';
 import { uniq } from 'lodash';
+import { installDependencies } from './builder/service/builder/webpack';
 
 export async function handleMpPlugins(
   plugins: IPlugin[] = [],
@@ -34,7 +34,7 @@ export async function handleMpPlugins(
   fs.writeJsonSync(mpBuildPkgJsonPath, buildPkgJson, { spaces: 2 });
 
   console.log('小程序安装依赖', appBuildMpDir);
-  await installDep(appBuildMpDir);
+  await installDependencies(appBuildMpDir);
 }
 
 function mergeSubPackages(baseAppJsonPath: string, mergeAppJsonPath: string) {
