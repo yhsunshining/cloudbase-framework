@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useCallback, createContext, useRef } from 'react';
+import { useContext, useCallback, createContext, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent } from '../actionHandler/utils';
 import { translateStyleToRem } from '@tcwd/weapps-core';
@@ -19,7 +19,12 @@ export const CompRenderer = observer(function (props) {
     codeContext,
     scopeContext,
     emitEvents = [],
+    componentSchema = {},
   } = props;
+
+  const [blockIndex, setBlockIndex] = useState();
+  const indexRef = useRef();
+  indexRef.current = blockIndex;
 
   const isInComposite = !!props.codeContext;
   // 判断 widgets 是从 page 来的，还是组件来的
@@ -46,8 +51,12 @@ export const CompRenderer = observer(function (props) {
   const parentForItems = useContext(ForContext);
 
   const emit = useCallback(
-    (trigger, event, forItems, scopeContext) => {
-      const listeners = listenerInstances;
+    (trigger, event, forItems, scopeContext, fieldData) => {
+      const listeners = indexRef.current
+      ? fieldData.selectableBlocks[indexRef.current].selectableBlock[
+          'x-props'
+        ].listenerInstances
+      : listenerInstances;
       event = { detail: event, name: trigger };
       forItems = {
         ...forItems,
@@ -86,6 +95,17 @@ export const CompRenderer = observer(function (props) {
     return componentProps;
   }
 
+    // 选区的预览的click事件
+    const onCustomEvent = (e, index) => {
+      if (index) {
+        setBlockIndex(index);
+      }
+    };
+
+    const selectableBlockEvents = {
+      onCustomEvent,
+    };
+
   // For循环渲染
   let forList;
   try {
@@ -122,7 +142,7 @@ export const CompRenderer = observer(function (props) {
         set(forItemData, slotProp, slots[slotProp]);
       });
       const emitWithForItems = (trigger, evt) =>
-        emit(trigger, evt, forItems, scopeContext);
+        emit(trigger, evt, forItems, scopeContext, forItemData);
       delete forItemData.style;
 
       // 获取当前元素的 ref
@@ -139,11 +159,17 @@ export const CompRenderer = observer(function (props) {
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
-            data={forItemData}
+            data={{ ...forItemData, selectableBlockEvents }}
             id={compId}
             {...componentProps}
             emit={emitWithForItems}
-            events={emitEvents}
+            events={
+              indexRef.current
+                ? componentSchema?.selectableBlock?.emitEvents?.map(
+                    (item) => item.eventName
+                  ) || []
+                : emitEvents
+            }
             compositeParent={codeContext}
             forIndexes={forItemsIndexes}
             $node={currentWidget}
@@ -162,7 +188,7 @@ export const CompRenderer = observer(function (props) {
     scopeContext
   );
   const emitWithForItems = (trigger, evt) =>
-    emit(trigger, evt, parentForItems, scopeContext);
+    emit(trigger, evt, parentForItems, scopeContext, fieldData);
 
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
@@ -193,11 +219,17 @@ export const CompRenderer = observer(function (props) {
   });
   return (
     <Field
-      data={fieldData}
+      data={{ ...fieldData, selectableBlockEvents }}
       id={compId}
       {...componentProps}
       emit={emitWithForItems}
-      events={emitEvents}
+      events={
+        indexRef.current
+          ? componentSchema?.selectableBlock?.emitEvents?.map(
+              (item) => item.eventName
+            ) || []
+          : emitEvents
+      }
       compositeParent={codeContext}
       forIndexes={forIndexes}
       $node={currentWidget}
