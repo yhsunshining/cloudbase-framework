@@ -436,6 +436,9 @@ export function getComponentSchemaString(
     } = xProps;
 
     const componentInfo = componentsInfoMap[sourceKey];
+    if ((componentInfo as any)?.selectableBlock) {
+      schema['selectableBlock'] = componentInfo['selectableBlock'];
+    }
     if ((componentInfo as any)?.events) {
       schema['emitEvents'] = (componentInfo as any)?.events.map(
         (item) => item.name
@@ -493,6 +496,20 @@ export function getComponentSchemaString(
       delete schema.properties;
     }
     delete schema.type;
+
+    if (compWidgets[schema.key!]?.selectableBlocks) {
+      const blocks = compWidgets[schema.key!].selectableBlocks;
+      blocks.map((block) => {
+        const blockInstance =
+          block?.selectableBlock &&
+          block?.selectableBlock['x-props']?.listenerInstances;
+        if (blockInstance) {
+          block.selectableBlock['x-props'].listenerInstances =
+            generateListnerInstances(blockInstance, isComposite);
+        }
+        return block;
+      });
+    }
 
     if (xProps) {
       // 如果是复合组件的根节点，则补充 wrapperClass

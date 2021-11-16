@@ -36,7 +36,7 @@ export function AppRender(props) {
     return null;
   }
 
-  const preClassName = useRef(); 
+  const preClassName = useRef();
 
   // wrapperClass
   const containerEl = Object.values(properties)[0];
@@ -76,7 +76,7 @@ export function AppRender(props) {
     const child = properties[key];
     if (!child['x-props'] && child.properties) {
       slots[key] = isScopeSlot(componentSchema, key) ? (
-        (props) => { 
+        (props) => {
           let clonedScopeContext = cloneDeep(scopeContext);
           lodashSet(
             clonedScopeContext,
@@ -112,6 +112,7 @@ export function AppRender(props) {
       id={componentSchema.key}
       xProps={xProps}
       emitEvents={componentSchema.emitEvents || []}
+      componentSchema={componentSchema}
       virtualFields={virtualFields}
       slots={slots}
       codeContext={codeContext}

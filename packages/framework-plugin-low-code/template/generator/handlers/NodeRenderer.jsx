@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useCallback, createContext } from 'react';
+import { useContext, useCallback, createContext, useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent, translateStyleToRem, checkVisible } from '../utils';
 import { get, set } from 'lodash';
@@ -17,7 +17,13 @@ export const CompRenderer = observer(function (props) {
     scopeContext = {},
     genericComp = {},
     emitEvents = [],
+    componentSchema = {},
   } = props;
+
+  const [blockIndex, setBlockIndex] = useState();
+  const indexRef = useRef();
+  indexRef.current = blockIndex;
+
   const isInComposite = !!codeContext.$WEAPPS_COMP;
   // 判断 widgets 是从 page 来的，还是组件来的
   const widgetsData = !isInComposite
@@ -47,8 +53,12 @@ export const CompRenderer = observer(function (props) {
 
   // 最终用于执行的事件函数
   const emit = useCallback(
-    (trigger, eventData, forItems, domEvent, scopeContext) => {
-      const listeners = listenerInstances;
+    (trigger, eventData, forItems, domEvent, scopeContext, fieldData) => {
+      const listeners = indexRef.current
+        ? fieldData.selectableBlocks[indexRef.current].selectableBlock[
+            'x-props'
+          ].listenerInstances
+        : listenerInstances;
       const event = {
         detail: eventData,
         name: trigger,
@@ -95,6 +105,17 @@ export const CompRenderer = observer(function (props) {
     return componentProps;
   }
 
+  // 选区的预览的click事件
+  const onCustomEvent = (e, index) => {
+    if (index) {
+      setBlockIndex(index);
+    }
+  };
+
+  const selectableBlockEvents = {
+    onCustomEvent,
+  };
+
   // For循环渲染
   let forList;
   try {
@@ -128,7 +149,7 @@ export const CompRenderer = observer(function (props) {
         set(forItemData, slotProp, slots[slotProp]);
       });
       const emitWithForItems = (trigger, eventData, domEvent) =>
-        emit(trigger, eventData, forItems, domEvent, scopeContext);
+        emit(trigger, eventData, forItems, domEvent, scopeContext, forItemData);
       delete forItemData.style;
 
       // 获取当前元素的 ref
@@ -139,7 +160,7 @@ export const CompRenderer = observer(function (props) {
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
-            data={forItemData}
+            data={{ ...forItemData, selectableBlockEvents }}
             id={compId}
             {...getSafeComponentProps({
               style: forItemStyle,
@@ -147,7 +168,13 @@ export const CompRenderer = observer(function (props) {
               staticResourceAttribute,
             })}
             emit={emitWithForItems}
-            events={emitEvents}
+            events={
+              indexRef.current
+                ? componentSchema?.selectableBlock?.emitEvents?.map(
+                    (item) => item.eventName
+                  ) || []
+                : emitEvents
+            }
             compositeParent={codeContext}
             forIndexes={forItemsIndexes}
             $node={currentWidget}
@@ -166,7 +193,7 @@ export const CompRenderer = observer(function (props) {
     scopeContext
   );
   const emitWithFiedle = (trigger, eventData, domEvent) =>
-    emit(trigger, eventData, parentForItems, domEvent, scopeContext);
+    emit(trigger, eventData, parentForItems, domEvent, scopeContext, fieldData);
 
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
@@ -192,7 +219,7 @@ export const CompRenderer = observer(function (props) {
 
   return (
     <Field
-      data={fieldData}
+      data={{ ...fieldData, selectableBlockEvents }}
       id={compId}
       {...getSafeComponentProps({
         style: finalStyle,
@@ -200,7 +227,13 @@ export const CompRenderer = observer(function (props) {
         staticResourceAttribute,
       })}
       emit={emitWithFiedle}
-      events={emitEvents}
+      events={
+        indexRef.current
+          ? componentSchema?.selectableBlock?.emitEvents?.map(
+              (item) => item.eventName
+            ) || []
+          : emitEvents
+      }
       compositeParent={codeContext}
       forIndexes={forIndexes}
       $node={currentWidget}
