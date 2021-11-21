@@ -37,6 +37,9 @@ import { appTemplateDir } from '../../config';
 import { notice } from '../../util/console';
 import { HISTORY_TYPE, RUNTIME } from '../../../types';
 import { PERSISTENT_DEPENDIENCES_MAP } from '../../../index';
+import { getCompileDirs } from './index';
+import * as junk from '../../util/junk';
+
 const yarnExists = commandExistsSync('yarn');
 
 export interface IMpConfig {
@@ -680,8 +683,45 @@ export async function downloadAndInstallDependencies(
         );
         return;
       }
-      console.log(`下载${name}@${version} ...`);
-      await downloadDependencies(targetDir, srcZipUrl);
+
+      const matched = srcZipUrl.match(/\/(cg-.*?)\//);
+      const { appBuildDir } = getCompileDirs('app');
+      if (
+        matched &&
+        matched[1] &&
+        fs.existsSync(
+          path.resolve(
+            appBuildDir,
+            `.component_cache/web/${matched[1]}@${version}`
+          )
+        )
+      ) {
+        console.log(`link ${name}@${version} ...`);
+        await fs.symlink(
+          path.resolve(
+            appBuildDir,
+            `.component_cache/web/${matched[1]}@${version}`
+          ),
+          targetDir,
+          'dir'
+        );
+        // await fs.copy(
+        //   path.resolve(
+        //     appBuildDir,
+        //     `.component_cache/web/${matched[1]}@${version}`
+        //   ),
+        //   targetDir,
+        //   {
+        //     filter: function (src, dest) {
+        //       const path = src.split('/');
+        //       return !junk.is(path[path.length - 1]);
+        //     },
+        //   }
+        // );
+      } else {
+        console.log(`下载${name}@${version} ...`);
+        await downloadDependencies(targetDir, srcZipUrl);
+      }
       console.log(`处理${name}@${version}依赖 ...`);
       await installDependencies(targetDir, {
         ...installOptions,

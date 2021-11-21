@@ -564,50 +564,8 @@ class LowCodePlugin extends Plugin {
       });
     }
     try {
-      const HostingProvider = this.api.resourceProviders?.hosting;
       const envId = this.api.envId;
-      async function getHostingInfo(envId) {
-        let [website, hostingDatas] = await HostingProvider.getHostingInfo({
-          envId: envId,
-        }).then(({ data: hostingDatas }) => {
-          let website = hostingDatas[0];
-          return [website, hostingDatas];
-        });
-        if (!website || website?.status !== 'online') {
-          await new Promise((resolve) => {
-            setTimeout(() => {
-              resolve(true);
-            }, 8 * 1000);
-          });
-          return getHostingInfo(envId);
-        } else {
-          return [website, hostingDatas];
-        }
-      }
-      let timeout: any = null;
-      let [website, hostingDatas] = await Promise.race([
-        new Promise((resolve) => {
-          timeout = setTimeout(() => {
-            resolve([]);
-          }, 120 * 1000);
-        }),
-        this._webPlugin?.website
-          ? Promise.resolve([this._webPlugin.website])
-          : getHostingInfo(envId),
-      ]);
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-
-      if (HostingProvider) {
-        if (!hostingDatas) {
-          hostingDatas = (
-            await HostingProvider.getHostingInfo({ envId: envId })
-          ).data;
-        }
-        let domains = hostingDatas.map((item) => item.cdnDomain);
-        this._domain = domains; //domains[0].cdnDomain;
-      }
+      let [website, hostingDatas] = await this._getHostingInfo(envId, true);
       this._website = website;
     } catch (e) {
       this.api.logger.error('获取静态托管失败: ', e);
@@ -646,7 +604,8 @@ class LowCodePlugin extends Plugin {
                 this._resolvedInputs.mpAppId !==
                 this._resolvedInputs.deployOptions?.targetMpAppId,
               resourceAppid: this._resolvedInputs.mpAppId,
-              domain: this._domain[0],
+              domain:
+                this._website?.cdnDomain || mainAppSerializeData.extra?.domain,
             },
             async (err: any, result) => {
               if (!err) {
@@ -878,6 +837,27 @@ class LowCodePlugin extends Plugin {
         await this._miniprogramePlugin.deploy();
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
+        try {
+          const HostingProvider = this.api.resourceProviders?.hosting;
+          const envId = this.api.envId;
+          let [website, hostingDatas] = await this._getHostingInfoTask(
+            envId,
+            false
+          );
+          if (HostingProvider) {
+            if (!hostingDatas) {
+              hostingDatas = (
+                await HostingProvider.getHostingInfo({ envId: envId })
+              ).data;
+            }
+            let domains = hostingDatas.map((item) => item.cdnDomain);
+            this._domain = domains; //domains[0].cdnDomain;
+          }
+          this._website = website;
+        } catch (e) {
+          this.api.logger.error('获取静态托管失败: ', e);
+          throw e;
+        }
 
         if (buildAsAdminPortalByBuildType(this._resolvedInputs.buildTypeList)) {
           await this._postProcessAdminPortal();
@@ -970,6 +950,45 @@ class LowCodePlugin extends Plugin {
       }
     }
     return;
+  }
+
+  async _getHostingInfoTask(envId, loose: boolean = false) {
+    let timeout: any = null;
+    let [website, hostingDatas] = await Promise.race([
+      new Promise((resolve) => {
+        timeout = setTimeout(() => {
+          resolve([]);
+        }, 120 * 1000);
+      }),
+      this._webPlugin?.website
+        ? Promise.resolve([this._webPlugin.website])
+        : this._getHostingInfo(envId, loose),
+    ]);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    return [website, hostingDatas];
+  }
+
+  async _getHostingInfo(envId, loose: boolean = false) {
+    const HostingProvider = this.api.resourceProviders?.hosting;
+    let [website, hostingDatas] = await HostingProvider.getHostingInfo({
+      envId: envId,
+    }).then(({ data: hostingDatas }) => {
+      let website = hostingDatas[0];
+      return [website, hostingDatas];
+    });
+    // 此处采取松校验
+    if (!website || (loose ? false : website?.status !== 'online')) {
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(true);
+        }, 8 * 1000);
+      });
+      return this._getHostingInfo(envId);
+    } else {
+      return [website, hostingDatas];
+    }
   }
 
   _checkIsVersion(version) {
