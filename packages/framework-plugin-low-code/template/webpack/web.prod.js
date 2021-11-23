@@ -233,16 +233,18 @@ module.exports = function (options) {
       concatenateModules: true,
       noEmitOnErrors: true,
       splitChunks: {
+        maxSize: isDevelopment ? undefined : 3000000,
         cacheGroups: {
           base: {
             test: /(react|react-dom|react-router|react-router-dom|mobx|mobx-react-lite|@cloudbase\/js-sdk)/,
             chunks: 'all',
-            priority: 100, //优先级
+            minSize: isDevelopment ? undefined : 500000,
+            priority: 100, // 优先级
           },
           utils: {
             test: /(lodash|dayjs|axios|kbone-api|fastclick)/,
             chunks: 'all',
-            priority: 100, //优先级
+            priority: 100, // 优先级
           },
           'async-commons': {
             chunks: 'async',

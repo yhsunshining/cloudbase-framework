@@ -784,6 +784,28 @@ class LowCodePlugin extends Plugin {
         buildAsWebByBuildType(this._resolvedInputs.buildTypeList) &&
         this._webPlugin
       ) {
+        try {
+          const HostingProvider = this.api.resourceProviders?.hosting;
+          const envId = this.api.envId;
+          let [website, hostingDatas] = await this._getHostingInfoTask(
+            envId,
+            false
+          );
+          if (HostingProvider) {
+            if (!hostingDatas) {
+              hostingDatas = (
+                await HostingProvider.getHostingInfo({ envId: envId })
+              ).data;
+            }
+            let domains = hostingDatas.map((item) => item.cdnDomain);
+            this._domain = domains; //domains[0].cdnDomain;
+          }
+          this._website = website;
+        } catch (e) {
+          this.api.logger.error('获取静态托管失败: ', e);
+          throw e;
+        }
+
         const deployContent = [
           ...(this._webPlugin.buildOutput.static || []),
           ...(this._webPlugin.buildOutput.staticConfig || []),
@@ -837,27 +859,6 @@ class LowCodePlugin extends Plugin {
         await this._miniprogramePlugin.deploy();
       } else if (this._webPlugin) {
         await this._webPlugin.deploy();
-        try {
-          const HostingProvider = this.api.resourceProviders?.hosting;
-          const envId = this.api.envId;
-          let [website, hostingDatas] = await this._getHostingInfoTask(
-            envId,
-            false
-          );
-          if (HostingProvider) {
-            if (!hostingDatas) {
-              hostingDatas = (
-                await HostingProvider.getHostingInfo({ envId: envId })
-              ).data;
-            }
-            let domains = hostingDatas.map((item) => item.cdnDomain);
-            this._domain = domains; //domains[0].cdnDomain;
-          }
-          this._website = website;
-        } catch (e) {
-          this.api.logger.error('获取静态托管失败: ', e);
-          throw e;
-        }
 
         if (buildAsAdminPortalByBuildType(this._resolvedInputs.buildTypeList)) {
           await this._postProcessAdminPortal();
@@ -1252,7 +1253,7 @@ class LowCodePlugin extends Plugin {
           DeployUrl: `https://${path.join(
             this._website.cdnDomain,
             this._getWebRootPath()
-          )}`,
+          )}?t=${Date.now()}`,
           Pages: (mainAppSerializeData?.pageInstanceList || [])
             .filter((page) => !page.hideAdminPortalMenu)
             .map((page) => ({
