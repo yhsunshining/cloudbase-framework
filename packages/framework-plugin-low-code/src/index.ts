@@ -565,7 +565,7 @@ class LowCodePlugin extends Plugin {
     }
     try {
       const envId = this.api.envId;
-      let [website, hostingDatas] = await this._getHostingInfo(envId, true);
+      let [website, hostingDatas] = await this._getHostingInfoTask(envId, true);
       this._website = website;
     } catch (e) {
       this.api.logger.error('获取静态托管失败: ', e);
@@ -961,9 +961,7 @@ class LowCodePlugin extends Plugin {
           resolve([]);
         }, 120 * 1000);
       }),
-      this._webPlugin?.website
-        ? Promise.resolve([this._webPlugin.website])
-        : this._getHostingInfo(envId, loose),
+      this._getHostingInfo(envId, loose),
     ]);
     if (timeout) {
       clearTimeout(timeout);
