@@ -1,3 +1,4 @@
+import config from '../../datasources/config'
 export function getComponentId(key) {
   return `__weapps-component-wrapper-${key}`;
 }
@@ -127,6 +128,7 @@ export function getStaticResourceAttribute(staticUrl) {
  * 检查页面权限
  **/
 export async function checkAuth(app, appId, pageId) {
+  <% if(isAdminPortal){ %>return true;<% } %>
   app.showNavigationBarLoading();
   const checkAuthResult = await app.cloud.callWedaApi({
     action: 'DescribeResourcesPermission',
@@ -148,4 +150,25 @@ export async function checkAuth(app, appId, pageId) {
     });
   }
   return isLogin;
+}
+
+const _REPORTED = {}
+export function reportTime(tag, time, only=false){
+  if(!window._aegis || !tag){
+    return;
+  }
+  if(only && _REPORTED[tag]){
+    return ;
+  }
+  _REPORTED[tag] = true
+  try {
+    let t = time === undefined? (performance?.now?.() || Date.now() - window['_aegis_inited']) :time;
+    window._aegis.reportTime({
+      name: tag,
+      duration: t,
+      ext2: config.isProd? 'production' : 'preview',
+    })
+  }catch(e){
+    console.log(e)
+  }
 }

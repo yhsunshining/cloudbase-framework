@@ -12,7 +12,7 @@ import computed from '../../lowcode/<%= pageName %>/computed'
 import { $$_<%= pageName %> as handler } from '../../app/handlers'
 import { app as mainApp } from 'app/global-api' // 取主包app
 import { app, $page } from '../../app/global-api' // 取对应子包app
-import { createWidgets, retryDataBinds, resolveComponentProps, checkAuth } from 'handlers/utils'
+import { createWidgets, retryDataBinds, resolveComponentProps, checkAuth, reportTime } from 'handlers/utils'
 import { useScrollTop } from 'handlers/hooks'
 import { get } from "lodash";
 import './index.less'
@@ -66,9 +66,10 @@ export default function App() {
   const [weDaHasLogin, setWeDaHasLogin] = React.useState(false);
 
   React.useEffect(() => {
-    checkAuth(app, app.id, '<%= pageName %>').then((checkAuthResult) =>
+    checkAuth(app, app.id, '<%= pageName %>').then((checkAuthResult) => {
       setWeDaHasLogin(checkAuthResult)
-    );
+      reportTime('FIRST_PAGE_CONTENT_RENDERED', undefined, true)
+    });
 
     Object.assign($page, {
       id: '<%= pageName %>',

@@ -976,9 +976,10 @@ export async function generateCodeFromTpl(
       isProd: deployMode === DEPLOY_MODE.UPLOAD,
     },
     'datasources/datasource-profiles.js.tpl': {
-      datasourceProfiles: JsonToStringWithVariableName(
+      datasourceProfiles: JSON.stringify(
         getDatasourceProfiles((appData as any).datasources || []),
-        { EOL: true }
+        null,
+        2
       ),
     },
     'datasources/dataset-profiles.js.tpl': {

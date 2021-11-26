@@ -10,18 +10,28 @@
     />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="<%= meta.desc %>" />
-    <% if(!isAdminPortal){ %>
     <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js"></script>
     <script>
-      const aegis = new Aegis({
+      <% if(!isAdminPortal){ %>
+      const _aegis = new Aegis({
         id: 'lXHFsBpTjIzNADiczY', // 项目ID，即上报key
         reportApiSpeed: true, // 接口测速
         reportAssetSpeed: true, // 静态资源测速
         spa: true,
         ext1: '<%=appId%>',
       });
+      <% } else {%>
+      const _aegis = new Aegis({
+        id: 'lXHFsBpTQiNCeCmGyb', // 项目ID，即上报key
+        reportApiSpeed: false, // 接口测速
+        reportAssetSpeed: false, // 静态资源测速
+        spa: true,
+        ext1: '<%=appId%>',
+      });
+      <% }%>
+      window._aegis = _aegis;
+      window._aegis_inited = Date.now()
     </script>
-    <% }%>
     <title><%= meta.title %></title>
     <% if(delevopment){ %>
     <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
@@ -388,7 +398,7 @@
                 const { name, data = {} } = args || {};
                 try {
                   if (res.result && res.result.code) {
-                    aegis.report({
+                    _aegis.report({
                       msg:
                         '[' +
                         name +
@@ -407,7 +417,7 @@
               })
               .catch((e) => {
                 try {
-                  aegis.report({
+                  _aegis.report({
                     msg:
                       '[' +
                       name +
