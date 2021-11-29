@@ -233,13 +233,18 @@ export function setter(context, path, value = undefined) {
 /**
  * 检查页面权限
  **/
+const _AUTH_CACHE_MAP = {}
 export async function checkAuth(app, appId, pageId) {
+  const cacheKey = `${appId}-${pageId}`
+  if(_AUTH_CACHE_MAP[cacheKey] !== undefined) {
+    return _AUTH_CACHE_MAP[cacheKey]
+  }
   app.showNavigationBarLoading();
   const checkAuthResult = await app.cloud.callWedaApi({
     action: 'DescribeResourcesPermission',
     data: {
       ResourceType: `<%= isAdminPortal? 'modelApp' : 'app'%>`,
-      ResourceIdList: [`${appId}-${pageId}`],
+      ResourceIdList: [cacheKey],
     },
   });
   let isLogin = false;
@@ -254,6 +259,7 @@ export async function checkAuth(app, appId, pageId) {
       icon: 'error',
     });
   }
+  _AUTH_CACHE_MAP[cacheKey] = isLogin
   return isLogin;
 }
 

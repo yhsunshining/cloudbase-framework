@@ -127,14 +127,19 @@ export function getStaticResourceAttribute(staticUrl) {
 /**
  * 检查页面权限
  **/
+const _AUTH_CACHE_MAP = {}
 export async function checkAuth(app, appId, pageId) {
   <% if(isAdminPortal){ %>return true;<% } %>
+  const cacheKey = `${appId}-${pageId}`
+  if(_AUTH_CACHE_MAP[cacheKey] !== undefined) {
+    return _AUTH_CACHE_MAP[cacheKey]
+  }
   app.showNavigationBarLoading();
   const checkAuthResult = await app.cloud.callWedaApi({
     action: 'DescribeResourcesPermission',
     data: {
       ResourceType: `<%= isAdminPortal? 'modelApp' : 'app'%>`,
-      ResourceIdList: [`${appId}-${pageId}`],
+      ResourceIdList: [cacheKey],
     },
   });
   let isLogin = false;
@@ -149,6 +154,7 @@ export async function checkAuth(app, appId, pageId) {
       icon: 'error',
     });
   }
+  _AUTH_CACHE_MAP[cacheKey] = isLogin
   return isLogin;
 }
 
@@ -157,10 +163,16 @@ export function reportTime(tag, time, only=false){
   if(!window._aegis || !tag){
     return;
   }
-  if(only && _REPORTED[tag]){
+  if(window['_WedaHostConfig'] && !window['_WedaHostConfig']['_REPORTED']) {
+    window['_WedaHostConfig']['_REPORTED'] = _REPORTED
+  }
+
+  const CACHE_MAP = window['_WedaHostConfig']?.['_REPORTED'] || _REPORTED
+
+  if(only && CACHE_MAP[tag]){
     return ;
   }
-  _REPORTED[tag] = true
+  CACHE_MAP[tag] = true
   try {
     let t = time === undefined? (performance?.now?.() || Date.now() - window['_aegis_inited']) :time;
     window._aegis.reportTime({

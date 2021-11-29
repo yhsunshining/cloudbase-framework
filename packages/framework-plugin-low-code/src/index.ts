@@ -260,6 +260,20 @@ class LowCodePlugin extends Plugin {
       throw new Error('缺少必须参数: mainAppSerializeData');
     }
 
+    /**
+     * 过滤处理 dependencies
+     */
+    let map = {};
+    this._resolvedInputs.dependencies = (
+      this._resolvedInputs.dependencies || []
+    ).reduce((list, item) => {
+      if (!map[`${item.name}@${item.version}`]) {
+        map[`${item.name}@${item.version}`] = true;
+        list.push(item);
+      }
+      return list;
+    }, [] as any);
+
     if (this._checkIsVersion(this._resolvedInputs.calsVersion)) {
       const cals = this._resolvedInputs.mainAppSerializeData;
       if (!this._resolvedInputs.mainAppSerializeData.mpPkgUrl) {
