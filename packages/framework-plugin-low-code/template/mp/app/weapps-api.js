@@ -102,6 +102,7 @@ function createGlboalApi() {
         .catch(reject)
       })
     }
+    return scanCode(restOptions);
   }
   return globalAPI
 }
