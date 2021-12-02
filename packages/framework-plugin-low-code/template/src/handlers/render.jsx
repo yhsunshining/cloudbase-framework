@@ -1,20 +1,46 @@
 import * as React from 'react';
 import { useRef } from 'react';
 import * as _ from 'lodash';
-import { CompRenderer } from './FieldMiddleware/renderer';
+import { getRenderList as getComponentRenderList } from './FieldMiddleware/renderer';
 import { isScopeSlot } from '../utils/index';
+import { observer } from 'mobx-react-lite';
 
-function getComponentChildren(component) {
+function checkDoNotRenderSlot(isSlot, renderSlot, rootNode) {
+  return isSlot && !(renderSlot || rootNode);
+}
+
+function getComponentChildren(
+  component,
+  { virtualFields, codeContext, scopeContext }
+) {
   const { properties } = component;
   if (!properties) {
     return [];
   }
-  return Object.values(properties).sort(
+  let list = Object.values(properties).sort(
     (a, b) => (a['x-index'] || 0) - (b['x-index'] || 0)
   );
+
+  const componentChildren = [];
+  const rootNode = false;
+  const renderSlot = false;
+  for (const schema of list) {
+    const children = getRenderList({
+      key: schema.key,
+      componentSchema: schema,
+      rootNode,
+      renderSlot,
+      virtualFields,
+      codeContext,
+      scopeContext,
+    });
+    componentChildren.push(children);
+  }
+
+  return componentChildren;
 }
 
-export function AppRender(props) {
+function getRenderList(props) {
   const {
     className,
     virtualFields,
@@ -24,12 +50,11 @@ export function AppRender(props) {
     codeContext,
     scopeContext = {},
   } = props;
-  
   const { 'x-props': xProps, properties = {} } = componentSchema;
 
   // 判断是否为 slot
   const isSlot = !xProps;
-  if (isSlot && !(renderSlot || rootNode)) {
+  if (checkDoNotRenderSlot(isSlot, renderSlot, rootNode)) {
     return null;
   }
 
@@ -67,7 +92,6 @@ export function AppRender(props) {
     }
   }
 
-  const children = getComponentChildren(componentSchema);
   const slots = {};
   // eslint-disable-next-line guard-for-in
   for (const key in properties) {
@@ -105,27 +129,40 @@ export function AppRender(props) {
     }
   }
 
-  return (
-    <CompRenderer
-      id={componentSchema.key}
-      xProps={xProps}
-      emitEvents={componentSchema.emitEvents || []}
-      virtualFields={virtualFields}
-      slots={slots}
-      codeContext={codeContext}
-      scopeContext={scopeContext}
-    >
-      {children.map((comp) => (
-        <AppRender
-          key={comp.key}
-          componentSchema={comp}
-          rootNode={false}
-          renderSlot={false}
-          virtualFields={virtualFields}
-          codeContext={codeContext}
-          scopeContext={scopeContext}
-        />
-      ))}
-    </CompRenderer>
-  );
+  // return (
+  //   <CompRenderer
+  //     id={componentSchema.key}
+  //     xProps={xProps}
+  //     emitEvents={componentSchema.emitEvents || []}
+  //     virtualFields={virtualFields}
+  //     slots={slots}
+  //     codeContext={codeContext}
+  //     scopeContext={scopeContext}
+  //   >
+  //     {getComponentChildren(componentSchema, {
+  //       virtualFields,
+  //       codeContext,
+  //       scopeContext,
+  //     })}
+  //   </CompRenderer>
+  // );
+
+  return getComponentRenderList({
+    id: componentSchema.key,
+    xProps,
+    emitEvents: componentSchema.emitEvents || [],
+    virtualFields,
+    slots,
+    codeContext,
+    scopeContext,
+    children: getComponentChildren(componentSchema, {
+      virtualFields,
+      codeContext,
+      scopeContext,
+    }),
+  });
 }
+
+export const AppRender = observer(function (props) {
+  return getRenderList(props);
+});
