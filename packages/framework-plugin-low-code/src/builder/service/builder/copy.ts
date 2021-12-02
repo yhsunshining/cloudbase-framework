@@ -11,6 +11,7 @@ import {
   readCmpInstances,
   getCompositedComponentClass,
   ICompositedComponent,
+  IComponentLibEntry,
 } from '../../../weapps-core';
 import { appTemplateDir } from '../../config';
 import { IComponentInputProps, IComponentsInfoMap } from '../../types/common';
@@ -91,11 +92,18 @@ export async function copyMaterialLibraries(
           path.join(materialDir, 'package.json')
         );
 
-        if (packageJson.lowcode) {
-          componentLib['entry'] = path.posix.relative(
-            srcDir,
-            packageJson.lowcode
-          );
+        if (packageJson.weda?.platform?.web) {
+          const entries = packageJson.weda?.platform?.web;
+          componentLib['entries'] = {
+            entry: path.posix.relative(srcDir, entries.entry),
+            components: path.posix.relative(srcDir, entries.components),
+            actions: path.posix.relative(srcDir, entries.actions),
+          };
+        } else if (packageJson.lowcode) {
+          const entry = path.posix.relative(srcDir, packageJson.lowcode);
+          componentLib['entries'] = {
+            entry,
+          };
         }
       } catch (e) {}
     })
@@ -109,7 +117,7 @@ export async function genCompositeComponentLibraries(
     [name: string]: {
       isComposite: boolean;
       version?: string;
-      entry?: string;
+      entries?: IComponentLibEntry;
       schemaVersion?: string;
       isPlainProps?: boolean;
     };
@@ -170,7 +178,7 @@ export async function genCompositeComponentLibraries(
                 var: string;
                 moduleNameVar: string;
                 version: string;
-                entry?: string;
+                entries?: IComponentLibEntry;
                 isPlainProps?: boolean;
               }[] = [];
               // @ts-ignore
@@ -196,7 +204,7 @@ export async function genCompositeComponentLibraries(
                     var: _.upperFirst(_.camelCase(`${moduleName}:${name}`)),
                     moduleNameVar: _.camelCase(moduleName),
                     version: compLib?.version || '',
-                    entry: compLib?.entry,
+                    entries: compLib?.entries,
                     isPlainProps: isPlainProps,
                   });
                 }

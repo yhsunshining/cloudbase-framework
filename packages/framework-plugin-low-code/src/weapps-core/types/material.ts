@@ -40,6 +40,11 @@ export interface IMaterialItem {
   componentInstances?: IWeAppComponentInstance[];
 }
 
+export interface IComponentLibEntry {
+  entry: string;
+  components?: string;
+  actions?: string;
+}
 export interface ICompositedComponent {
   id: number;
   name: string;

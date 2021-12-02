@@ -60,7 +60,7 @@ async function handleCompositeComponent({ dependencies, appBuildDir }) {
       (materialGroupInfoMap[item.name] = {
         isComposite: item.isComposite,
         version: item.version,
-        entry: item.entry,
+        entries: item.entries,
         schemaVersion: item.schemaVersion,
       })
   );

@@ -10,6 +10,7 @@ const HappyPack = require('happypack');
 const core = 4;
 const happyThreadPool = HappyPack.ThreadPool({ size: core });
 
+const TS_LOADER_ID = 'ts-loader';
 module.exports = function (options) {
   const {
     context,
@@ -26,50 +27,61 @@ module.exports = function (options) {
     definePlugin = {},
   } = options;
   const isDevelopment = mode !== 'production';
+  const babelLoader = {
+    loader: 'babel-loader',
+    options: {
+      compact: false,
+      cacheDirectory: true,
+      cwd: context,
+      presets: [
+        [
+          '@babel/preset-env',
+          {
+            modules: false,
+            targets: {
+              esmodules: true,
+            },
+          },
+        ],
+        '@babel/preset-react',
+      ],
+      plugins: [
+        [
+          'babel-plugin-import',
+          {
+            libraryName: '@govcloud/gsd-kbone-react',
+            libraryDirectory: 'lib/components',
+            camel2DashComponentName: false,
+          },
+        ],
+        '@babel/plugin-proposal-class-properties',
+        ['@babel/plugin-proposal-decorators', { legacy: true }],
+        '@babel/plugin-proposal-export-default-from',
+        '@babel/plugin-proposal-export-namespace-from',
+        '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-partial-application',
+        ['@babel/plugin-proposal-pipeline-operator', { proposal: 'minimal' }],
+      ].filter(Boolean),
+    },
+  };
   let plugins = [
     new HappyPack({
-      id: 'babel',
+      id: TS_LOADER_ID,
       loaders: [
+        babelLoader,
         {
-          loader: 'babel-loader',
+          loader: 'ts-loader',
           options: {
-            compact: false,
-            cacheDirectory: true,
-            cwd: context,
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  targets: {
-                    esmodules: true,
-                  },
-                },
-              ],
-              '@babel/preset-react',
-            ],
-            plugins: [
-              [
-                'babel-plugin-import',
-                {
-                  libraryName: '@govcloud/gsd-kbone-react',
-                  libraryDirectory: 'lib/components',
-                  camel2DashComponentName: false,
-                },
-              ],
-              '@babel/plugin-proposal-class-properties',
-              ['@babel/plugin-proposal-decorators', { legacy: true }],
-              '@babel/plugin-proposal-export-default-from',
-              '@babel/plugin-proposal-export-namespace-from',
-              '@babel/plugin-proposal-optional-chaining',
-              '@babel/plugin-proposal-partial-application',
-              [
-                '@babel/plugin-proposal-pipeline-operator',
-                { proposal: 'minimal' },
-              ],
-            ].filter(Boolean),
+            happyPackMode: true,
+            transpileOnly: true,
           },
         },
       ],
+      threadPool: happyThreadPool,
+    }),
+    new HappyPack({
+      id: 'babel',
+      loaders: [babelLoader],
       threadPool: happyThreadPool,
     }),
     new HtmlWebpackPlugin({
@@ -128,7 +140,7 @@ module.exports = function (options) {
     },
     devtool: isDevelopment ? 'eval' : false,
     resolve: {
-      extensions: ['.js', '.jsx', '.tsx', '.json', '.scss', '.css'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.scss', '.css'],
       modules: [...resolveModules],
       symlinks: false,
       cacheWithContext: false,
@@ -141,6 +153,11 @@ module.exports = function (options) {
     },
     module: {
       rules: [
+        {
+          test: /\.tsx?$/,
+          exclude: /node_modules\/(?!@cloudbase\/weda-ui)|gsd-kbone-react/,
+          use: [`happypack/loader?id=${TS_LOADER_ID}`],
+        },
         {
           test: /\.(js|jsx)$/,
           exclude: /node_modules\/(?!@cloudbase\/weda-ui)|gsd-kbone-react/,

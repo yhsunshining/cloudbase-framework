@@ -2,6 +2,7 @@ import * as path from 'path';
 import {
   getCodeModuleFilePath,
   getCompositedComponentClass,
+  IComponentLibEntry,
   ICompositedComponent,
   IMaterialItem,
   IWeAppCode,
@@ -49,9 +50,13 @@ async function handleCompositeComponent({
       (materialGroupInfoMap[item.name] = {
         isComposite: item.isComposite,
         version: item.version,
-        entry: item.entry,
+        entries: item.entries,
         schemaVersion: item.schemaVersion,
       })
+  );
+  console.log(
+    '=====================================*****',
+    materialGroupInfoMap
   );
   const componentsInfoMap = await getComponentsInfo(
     path.join(appBuildDir, 'src'),
@@ -205,7 +210,7 @@ export async function genCompositeComponentLibraries(
     [name: string]: {
       isComposite?: boolean;
       version?: string;
-      entry?: string;
+      entries?: IComponentLibEntry;
       schemaVersion?: string;
     };
   } = {},
@@ -288,7 +293,7 @@ export async function genCompositeComponentLibraries(
                     version: compLib?.version,
                     isComposite: compLib?.isComposite,
                     isPlainProps,
-                    entry: compLib?.entry,
+                    entries: compLib?.entries,
                   });
                 }
                 return value;

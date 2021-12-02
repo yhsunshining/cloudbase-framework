@@ -16,6 +16,7 @@ import {
   IExtraData,
   IBuildType,
   IWeAppComponentInstance,
+  IComponentLibEntry,
 } from '../../weapps-core';
 import {
   buildAsAdminPortalByBuildType,
@@ -201,7 +202,7 @@ export interface IOriginKeyInfo {
   type?: ActionType;
   isComposite?: boolean;
   isPlainProps?: boolean;
-  entry?: string;
+  entries?: IComponentLibEntry;
 }
 
 export async function generateSinglePageJsxFile(
@@ -343,7 +344,7 @@ export function pullActionToListByInstances(
   originActionList,
   fixedDependencies: (IMaterialItem & {
     isPlainProps?: boolean;
-    entry?: string;
+    entries?: IComponentLibEntry;
   })[]
 ) {
   if (!listenerInstances || !listenerInstances.length) {
@@ -366,7 +367,7 @@ export function pullActionToListByInstances(
         key: actionKey,
         type,
         variableName,
-        entry: material?.entry,
+        entries: material?.entries,
       });
     }
   });
@@ -404,7 +405,8 @@ export function pullComponentToListByInstance(
       key: componentKey,
       variableName: variableName || '',
       isPlainProps,
-      entry: (foundOne as IMaterialItem & { entry?: string })?.entry,
+      entries: (foundOne as IMaterialItem & { entries?: IComponentLibEntry })
+        ?.entries,
     });
   }
 }

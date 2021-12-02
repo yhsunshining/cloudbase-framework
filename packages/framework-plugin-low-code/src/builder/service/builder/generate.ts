@@ -26,6 +26,7 @@ import {
   getCompositedComponentClass,
   ICompositedComponent,
   IBuildType,
+  IComponentLibEntry,
 } from '../../../weapps-core';
 import {
   deepDealSchema,
@@ -180,7 +181,7 @@ export async function generateSinglePageJsxFile(
       const info = {
         materialName: component.materialName,
         version: component.materialVersion,
-        entry: component.entry,
+        entries: component.entries,
       };
       originEntryMap[component.materialName] = info;
     }
@@ -190,7 +191,7 @@ export async function generateSinglePageJsxFile(
       const info = {
         materialName: action.materialName,
         version: action.materialVersion,
-        entry: action.entry,
+        entries: action.entries,
       };
       originEntryMap[action.materialName] = info;
     }
@@ -332,13 +333,15 @@ export function getOriginPluginList(
   return originPluginList;
 }
 
+interface IFixedDependence extends IMaterialItem {
+  isPlainProps?: boolean;
+  entries?: IComponentLibEntry;
+}
+
 export function pullActionToListByInstances(
   listenerInstances,
   originActionList,
-  fixedDependencies: (IMaterialItem & {
-    isPlainProps?: boolean;
-    entry?: string;
-  })[]
+  fixedDependencies: IFixedDependence[]
 ) {
   if (!listenerInstances || !listenerInstances.length) {
     return;
@@ -360,7 +363,7 @@ export function pullActionToListByInstances(
         key: actionKey,
         type,
         variableName,
-        entry: material?.entry,
+        entries: material?.entries,
       });
     }
   });
@@ -369,10 +372,7 @@ export function pullActionToListByInstances(
 export function pullComponentToListByInstance(
   sourceKey: string,
   originComponentList: IOriginKeyInfo[],
-  fixedDependencies: (IMaterialItem & {
-    isPlainProps?: boolean;
-    entry?: string;
-  })[]
+  fixedDependencies: IFixedDependence[]
 ) {
   const { materialName, name, variableName } =
     getMetaInfoBySourceKey(sourceKey);
@@ -391,7 +391,7 @@ export function pullComponentToListByInstance(
       key: componentKey,
       variableName: variableName || '',
       isPlainProps: !!foundOne?.isPlainProps,
-      entry: foundOne?.entry,
+      entries: foundOne?.entries,
     });
   }
 }
@@ -796,13 +796,20 @@ export function getComponentImportStringArr(
   componentImportStringArr: string[] = []
 ) {
   components.map(async (component: IOriginKeyInfo) => {
-    const { name, materialName, materialVersion, variableName, entry } =
+    const { name, materialName, materialVersion, variableName, entries } =
       component;
     // const fullName = `${materialName}_${name}`
 
     // 这里将头字母变成大写是为了能在jsx中以<XXX/>去引用组件
     let importString = '';
-    if (entry) {
+    if (entries?.components) {
+      importString = `import { ${name} as ${_.upperFirst(
+        variableName
+      )} } from '${path.posix.join(
+        `libraries/${materialName}@${materialVersion}`,
+        entries?.components
+      )}'`;
+    } else if (entries?.entry) {
       const componentsLibVariableName = camelcase(`${materialName}`);
       importString = `const { ${name}: ${_.upperFirst(
         variableName
@@ -823,16 +830,16 @@ export function getEntryImportStringArr(
   materialInfoList: {
     materialName: string;
     version: string;
-    entry?: string;
+    entries?: IComponentLibEntry;
   }[] = [],
   entryImportStringArr: string[] = []
 ) {
-  materialInfoList.forEach(({ materialName, version, entry }) => {
-    if (entry) {
+  materialInfoList.forEach(({ materialName, version, entries }) => {
+    if (!(entries?.actions && entries?.components) && entries?.entry) {
       const componentsLibVariableName = camelcase(`${materialName}`);
       const importComponentLibString = `import ${componentsLibVariableName} from '${path.posix.join(
         `libraries/${materialName}@${version}`,
-        entry
+        entries?.entry
       )}'`;
       if (!entryImportStringArr.includes(importComponentLibString)) {
         entryImportStringArr.push(importComponentLibString);
@@ -858,12 +865,17 @@ export function pushActionToImportStringArr(
   listenerInstance: IOriginKeyInfo,
   actionImportStringArr: string[]
 ) {
-  const { name, materialName, materialVersion, variableName, entry } =
+  const { name, materialName, materialVersion, variableName, entries } =
     listenerInstance;
 
   const componentsLibVariableName = camelcase(`${materialName}`);
 
-  const importString = entry
+  const importString = entries?.actions
+    ? `import { ${name} as ${variableName} } from '${path.posix.join(
+        `libraries/${materialName}@${materialVersion}`,
+        entries?.actions
+      )}'`
+    : entries?.entry
     ? `const { ${name}: ${variableName} } = ${componentsLibVariableName}.actions`
     : `import ${variableName} from 'libraries/${materialName}@${materialVersion}/actions/${name}'`;
 

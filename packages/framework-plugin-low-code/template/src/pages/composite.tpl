@@ -17,8 +17,10 @@ import handler$<%= handler.name %> from "./lowcode/handler/<%= handler.name %>.j
 
 // Import Components
 <% var componentsMap = {}; useComponents.forEach(compItem => {%>
-<% if(compItem.entry){ %><% if(!componentsMap[compItem.moduleName]){ componentsMap[compItem.moduleName] = true %>
-import <%= compItem.moduleNameVar %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/<%= compItem.entry %>";
+<% if(compItem.entries && compItem.entries.components){ %>
+import { <%= compItem.name %> as <%= compItem.var %> } from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/<%= compItem.entries.components %>";
+<% } else if(compItem.entries && compItem.entries.components){ %><% if(!componentsMap[compItem.moduleName]){ componentsMap[compItem.moduleName] = true %>
+import <%= compItem.moduleNameVar %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/<%= compItem.entries.entry %>";
 <% } %>const { <%= compItem.name %>: <%= compItem.var %> } = <%= compItem.moduleNameVar %>.components
 <% } else { %>import <%= compItem.var %> from "libraries/<%= compItem.moduleName %>@<%= compItem.version %>/components/<%= compItem.name %>";<% } %>
 <%}) %>
