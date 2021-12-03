@@ -16,7 +16,6 @@ import { app } from './app/global-api'
 if (process.env.isApp) {
   initWebConfig(app, AppConfig);
 }
-attachFastClick && attachFastClick.attach && attachFastClick.attach(document.body)
 
 // 设置数据源请求的 loading 及 toast 处理
 setConfig({
@@ -87,14 +86,16 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 function render(props){
+  const target =  props && props.container ? props.container.querySelector('#react-body') : document.getElementById('react-body');
     ReactDOM.render(
       <App />,
-      props && props.container ? props.container.querySelector('#react-body') : document.getElementById('react-body')
+      target
     )
 }
 
 // if (!process.env.isAdminPortal) {
 if (!window.__POWERED_BY_QIANKUN__) {
+  attachFastClick && attachFastClick.attach && attachFastClick.attach(document.body)
   render()
 }
 
