@@ -230,7 +230,7 @@ export const getRenderList = function (props) {
 
   // 单节点渲染
   const { fieldData, finalClassNameList, finalStyle } = getBindData({
-    parentForItems,
+    forItems: parentForItems,
     scopeContext,
     wData: widgetsData,
     classNameList,
