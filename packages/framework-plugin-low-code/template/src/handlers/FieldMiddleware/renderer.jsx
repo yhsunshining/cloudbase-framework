@@ -10,106 +10,7 @@ import { checkVisible } from '../../utils/index';
 
 export const ForContext = createContext({});
 
-export function getForList(dataBinds, parentForItems) {
-  // For循环渲染
-  let forList;
-  try {
-    // 绑定了 for 变量，但计算值错误时，应当空数组兜底
-    forList =
-      dataBinds && dataBinds._waFor && (dataBinds._waFor(parentForItems) || []);
-  } catch (e) {
-    // 计算值出错则使用空数组兜底
-    forList = [];
-    console.warn('_waFor data', e);
-  }
-  if (forList && !Array.isArray(forList)) {
-    console.warn(`${compId}循环绑定非数组值：`, forList);
-    forList = [];
-  }
-  return forList;
-}
-
-function getSafeComponentProps({
-  style,
-  classNameList,
-  staticResourceAttribute,
-}) {
-  const componentProps = {};
-  if (classNameList.length) {
-    componentProps.className = classNameList.join(' ');
-  }
-
-  if (style && Object.keys(style).length) {
-    componentProps.style = style;
-  }
-  if (staticResourceAttribute && staticResourceAttribute.length > 0) {
-    componentProps.staticResourceAttribute = staticResourceAttribute;
-  }
-  return componentProps;
-}
-
-// TODO: 需要不断移除 dataBinds(style/classList)
-function getBindData({
-  forItems,
-  scopeContext,
-  wData,
-  commonStyle,
-  isInComposite,
-  codeContext,
-  classNameList,
-}) {
-  // bindData
-  if (Array.isArray(wData)) {
-    wData =
-      forItems.forIndexes === void 0 || wData.length === 0
-        ? {}
-        : get(wData, getForIndexes(forItems, wData));
-  }
-  wData = wData || {};
-  const fieldData = { ...wData };
-
-  // 再次计算 scope value
-  for (let key in fieldData) {
-    if (Object.prototype.hasOwnProperty.call(fieldData, key)) {
-      const value = fieldData[key];
-      if (value && value.__type === 'scopedValue') {
-        try {
-          fieldData[key] = value.getValue(scopeContext);
-        } catch (e) {
-          console.warn(`Error computing data bind '${key}' error:`, e);
-          fieldData[key] = '';
-        }
-      }
-    }
-  }
-
-  // bindStyle
-  let bindStyle = fieldData.style || {};
-  // 复合组件第一层需要将最外层样式 style 挂到节点上
-  let cssStyle = commonStyle;
-  if (isInComposite && wData && !wData.parent) {
-    cssStyle = {
-      ...cssStyle,
-      ...(codeContext.$WEAPPS_COMP.props?.style || {}),
-    };
-    bindStyle = {
-      ...bindStyle,
-      ...(codeContext.$WEAPPS_COMP.props?.style || {}),
-    };
-  }
-  const finalStyle = getFinalStyle(cssStyle, bindStyle);
-
-  // bindClassList
-  const bindClassList = fieldData.classList || [];
-  const finalClassNameList = getFinalClassNameList(
-    classNameList,
-    bindClassList
-  );
-
-  return { fieldData, finalStyle, finalClassNameList };
-}
-
-export const getRenderList = function (props) {
+export const CompRenderer = observer(function (props) {
   const {
     id: compId,
     xProps,
@@ -126,7 +27,24 @@ export const getRenderList = function (props) {
     ? $page.widgets[compId]
     : codeContext.$WEAPPS_COMP.widgets[compId];
 
+  if (!xProps) {
+    return props.children;
+  }
+
+  const {
+    commonStyle = {},
+    sourceKey,
+    data = {},
+    dataBinds,
+    listenerInstances,
+    styleBind,
+    classNameList = [],
+    classNameListBind,
+    staticResourceAttribute = [],
+  } = xProps;
+  const Field = virtualFields[sourceKey];
   const parentForItems = useContext(ForContext);
+
   const emit = useCallback(
     (trigger, event, forItems, scopeContext) => {
       const listeners = listenerInstances;
@@ -149,23 +67,41 @@ export const getRenderList = function (props) {
     [props]
   );
 
-  if (!xProps) {
-    return props.children;
+  function getSafeComponentProps({
+    style,
+    classNameList,
+    staticResourceAttribute,
+  }) {
+    const componentProps = {};
+    if (classNameList.length) {
+      componentProps.className = classNameList.join(' ');
+    }
+
+    if (style && Object.keys(style).length) {
+      componentProps.style = style;
+    }
+    if (staticResourceAttribute && staticResourceAttribute.length > 0) {
+      componentProps.staticResourceAttribute = staticResourceAttribute;
+    }
+    return componentProps;
   }
 
-  const {
-    commonStyle = {},
-    sourceKey,
-    dataBinds,
-    classNameList = [],
-    staticResourceAttribute = [],
-    listenerInstances,
-  } = xProps;
-  const Field = virtualFields[sourceKey];
-
   // For循环渲染
-  let forList = getForList(dataBinds, parentForItems);
+  let forList;
+  try {
+    // 绑定了 for 变量，但计算值错误时，应当空数组兜底
+    forList =
+      dataBinds && dataBinds._waFor && (dataBinds._waFor(parentForItems) || []);
+  } catch (e) {
+    // 计算值出错则使用空数组兜底
+    forList = [];
+    console.warn('_waFor data', e);
+  }
   if (forList) {
+    if (!Array.isArray(forList)) {
+      console.warn(`${compId}循环绑定非数组值：`, forList);
+      forList = [];
+    }
     return forList.map((item, index) => {
       const forItemsIndexes = (parentForItems.forIndexes || []).concat(index);
       const forItems = {
@@ -177,15 +113,7 @@ export const getRenderList = function (props) {
         fieldData: forItemData,
         finalStyle: forItemStyle,
         finalClassNameList: forItemClassNameList,
-      } = getBindData({
-        forItems,
-        scopeContext,
-        wData: widgetsData,
-        classNameList,
-        commonStyle,
-        isInComposite,
-        codeContext,
-      });
+      } = getBindData(forItems, scopeContext);
       if (!checkVisible(forItemData)) {
         return null;
       }
@@ -229,19 +157,16 @@ export const getRenderList = function (props) {
   }
 
   // 单节点渲染
-  const { fieldData, finalClassNameList, finalStyle } = getBindData({
-    forItems: parentForItems,
-    scopeContext,
-    wData: widgetsData,
-    classNameList,
-    commonStyle,
-    isInComposite,
-    codeContext,
-  });
+  const { fieldData, finalClassNameList, finalStyle } = getBindData(
+    parentForItems,
+    scopeContext
+  );
+  const emitWithForItems = (trigger, evt) =>
+    emit(trigger, evt, parentForItems, scopeContext);
 
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
-    return [];
+    return null;
   }
 
   // 单个组件的 slot 属性
@@ -266,12 +191,12 @@ export const getRenderList = function (props) {
     classNameList: finalClassNameList,
     staticResourceAttribute,
   });
-  return [
+  return (
     <Field
       data={fieldData}
       id={compId}
       {...componentProps}
-      emit={(trigger, evt) => emit(trigger, evt, parentForItems, scopeContext)}
+      emit={emitWithForItems}
       events={emitEvents}
       compositeParent={codeContext}
       forIndexes={forIndexes}
@@ -279,12 +204,62 @@ export const getRenderList = function (props) {
       domRef={domRef}
     >
       {props.children}
-    </Field>,
-  ];
-};
+    </Field>
+  );
 
-export const CompRenderer = observer(function (props) {
-  return getRenderList(props);
+  // TODO: 需要不断移除 dataBinds(style/classList)
+  function getBindData(forItems, scopeContext) {
+    // bindData
+    let wData = widgetsData;
+    if (Array.isArray(wData)) {
+      wData =
+        forItems.forIndexes === void 0 || wData.length === 0
+          ? {}
+          : get(wData, getForIndexes(forItems, wData));
+    }
+    wData = wData || {};
+    const fieldData = { ...wData };
+
+    // 再次计算 scope value
+    for (let key in fieldData) {
+      if (Object.prototype.hasOwnProperty.call(fieldData, key)) {
+        const value = fieldData[key];
+        if (value && value.__type === 'scopedValue') {
+          try {
+            fieldData[key] = value.getValue(scopeContext);
+          } catch (e) {
+            console.warn(`Error computing data bind '${key}' error:`, e);
+            fieldData[key] = '';
+          }
+        }
+      }
+    }
+
+    // bindStyle
+    let bindStyle = fieldData.style || {};
+    // 复合组件第一层需要将最外层样式 style 挂到节点上
+    let cssStyle = commonStyle;
+    if (isInComposite && wData && !wData.parent) {
+      cssStyle = {
+        ...cssStyle,
+        ...(codeContext.$WEAPPS_COMP.props?.style || {}),
+      };
+      bindStyle = {
+        ...bindStyle,
+        ...(codeContext.$WEAPPS_COMP.props?.style || {}),
+      };
+    }
+    const finalStyle = getFinalStyle(cssStyle, bindStyle);
+
+    // bindClassList
+    const bindClassList = fieldData.classList || [];
+    const finalClassNameList = getFinalClassNameList(
+      classNameList,
+      bindClassList
+    );
+
+    return { fieldData, finalStyle, finalClassNameList };
+  }
 });
 
 export function getFinalStyle(
