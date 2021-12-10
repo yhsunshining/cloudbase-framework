@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { useContext, useCallback, createContext, useRef, useState } from 'react';
+import {
+  useContext,
+  useCallback,
+  createContext,
+  useRef,
+  useState,
+} from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent } from '../actionHandler/utils';
 import { translateStyleToRem } from '@tcwd/weapps-core';
@@ -23,8 +29,11 @@ export const CompRenderer = observer(function (props) {
   } = props;
 
   const [blockIndex, setBlockIndex] = useState();
+  const [blockType, setBlockType] = useState();
   const indexRef = useRef();
+  const typeRef = useRef();
   indexRef.current = blockIndex;
+  typeRef.current = blockType;
 
   const isInComposite = !!props.codeContext;
   // 判断 widgets 是从 page 来的，还是组件来的
@@ -52,11 +61,16 @@ export const CompRenderer = observer(function (props) {
 
   const emit = useCallback(
     (trigger, event, forItems, scopeContext, fieldData) => {
-      const listeners = indexRef.current
-      ? fieldData.selectableBlocks[indexRef.current].selectableBlock[
+      const listeners =
+        indexRef.current &&
+        typeRef.current &&
+        fieldData?.[typeRef.current]?.[indexRef.current]?.selectableBlock?.[
           'x-props'
-        ].listenerInstances
-      : listenerInstances;
+        ]?.listenerInstances
+          ? fieldData[typeRef.current][indexRef.current].selectableBlock[
+              'x-props'
+            ].listenerInstances
+          : listenerInstances;
       event = { detail: event, name: trigger };
       forItems = {
         ...forItems,
@@ -95,16 +109,17 @@ export const CompRenderer = observer(function (props) {
     return componentProps;
   }
 
-    // 选区的预览的click事件
-    const onCustomEvent = (e, index) => {
-      if (index) {
-        setBlockIndex(index);
-      }
-    };
+  // 选区的预览的click事件
+  const onCustomEvent = ({ order: index, blockKey }) => {
+    if (index) {
+      setBlockIndex(index);
+      setBlockType(blockKey);
+    }
+  };
 
-    const selectableBlockEvents = {
-      onCustomEvent,
-    };
+  const selectableBlockEvents = {
+    onCustomEvent,
+  };
 
   // For循环渲染
   let forList;
@@ -165,8 +180,8 @@ export const CompRenderer = observer(function (props) {
             emit={emitWithForItems}
             events={
               indexRef.current
-                ? componentSchema?.selectableBlock?.emitEvents?.map(
-                    (item) => item.eventName
+                ? componentSchema?.selectableBlock?.events?.map(
+                    (item) => item.name
                   ) || []
                 : emitEvents
             }
@@ -225,8 +240,8 @@ export const CompRenderer = observer(function (props) {
       emit={emitWithForItems}
       events={
         indexRef.current
-          ? componentSchema?.selectableBlock?.emitEvents?.map(
-              (item) => item.eventName
+          ? componentSchema?.selectableBlock?.events?.map(
+              (item) => item.name
             ) || []
           : emitEvents
       }

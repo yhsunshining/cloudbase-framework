@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { useContext, useCallback, createContext, useState, useRef } from 'react';
+import {
+  useContext,
+  useCallback,
+  createContext,
+  useState,
+  useRef,
+} from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent, translateStyleToRem, checkVisible } from '../utils';
 import { get, set } from 'lodash';
@@ -21,8 +27,11 @@ export const CompRenderer = observer(function (props) {
   } = props;
 
   const [blockIndex, setBlockIndex] = useState();
+  const [blockType, setBlockType] = useState();
   const indexRef = useRef();
+  const typeRef = useRef();
   indexRef.current = blockIndex;
+  typeRef.current = blockType;
 
   const isInComposite = !!codeContext.$WEAPPS_COMP;
   // 判断 widgets 是从 page 来的，还是组件来的
@@ -54,11 +63,16 @@ export const CompRenderer = observer(function (props) {
   // 最终用于执行的事件函数
   const emit = useCallback(
     (trigger, eventData, forItems, domEvent, scopeContext, fieldData) => {
-      const listeners = indexRef.current
-        ? fieldData.selectableBlocks[indexRef.current].selectableBlock[
-            'x-props'
-          ].listenerInstances
-        : listenerInstances;
+      const listeners =
+        indexRef.current &&
+        typeRef.current &&
+        fieldData?.[typeRef.current]?.[indexRef.current]?.selectableBlock?.[
+          'x-props'
+        ]?.listenerInstances
+          ? fieldData[typeRef.current][indexRef.current].selectableBlock[
+              'x-props'
+            ].listenerInstances
+          : listenerInstances;
       const event = {
         detail: eventData,
         name: trigger,
@@ -106,9 +120,10 @@ export const CompRenderer = observer(function (props) {
   }
 
   // 选区的预览的click事件
-  const onCustomEvent = (e, index) => {
+  const onCustomEvent = ({ order: index, blockKey }) => {
     if (index) {
       setBlockIndex(index);
+      setBlockType(blockKey);
     }
   };
 
@@ -170,8 +185,8 @@ export const CompRenderer = observer(function (props) {
             emit={emitWithForItems}
             events={
               indexRef.current
-                ? componentSchema?.selectableBlock?.emitEvents?.map(
-                    (item) => item.eventName
+                ? componentSchema?.selectableBlock?.events?.map(
+                    (item) => item.name
                   ) || []
                 : emitEvents
             }
@@ -229,8 +244,8 @@ export const CompRenderer = observer(function (props) {
       emit={emitWithFiedle}
       events={
         indexRef.current
-          ? componentSchema?.selectableBlock?.emitEvents?.map(
-              (item) => item.eventName
+          ? componentSchema?.selectableBlock?.events?.map(
+              (item) => item.name
             ) || []
           : emitEvents
       }

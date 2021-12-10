@@ -496,17 +496,22 @@ export function getComponentSchemaString(
     }
     delete schema.type;
 
-    if (compWidgets[schema.key!]?.selectableBlocks) {
-      const blocks = compWidgets[schema.key!].selectableBlocks;
-      blocks.map((block) => {
-        const blockInstance =
-          block?.selectableBlock &&
-          block?.selectableBlock['x-props']?.listenerInstances;
-        if (blockInstance) {
-          block.selectableBlock['x-props'].listenerInstances =
-            generateListnerInstances(blockInstance, isComposite);
+    if (compWidgets[schema.key!]) {
+      const propsKeys = Object.keys(compWidgets[schema.key!]);
+      propsKeys.forEach((propsKey) => {
+        const propsVaule = compWidgets[schema.key!][propsKey];
+        if (propsVaule && Array.isArray(propsVaule)) {
+          propsVaule.map((block) => {
+            const blockInstance =
+              block?.selectableBlock &&
+              block?.selectableBlock?.['x-props']?.listenerInstances;
+            if (blockInstance) {
+              block.selectableBlock['x-props'].listenerInstances =
+                generateListnerInstances(blockInstance, isComposite);
+            }
+            return block;
+          });
         }
-        return block;
       });
     }
 
