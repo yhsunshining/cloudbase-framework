@@ -117,7 +117,7 @@ export const CompRenderer = observer(function (props) {
     }
   };
 
-  const selectableBlockEvents = {
+  const _selectableBlockEvents = {
     onCustomEvent,
   };
 
@@ -174,7 +174,7 @@ export const CompRenderer = observer(function (props) {
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
-            data={{ ...forItemData, selectableBlockEvents }}
+            data={{ ...forItemData, _selectableBlockEvents }}
             id={compId}
             {...componentProps}
             emit={emitWithForItems}
@@ -234,7 +234,7 @@ export const CompRenderer = observer(function (props) {
   });
   return (
     <Field
-      data={{ ...fieldData, selectableBlockEvents }}
+      data={{ ...fieldData, _selectableBlockEvents }}
       id={compId}
       {...componentProps}
       emit={emitWithForItems}
