@@ -60,19 +60,45 @@ export const CompRenderer = observer(function (props) {
   const Field = virtualFields[FieldKey];
   const parentForItems = useContext(ForContext);
 
-  // 最终用于执行的事件函数
+  // 组件最终用于执行的事件函数
   const emit = useCallback(
+    (trigger, eventData, forItems, domEvent, scopeContext) => {
+      const listeners = listenerInstances;
+      const event = {
+        detail: eventData,
+        name: trigger,
+        target: widgetsData,
+        currentTarget: widgetsData,
+        domEvent,
+      };
+      forItems = {
+        ...forItems,
+        forIndexes: getForIndexes(forItems, widgetsData),
+      };
+      emitEvent(
+        trigger,
+        listeners,
+        {
+          event,
+          customEventData: event,
+          forItems,
+          domEvent,
+        },
+        scopeContext
+      );
+    },
+    [props]
+  );
+
+  // 选区最终用于执行的事件函数
+  const emitSB = useCallback(
     (trigger, eventData, forItems, domEvent, scopeContext, fieldData) => {
       const listeners =
-        indexRef.current &&
         typeRef.current &&
+        indexRef.current &&
         fieldData?.[typeRef.current]?.[indexRef.current]?.selectableBlock?.[
           'x-props'
-        ]?.listenerInstances
-          ? fieldData[typeRef.current][indexRef.current].selectableBlock[
-              'x-props'
-            ].listenerInstances
-          : listenerInstances;
+        ]?.listenerInstances;
       const event = {
         detail: eventData,
         name: trigger,
@@ -127,10 +153,6 @@ export const CompRenderer = observer(function (props) {
     }
   };
 
-  const _selectableBlockEvents = {
-    onCustomEvent,
-  };
-
   // For循环渲染
   let forList;
   try {
@@ -164,7 +186,24 @@ export const CompRenderer = observer(function (props) {
         set(forItemData, slotProp, slots[slotProp]);
       });
       const emitWithForItems = (trigger, eventData, domEvent) =>
-        emit(trigger, eventData, forItems, domEvent, scopeContext, forItemData);
+        emit(trigger, eventData, forItems, domEvent, scopeContext);
+
+      const _selectableBlockEventsForItems = {
+        onCustomEvent,
+        events:
+          componentSchema?.selectableBlock?.events.map((item) => item.name) ||
+          [],
+        emit: (trigger, eventData, domEvent) =>
+          emitSB(
+            trigger,
+            eventData,
+            forItems,
+            domEvent,
+            scopeContext,
+            forItemData
+          ),
+      };
+
       delete forItemData.style;
 
       // 获取当前元素的 ref
@@ -175,7 +214,10 @@ export const CompRenderer = observer(function (props) {
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
-            data={{ ...forItemData, _selectableBlockEvents }}
+            data={{
+              ...forItemData,
+              _selectableBlockEvents: _selectableBlockEventsForItems,
+            }}
             id={compId}
             {...getSafeComponentProps({
               style: forItemStyle,
@@ -183,13 +225,7 @@ export const CompRenderer = observer(function (props) {
               staticResourceAttribute,
             })}
             emit={emitWithForItems}
-            events={
-              indexRef.current
-                ? componentSchema?.selectableBlock?.events?.map(
-                    (item) => item.name
-                  ) || []
-                : emitEvents
-            }
+            events={emitEvents}
             compositeParent={codeContext}
             forIndexes={forItemsIndexes}
             $node={currentWidget}
@@ -208,7 +244,22 @@ export const CompRenderer = observer(function (props) {
     scopeContext
   );
   const emitWithFiedle = (trigger, eventData, domEvent) =>
-    emit(trigger, eventData, parentForItems, domEvent, scopeContext, fieldData);
+    emit(trigger, eventData, parentForItems, domEvent, scopeContext);
+
+  const _selectableBlockEventsWithFiedle = {
+    onCustomEvent,
+    events:
+      componentSchema?.selectableBlock?.events.map((item) => item.name) || [],
+    emit: (trigger, eventData, domEvent) =>
+      emitSB(
+        trigger,
+        eventData,
+        parentForItems,
+        domEvent,
+        scopeContext,
+        fieldData
+      ),
+  };
 
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
@@ -234,7 +285,10 @@ export const CompRenderer = observer(function (props) {
 
   return (
     <Field
-      data={{ ...fieldData, _selectableBlockEvents }}
+      data={{
+        ...fieldData,
+        _selectableBlockEvents: _selectableBlockEventsWithFiedle,
+      }}
       id={compId}
       {...getSafeComponentProps({
         style: finalStyle,
@@ -242,13 +296,7 @@ export const CompRenderer = observer(function (props) {
         staticResourceAttribute,
       })}
       emit={emitWithFiedle}
-      events={
-        indexRef.current
-          ? componentSchema?.selectableBlock?.events?.map(
-              (item) => item.name
-            ) || []
-          : emitEvents
-      }
+      events={emitEvents}
       compositeParent={codeContext}
       forIndexes={forIndexes}
       $node={currentWidget}

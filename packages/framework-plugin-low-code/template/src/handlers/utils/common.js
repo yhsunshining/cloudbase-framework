@@ -104,9 +104,25 @@ export function resolveComponentProps(props, isPlainProps) {
     'slot',
   ];
   builtinProps.map((prop) => delete customProps[prop]);
+  // 选区events处理
+  const { _selectableBlockEvents, ...restData } = data;
+  const { emit: _selectableBlockEmit } = _selectableBlockEvents;
+  _selectableBlockEvents.events = new Proxy(
+    _selectableBlockEvents.events.reduce((events, item) => {
+      const propName = item;
+      events[propName] = (e) => _selectableBlockEmit(propName, e);
+      return events;
+    }, {}),
+    {
+      get(obj, prop) {
+        return prop in obj ? obj[prop] : (e) => _selectableBlockEmit(prop, e);
+      },
+    }
+  );
   return {
-    ...data,
+    ...restData,
     ...restProps,
+    _selectableBlockEvents,
     events: events.reduce((events, item) => {
       const propName = item;
       events[propName] = (e) => restProps.emit(propName, e);
