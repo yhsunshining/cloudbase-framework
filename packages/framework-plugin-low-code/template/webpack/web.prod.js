@@ -72,6 +72,11 @@ module.exports = function (options) {
         {
           loader: 'ts-loader',
           options: {
+            compilerOptions: {
+              target: 'ESNext',
+              module: 'ESNext',
+              esModuleInterop: true,
+            },
             happyPackMode: true,
             transpileOnly: true,
           },
@@ -94,15 +99,13 @@ module.exports = function (options) {
       filename: '[name].[contenthash].css',
       chunkFilename: '[id].[contenthash].css',
     }),
-    new webpack.DefinePlugin(
-      Object.assign(
-        {
-          'process.env.isMiniprogram': false, // 注入环境变量，用于业务代码判断
-          'process.env.SSR': false,
-        },
-        definePlugin
-      )
-    ),
+    new webpack.DefinePlugin(Object.assign(
+      {
+        'process.env.isMiniprogram': false, // 注入环境变量，用于业务代码判断
+        'process.env.SSR': false,
+      },
+      definePlugin,
+    )),
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -277,20 +280,20 @@ module.exports = function (options) {
       },
       ...(isDevelopment
         ? {
-            minimize: false,
-            removeAvailableModules: false,
-            removeEmptyChunks: true,
-          }
+          minimize: false,
+          removeAvailableModules: false,
+          removeEmptyChunks: true,
+        }
         : {
-            minimizer: [
-              new TerserPlugin({
-                test: /\.js(\?.*)?$/i,
-                cache: false,
-                parallel: true,
-                sourceMap: false,
-              }),
-            ],
-          }),
+          minimizer: [
+            new TerserPlugin({
+              test: /\.js(\?.*)?$/i,
+              cache: false,
+              parallel: true,
+              sourceMap: false,
+            }),
+          ],
+        }),
     },
   };
 };
