@@ -998,7 +998,7 @@ class LowCodePlugin extends Plugin {
           resolve(true);
         }, 8 * 1000);
       });
-      return this._getHostingInfo(envId);
+      return this._getHostingInfo(envId, loose);
     } else {
       return [website, hostingDatas];
     }
