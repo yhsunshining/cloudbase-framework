@@ -2,7 +2,7 @@ import { observable } from 'mobx';
 import { createComputed, createEventHandlers, checkAuth } from './util';
 import { createWidgets, createInitData, disposeWidget } from './widget';
 import mergeRenderer from './merge-renderer';
-import { createDataset, EXTRA_API, createStateDataSourceVar, generateParamsParser } from '../datasources/index';
+import { createDataset, EXTRA_API, createStateDataSourceVar, generateParamsParser, setConfig } from '../datasources/index';
 
 export function createPage(
   lifecycle,
@@ -72,6 +72,7 @@ export function createPage(
       ...mergeRenderer,
       onLoad(options) {
         app.activePage = $page;
+        setConfig({ currentPageId: $page.uuid });
         this._pageActive = true;
 
         let query = decodePageQuery(options || {});
@@ -89,6 +90,7 @@ export function createPage(
       },
       async onShow() {
         app.activePage = $page;
+        setConfig({ currentPageId: $page.uuid });
         $page.widgets = this._widgets;
         this._pageActive = true;
 

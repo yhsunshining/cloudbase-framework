@@ -11,6 +11,7 @@ export {
   CLOUD_SDK,
   DS_API,
   DS_SDK,
+  setConfig
 } from '@cloudbase/weda-cloud-sdk'
 
 import config from './config'
