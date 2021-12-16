@@ -24,7 +24,7 @@ export function AppRender(props) {
     codeContext,
     scopeContext = {},
   } = props;
-  
+
   const { 'x-props': xProps, properties = {} } = componentSchema;
 
   // 判断是否为 slot
@@ -110,6 +110,7 @@ export function AppRender(props) {
       id={componentSchema.key}
       xProps={xProps}
       emitEvents={componentSchema.emitEvents || []}
+      componentSchema={componentSchema}
       virtualFields={virtualFields}
       slots={slots}
       codeContext={codeContext}
