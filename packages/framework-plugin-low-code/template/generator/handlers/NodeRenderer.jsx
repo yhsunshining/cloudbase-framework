@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { useContext, useCallback, createContext } from 'react';
+import {
+  useContext,
+  useCallback,
+  createContext,
+  useState,
+  useRef,
+} from 'react';
 import { observer } from 'mobx-react-lite';
 import { emitEvent, translateStyleToRem, checkVisible } from '../utils';
 import { get, set } from 'lodash';
@@ -17,7 +23,16 @@ export const CompRenderer = observer(function (props) {
     scopeContext = {},
     genericComp = {},
     emitEvents = [],
+    componentSchema = {},
   } = props;
+
+  const [blockIndex, setBlockIndex] = useState();
+  const [blockType, setBlockType] = useState();
+  const indexRef = useRef();
+  const typeRef = useRef();
+  indexRef.current = blockIndex;
+  typeRef.current = blockType;
+
   const isInComposite = !!codeContext.$WEAPPS_COMP;
   // 判断 widgets 是从 page 来的，还是组件来的
   const widgetsData = !isInComposite
@@ -45,10 +60,45 @@ export const CompRenderer = observer(function (props) {
   const Field = virtualFields[FieldKey];
   const parentForItems = useContext(ForContext);
 
-  // 最终用于执行的事件函数
+  // 组件最终用于执行的事件函数
   const emit = useCallback(
     (trigger, eventData, forItems, domEvent, scopeContext) => {
       const listeners = listenerInstances;
+      const event = {
+        detail: eventData,
+        name: trigger,
+        target: widgetsData,
+        currentTarget: widgetsData,
+        domEvent,
+      };
+      forItems = {
+        ...forItems,
+        forIndexes: getForIndexes(forItems, widgetsData),
+      };
+      emitEvent(
+        trigger,
+        listeners,
+        {
+          event,
+          customEventData: event,
+          forItems,
+          domEvent,
+        },
+        scopeContext
+      );
+    },
+    [props]
+  );
+
+  // 选区最终用于执行的事件函数
+  const emitSB = useCallback(
+    (trigger, eventData, forItems, domEvent, scopeContext, fieldData) => {
+      const listeners =
+        typeRef.current &&
+        indexRef.current &&
+        fieldData?.[typeRef.current]?.[indexRef.current]?.selectableBlock?.[
+          'x-props'
+        ]?.listenerInstances;
       const event = {
         detail: eventData,
         name: trigger,
@@ -95,6 +145,14 @@ export const CompRenderer = observer(function (props) {
     return componentProps;
   }
 
+  // 选区的预览的click事件
+  const onCustomEvent = ({ order: index, blockKey }) => {
+    if (index) {
+      setBlockIndex(index);
+      setBlockType(blockKey);
+    }
+  };
+
   // For循环渲染
   let forList;
   try {
@@ -129,6 +187,23 @@ export const CompRenderer = observer(function (props) {
       });
       const emitWithForItems = (trigger, eventData, domEvent) =>
         emit(trigger, eventData, forItems, domEvent, scopeContext);
+
+      const _selectableBlockEventsForItems = {
+        onCustomEvent,
+        events:
+          componentSchema?.selectableBlock?.events.map((item) => item.name) ||
+          [],
+        emit: (trigger, eventData, domEvent) =>
+          emitSB(
+            trigger,
+            eventData,
+            forItems,
+            domEvent,
+            scopeContext,
+            forItemData
+          ),
+      };
+
       delete forItemData.style;
 
       // 获取当前元素的 ref
@@ -139,7 +214,10 @@ export const CompRenderer = observer(function (props) {
       return (
         <ForContext.Provider key={index} value={forItems}>
           <Field
-            data={forItemData}
+            data={{
+              ...forItemData,
+              _selectableBlockEvents: _selectableBlockEventsForItems,
+            }}
             id={compId}
             {...getSafeComponentProps({
               style: forItemStyle,
@@ -168,6 +246,21 @@ export const CompRenderer = observer(function (props) {
   const emitWithFiedle = (trigger, eventData, domEvent) =>
     emit(trigger, eventData, parentForItems, domEvent, scopeContext);
 
+  const _selectableBlockEventsWithFiedle = {
+    onCustomEvent,
+    events:
+      componentSchema?.selectableBlock?.events.map((item) => item.name) || [],
+    emit: (trigger, eventData, domEvent) =>
+      emitSB(
+        trigger,
+        eventData,
+        parentForItems,
+        domEvent,
+        scopeContext,
+        fieldData
+      ),
+  };
+
   // false 或空字符串时
   if (!checkVisible(fieldData)) {
     return null;
@@ -192,7 +285,10 @@ export const CompRenderer = observer(function (props) {
 
   return (
     <Field
-      data={fieldData}
+      data={{
+        ...fieldData,
+        _selectableBlockEvents: _selectableBlockEventsWithFiedle,
+      }}
       id={compId}
       {...getSafeComponentProps({
         style: finalStyle,
