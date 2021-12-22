@@ -81,6 +81,9 @@ export async function copyMaterialLibraries(
       // 副作用修改了dependence定义，trycatch 不阻塞主流程
       try {
         const meta = readComponentLibMata(librariesDir);
+        if (meta?.schemaVersion) {
+          componentLib['schemaVersion'] = meta?.schemaVersion;
+        }
         let [major] = meta?.schemaVersion?.split('.') || [];
         if (Number(major) >= 3) {
           componentLib['isPlainProps'] = true;

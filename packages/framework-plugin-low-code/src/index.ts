@@ -814,7 +814,9 @@ class LowCodePlugin extends Plugin {
             let domains = hostingDatas.map((item) => item.cdnDomain);
             this._domain = domains; //domains[0].cdnDomain;
           }
-          this._website = website;
+          if (website) {
+            this._website = website;
+          }
         } catch (e) {
           this.api.logger.error('获取静态托管失败: ', e);
           throw e;
@@ -973,7 +975,7 @@ class LowCodePlugin extends Plugin {
       new Promise((resolve) => {
         timeout = setTimeout(() => {
           resolve([]);
-        }, 120 * 1000);
+        }, 300 * 1000);
       }),
       this._getHostingInfo(envId, loose),
     ]);
