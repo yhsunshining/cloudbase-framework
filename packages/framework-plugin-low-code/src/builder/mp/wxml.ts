@@ -157,7 +157,12 @@ export function generateWxml(
         elements.push({
           type: 'element',
           name: tagName,
-          attributes: { name: data0.name.value },
+          attributes: {
+            name:
+              data0.name.type && data0.name.type !== 'static'
+                ? `{{${id}.name}}`
+                : data0.name.value,
+          },
           elements: [],
           _order: xIndex || 0,
           _parent: null,
@@ -270,9 +275,8 @@ export function generateWxml(
       listeners.forEach((l) => {
         const evtName = getMpEventName(l.trigger);
         const modifiers = l;
-        node.attributes[
-          getMpEventAttr(evtName, modifiers, tagName)
-        ] = getMpEventHanlderName(id, evtName, modifiers);
+        node.attributes[getMpEventAttr(evtName, modifiers, tagName)] =
+          getMpEventHanlderName(id, evtName, modifiers);
       });
 
       // 扩展组件配置
