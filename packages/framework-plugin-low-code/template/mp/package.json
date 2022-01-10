@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"scripts": {	},
 	"dependencies": {
-		"@cloudbase/weda-cloud-sdk": "1.0.1",
+		"@cloudbase/weda-cloud-sdk": "stable",
     "mobx": "^5.15.4",
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
