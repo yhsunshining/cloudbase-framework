@@ -151,32 +151,37 @@ export async function generateWxMp({
     projectConfigJson.miniprogramRoot || '/'
   );
 
-  await generateFramework(mainAppData, miniprogramRoot, buildContext);
-
   // #3 生成主包根路径文件
-  let appFileData: Record<string, object> = {
-    'common/style.js': {},
-    'common/utils.wxs': {
-      domain: domain,
-    },
-    'common/util.js': {
-      isAdminPortal: buildAsAdminPortalByBuildType(buildTypeList as any),
-    },
-    'common/widget.js': {},
-    'common/url.js': {},
-    'common/weapp-sdk.js': {},
-    'common/weapp-page.js': {
-      dataPropNames: wxmlDataPrefix,
-      debug: !buildContext.isProduction,
-    },
-    'common/weapp-component.js': {},
-    'common/merge-renderer.js': {
-      dataPropNames: wxmlDataPrefix,
-      debug: !buildContext.isProduction,
-    },
-    'common/process.js': {},
-    'common/data-patch.js': {},
-  };
+  let appFileData: Record<string, object> = {};
+  if (weapps.find((item) => !item.mpPkgUrl)) {
+    // 非全部都是 zip 包的情况，生成系统文件
+    await generateFramework(mainAppData, miniprogramRoot, buildContext);
+    appFileData = {
+      ...appFileData,
+      'common/style.js': {},
+      'common/utils.wxs': {
+        domain: domain,
+      },
+      'common/util.js': {
+        isAdminPortal: buildAsAdminPortalByBuildType(buildTypeList as any),
+      },
+      'common/widget.js': {},
+      'common/url.js': {},
+      'common/weapp-sdk.js': {},
+      'common/weapp-page.js': {
+        dataPropNames: wxmlDataPrefix,
+        debug: !buildContext.isProduction,
+      },
+      'common/weapp-component.js': {},
+      'common/merge-renderer.js': {
+        dataPropNames: wxmlDataPrefix,
+        debug: !buildContext.isProduction,
+      },
+      'common/process.js': {},
+      'common/data-patch.js': {},
+    };
+  }
+
   if (mainAppData.mpPkgUrl) {
     // 合并 project 和 app json
     if (!projectConfigJson.setting) {
@@ -258,39 +263,41 @@ export async function generateWxMp({
     );
   }
 
-  // 生成数据源
-  const datasourceFileData = {
-    'datasources/index.js': {},
-    'datasources/config.js.tpl': {
-      envID: mainAppData.envId,
-      appID: appId,
-      resourceAppid: !!options.isCrossAccount ? options.resourceAppid : '',
-      isProd: deployMode === DEPLOY_MODE.UPLOAD,
-    },
-    'datasources/datasource-profiles.js.tpl': {
-      datasourceProfiles: JsonToStringWithVariableName(
-        getDatasourceProfiles(
-          weapps.reduce((datasources, app) => {
-            datasources.push(...(app.datasources || []));
-            return datasources;
-          }, [] as any[])
-        )
-      ),
-    },
-    'datasources/dataset-profiles.js.tpl': {
-      datasetProfiles: JsonToStringWithVariableName(
-        getDatasetProfiles(mainAppData as any, weapps)
-      ),
-    },
-  };
+  // 有低码包的情况,生成数据源
+  if (weapps.find((item) => !item.mpPkgUrl)) {
+    const datasourceFileData = {
+      'datasources/index.js': {},
+      'datasources/config.js.tpl': {
+        envID: mainAppData.envId,
+        appID: appId,
+        resourceAppid: !!options.isCrossAccount ? options.resourceAppid : '',
+        isProd: deployMode === DEPLOY_MODE.UPLOAD,
+      },
+      'datasources/datasource-profiles.js.tpl': {
+        datasourceProfiles: JsonToStringWithVariableName(
+          getDatasourceProfiles(
+            weapps.reduce((datasources, app) => {
+              datasources.push(...(app.datasources || []));
+              return datasources;
+            }, [] as any[])
+          )
+        ),
+      },
+      'datasources/dataset-profiles.js.tpl': {
+        datasetProfiles: JsonToStringWithVariableName(
+          getDatasetProfiles(mainAppData as any, weapps)
+        ),
+      },
+    };
 
-  console.log('Generating ' + em('datasources') + ' files');
-  await generateFiles(
-    datasourceFileData,
-    templateDir,
-    miniprogramRoot,
-    buildContext
-  );
+    console.log('Generating ' + em('datasources') + ' files');
+    await generateFiles(
+      datasourceFileData,
+      templateDir,
+      miniprogramRoot,
+      buildContext
+    );
+  }
 
   // 生成子包
   await Promise.all(
