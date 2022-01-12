@@ -1,5 +1,5 @@
-import dataSourceProfiles from './datasource-profiles'
 import datasetProfiles from './dataset-profiles'
+const dataSourceProfiles = require('./datasource-profiles.js')
 
 /**
  * 数据源基本配置
