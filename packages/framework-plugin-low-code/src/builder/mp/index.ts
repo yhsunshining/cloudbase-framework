@@ -156,13 +156,15 @@ export async function generateWxMp({
   if (weapps.find((item) => !item.mpPkgUrl)) {
     // 非全部都是 zip 包的情况，生成系统文件
     await generateFramework(mainAppData, miniprogramRoot, buildContext);
-    // 有了 framework app 之后，追加 app 引用
-    let appJsPath = path.join(miniprogramRoot, 'app.js');
-    let appJsContent = await fs.readFile(appJsPath);
-    await writeFile(
-      appJsPath,
-      `import { app as wedaApp } from './app/weapps-api'\n${appJsContent}`
-    );
+    // 有了 framework app 之后，并且是源码的方式,追加 app 引用
+    if (mainAppData.mpPkgUrl) {
+      let appJsPath = path.join(miniprogramRoot, 'app.js');
+      let appJsContent = await fs.readFile(appJsPath);
+      await writeFile(
+        appJsPath,
+        `import { app as wedaApp } from './app/weapps-api'\n${appJsContent}`
+      );
+    }
 
     appFileData = {
       ...appFileData,
