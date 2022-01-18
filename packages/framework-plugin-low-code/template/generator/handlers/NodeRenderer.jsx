@@ -94,8 +94,8 @@ export const CompRenderer = observer(function (props) {
   const emitSB = useCallback(
     (trigger, eventData, forItems, domEvent, scopeContext, fieldData) => {
       const listeners =
-        typeRef.current &&
-        indexRef.current &&
+        typeRef?.current &&
+        indexRef?.current !== undefined &&
         fieldData?.[typeRef.current]?.[indexRef.current]?.selectableBlock?.[
           'x-props'
         ]?.listenerInstances;
@@ -147,7 +147,7 @@ export const CompRenderer = observer(function (props) {
 
   // 选区的预览的click事件
   const onCustomEvent = ({ order: index, blockKey }) => {
-    if (index) {
+    if (index !== undefined) {
       setBlockIndex(index);
       setBlockType(blockKey);
     }
