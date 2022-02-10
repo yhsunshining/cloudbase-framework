@@ -614,14 +614,8 @@ export function getComponentSchemaString(
 
   return {
     widgets: JsonToStringWithVariableName(compWidgets),
-    dataBinds: JsonToStringWithVariableName(compDataBinds).replace(
-      /\\r/g,
-      '\n'
-    ),
-    componentSchema: JsonToStringWithVariableName(componentSchemaJson).replace(
-      /\\r/g,
-      '\n'
-    ),
+    dataBinds: JsonToStringWithVariableName(compDataBinds),
+    componentSchema: JsonToStringWithVariableName(componentSchemaJson),
   };
 }
 

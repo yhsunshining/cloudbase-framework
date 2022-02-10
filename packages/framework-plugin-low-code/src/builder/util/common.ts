@@ -62,11 +62,16 @@ export function getSelfPackageJson(): IPackageJson | undefined {
 }
 
 export function JsonToStringWithVariableName(copyJson: any): string {
-  return JSON.stringify(copyJson, null, 2)
-    .replace(/"%%%(.*?)%%%"/g, function (match, expression) {
-      return expression.replace(/\\"/g, '"');
-    })
-    .replace(/\\n/g, '');
+  return JSON.stringify(copyJson, null, 2).replace(
+    /"%%%(.*?)%%%"/g,
+    function (match, expression) {
+      return expression
+        .replace(/\\"/g, '"')
+        .replace(/\\'/g, "'")
+        .replace(/\\r\\n/g, '\r\n')
+        .replace(/\\n/g, '\n');
+    }
+  );
 }
 
 export function requireUncached(module) {
