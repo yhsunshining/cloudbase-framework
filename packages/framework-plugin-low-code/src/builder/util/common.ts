@@ -68,7 +68,7 @@ export function JsonToStringWithVariableName(copyJson: any): string {
       return expression
         .replace(/\\"/g, '"')
         .replace(/\\'/g, "'")
-        .replace(/\\r\\n/g, '\r\n')
+        .replace(/\\r/g, '\r')
         .replace(/\\n/g, '\n');
     }
   );

@@ -634,7 +634,7 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
     } else if (bind.type === PropBindType.scope) {
       funcCode = `() => ({__type: "scopedValue", getValue: ($scope)=>$scope.${bind.bindDataPath}})}`;
     } else if (bind.type === PropBindType.expression) {
-      let code = bind.bindDataPath.replace(/\n/g, ' ');
+      let code = bind.bindDataPath;
       if (isComposite) {
         funcCode = `(forItems) => { const $for = forItems; return (${code.replace(
           /\$comp/g,
@@ -642,8 +642,8 @@ function generateDataBinds(dataBinds, isComposite: boolean) {
         )})}`;
       } else {
         funcCode = /\$scope\./.test(code)
-          ? `(forItems, event) => ({__type: "scopedValue", getValue: ($scope) => { const $for = forItems;return (${code})}})`
-          : `(forItems, event) => { const $for = forItems;return (${code})}`;
+          ? `(forItems, event) => ({__type: "scopedValue", getValue: ($scope) => { const $for = forItems;return (\n${code}\n)}})`
+          : `(forItems, event) => { const $for = forItems;return (\n${code}\n)}`;
       }
     } else if (bind.type === PropBindType.prop) {
       let bindDataPath = bind.bindDataPath;

@@ -203,7 +203,7 @@ function _generateDynamicDataset(dataset) {
               let jsExp = generateDataBind(bind);
               processed[
                 paramKey
-              ] = `${REPLACE_SIGN}(app, $page) =>  (${jsExp})${REPLACE_SIGN}`;
+              ] = `${REPLACE_SIGN}(app, $page) =>  (\n${jsExp}\n)${REPLACE_SIGN}`;
             }
           }
           config.initMethod.params = processed;
